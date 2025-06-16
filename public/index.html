@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Generator - V2</title>
+    <style>
+        /* CSS Variables for easy theme management */
+        :root {
+            /* DARK MODE (Default) */
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 68px;
+            --bg-color: #1a1a1a;
+            --panel-bg-color: #2a2a2a;
+            --border-color: #444;
+            --text-color: #e0e0e0;
+            --text-color-secondary: #aaa;
+            --primary-color: #007bff;
+            --primary-color-hover: #0056b3;
+            --input-bg-color: #333;
+            --disabled-bg-color: #404040;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* LIGHT MODE THEME */
+        body.light-mode {
+            --bg-color: #f0f2f5;
+            --panel-bg-color: #ffffff;
+            --border-color: #d9d9d9;
+            --text-color: #222222;
+            --text-color-secondary: #555555;
+            --input-bg-color: #f0f2f5;
+            --disabled-bg-color: #e9ecef;
+        }
+
+
+        /* General Body Styles */
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            height: calc(100vh - 2rem);
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h2, h3, h4 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        h4 {
+            font-size: 1.1em;
+            color: var(--text-color-secondary);
+            border-bottom: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Main App Container using Flexbox */
+        .app-container {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- 1. Left Sidebar: Prompt Library --- */
+        .sidebar {
+            background-color: var(--panel-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            width: var(--sidebar-width);
+            height: 100%;
+            box-sizing: border-box;
+            transition: width 0.3s ease-in-out, background-color 0.3s, border-color 0.3s;
+        }
+
+        .sidebar--collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar__header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+            transition: justify-content 0.3s ease-in-out;
+        }
+
+        .sidebar--collapsed .sidebar__header {
+            justify-content: center;
+        }
+
+        .sidebar__hamburger {
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .sidebar__header h2 {
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.2s ease, width 0.2s ease;
+        }
+        .sidebar--collapsed .sidebar__header h2 {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar__content {
+             flex-grow: 1;
+             overflow-y: auto;
+             opacity: 1;
+             transition: opacity 0.2s ease;
+        }
+        .sidebar--collapsed .sidebar__content {
+             opacity: 0;
+             pointer-events: none;
+        }
+
+        .sidebar__footer {
+            padding-top: 1rem;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        #admin-reset-button {
+            width: 100%;
+            background-color: var(--danger-color);
+            font-size: 0.8rem;
+        }
+
+        .sidebar__sub-heading {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: var(--text-color-secondary);
+            padding: 0.5rem 0.5rem 0.25rem;
+            margin-top: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar__jobs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .job-selector {
+            padding: 0.4rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .job-selector:hover {
+            background-color: var(--input-bg-color);
+        }
+        .job-selector.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+
+        .sidebar details { margin-bottom: 0.5rem; }
+        .sidebar summary {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .sidebar summary:hover { background-color: var(--input-bg-color); }
+        .sidebar ul { list-style: none; padding-left: 0; }
+        .sidebar li {
+            padding: 0.4rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+         .sidebar li:hover {
+            background-color: var(--primary-color-hover);
+            color: white;
+        }
+        .sidebar__project-delete-button {
+            background: none;
+            border: none;
+            color: var(--text-color-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+        .sidebar li:hover .sidebar__project-delete-button {
+            color: white;
+        }
+         .sidebar__project-delete-button:hover {
+             color: var(--danger-color) !important;
+        }
+
+        /* Main Content Wrapper */
+        .main-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+            height: 100%;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background-color: var(--panel-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        /* --- PROMPT GENERATOR & COLLAPSIBLE STYLES --- */
+        .panel__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .collapsible-panel__header {
+             cursor: pointer;
+        }
+
+        .panel__header h3 {
+             border-bottom: none;
+             margin-bottom: 0;
+             cursor: default; /* Make text non-clickable */
+        }
+
+
+        .panel__title-input {
+            font-family: var(--font-family);
+            background-color: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .panel__title-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .panel__title-input::placeholder {
+            color: var(--text-color-secondary);
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        .collapsible-panel__icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease-in-out;
+            padding: 0.5rem;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .collapsible-panel--collapsed .collapsible-panel__icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-panel__content {
+            display: grid;
+            grid-template-rows: 0fr; /* Collapsed by default */
+            transition: grid-template-rows 0.35s ease-in-out;
+        }
+
+        .collapsible-panel:not(.collapsible-panel--collapsed) .collapsible-panel__content {
+            grid-template-rows: 1fr; /* Expanded state */
+            margin-top: 1.5rem; /* Add space only when open */
+        }
+
+        .collapsible-panel__inner-wrapper {
+            overflow: hidden;
+            min-height: 0; /* Prevents content from breaking out of the grid during animation */
+        }
+
+        /* --- New Prompt Builder Styles --- */
+        .prompt-builder__pallet {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .generate-button-container {
+            margin-top: -1rem; /* Pull up slightly */
+        }
+
+        .prompt-builder__component {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .component__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .component__header h4 {
+            border: none;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+        }
+
+        .component__remove-button {
+            background: none;
+            border: none;
+            color: var(--text-color-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 0.5rem;
+            line-height: 1;
+        }
+        .component__remove-button:hover {
+            color: var(--danger-color);
+        }
+
+        .component__controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-grow: 1;
+        }
+
+        .component__controls select,
+        .component__controls textarea {
+             width: 100%;
+             background-color: var(--input-bg-color);
+             border: 1px solid var(--border-color);
+             border-radius: 4px;
+             color: var(--text-color);
+             padding: 0.5rem;
+             font-size: 0.9rem;
+        }
+
+        .component__controls textarea {
+            flex-grow: 1;
+        }
+
+        /* --- Refinement Area & Other Styles --- */
+        .panel__header-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-color);
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            box-sizing: border-box;
+            resize: vertical;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+        
+        textarea::placeholder {
+            color: var(--text-color-secondary);
+            opacity: 0.8;
+        }
+
+        .refinement-area {
+            display: flex;
+            gap: 1rem;
+        }
+        .refinement-area > .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .insert-button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #userOutline-textarea,
+        #finalPrompt-textarea,
+        #articleWorkspace-textarea {
+            min-height: 16.5rem; /* Approx 11 lines * 1.5 line-height */
+        }
+
+        .draft-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .draft-controls__button--save {
+            background-color: var(--success-color);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        .draft-controls__button--delete {
+            background-color: var(--danger-color);
+        }
+        .draft-controls__button--delete:disabled {
+            background-color: var(--disabled-bg-color);
+            cursor: not-allowed;
+            color: var(--text-color-secondary);
+        }
+        body.light-mode .draft-controls__button--save,
+        body.light-mode .draft-controls__button--delete {
+             color: white;
+        }
+
+        /* --- UTILITY & DEMO STYLES --- */
+        .button--primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: 1px solid var(--primary-color);
+            padding: 0.6rem 0.75rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .button--primary:hover {
+            background-color: var(--primary-color-hover);
+        }
+        body.light-mode .button--primary {
+             color: white;
+        }
+
+        .button--utility, .button--edit-mode {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: normal;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button--utility:hover, .button--edit-mode:hover {
+            background-color: var(--border-color);
+        }
+        .button--utility.copied {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+        .button--theme {
+            padding: 0.25rem 0.5rem;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+
+        #save-project-button { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+        #delete-project-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
+        #edit-project-button { background-color: var(--warning-color); color: #212529; border-color: var(--warning-color); }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- TEXT TRANSFORMER STYLES --- */
+        .text-transformer__area {
+            display: flex;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        .text-transformer__area > .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+         .text-transformer__area > .panel > textarea {
+            flex-grow: 1; /* Make textarea fill panel */
+        }
+
+        .text-transformer__actions-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align from top */
+            gap: 0.5rem; /* Gap between buttons */
+            width: 130px; /* Give the container a width */
+            flex-shrink: 0;
+        }
+
+        .text-transformer__action-button {
+            padding: 0.5rem;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        .text-transformer__action-selector {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 0.75rem;
+            font-size: 0.875rem;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            text-align: center;
+        }
+        .text-transformer__action-selector:hover {
+            border-color: var(--primary-color);
+        }
+        .text-transformer__action-selector.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        #text-transformer-options-container {
+            border-top: 1px solid var(--border-color);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            font-size: 0.875rem;
+        }
+        #text-transformer-options-container label {
+            display: block;
+            padding: 0.35rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-color-secondary);
+        }
+        #text-transformer-options-container label:hover {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+        }
+        #text-transformer-options-container input {
+            margin-right: 0.5rem;
+            accent-color: var(--primary-color);
+        }
+
+
+        #transform-execute-button {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__header">
+                <span class="sidebar__hamburger" id="hamburger-button">&#9776;</span>
+                <h2>Prompt Gen</h2>
+            </div>
+            <div class="sidebar__content">
+                <h4 class="sidebar__sub-heading">Quick Start</h4>
+                <details open>
+                    <summary>Jobs</summary>
+                    <div class="sidebar__jobs-list" id="jobs-list">
+                        </div>
+                </details>
+                <h4 class="sidebar__sub-heading">Library</h4>
+                <details open>
+                    <summary>Work Projects</summary>
+                    <ul id="library-list">
+                        </ul>
+                </details>
+            </div>
+            <div class="sidebar__footer">
+                <button id="admin-reset-button">Admin: Hard Reset</button>
+            </div>
+        </aside>
+
+        <div class="main-content-wrapper">
+            <main class="main-content">
+
+                <section class="panel" id="project-hub-panel">
+                     <div class="panel__header">
+                        <h3>Project Hub</h3>
+                        <div class="panel__header-buttons">
+                            <button id="save-project-button" class="button--utility">Save Project</button>
+                            <button id="theme-light-button" class="button--utility button--theme">☀️</button>
+                            <button id="theme-dark-button" class="button--utility button--theme hidden">🌙</button>
+                        </div>
+                    </div>
+                    <input type="text" id="project-title-input" class="panel__title-input" placeholder="Enter Project Title...">
+                </section>
+
+                <section class="panel collapsible-panel collapsible-panel--collapsed" id="prompt-builder-panel">
+                    <div class="panel__header">
+                        <h3>Prompt Builder</h3>
+                        <div class="panel__header-buttons">
+                             <button id="add-component-button" class="button--utility">Add Component</button>
+                        </div>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper">
+                            <div class="prompt-builder__pallet" id="prompt-builder-pallet">
+                                </div>
+                            <div id="prompt-assembler-output" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                                <div class="generate-button-container">
+                                    <button id="assemble-all-button" class="button--primary">Add All to Final Prompt</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel collapsible-panel collapsible-panel--collapsed" id="refinement-panel">
+                     <div class="panel__header">
+                        <h3>Refinement</h3>
+                         <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                     <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper">
+                            <div class="refinement-area">
+                                <div class="panel user-outline-panel">
+                                    <div class="panel__header"><h3>User Outline</h3></div>
+                                    <textarea id="userOutline-textarea" autocomplete="off" placeholder="Write your outline or dump your thoughts here..."></textarea>
+                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                </div>
+                                <div class="insert-button-container">
+                                    <button id="insert-button" title="Insert Outline into Final Prompt" class="button--primary">&rarr;</button>
+                                </div>
+                                <div class="panel final-prompt-panel">
+                                    <div class="panel__header">
+                                        <h3>Final Prompt</h3>
+                                        <div class="panel__header-buttons">
+                                            <button id="copy-button" class="button--utility">Copy</button>
+                                            <button id="clear-button" class="button--utility">Clear</button>
+                                        </div>
+                                    </div>
+                                    <textarea id="finalPrompt-textarea" autocomplete="off" placeholder="The final, combined prompt will appear here..."></textarea>
+                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                </section>
+
+                <section class="panel collapsible-panel collapsible-panel--collapsed" id="text-transformer-panel">
+                    <div class="panel__header">
+                        <h3>Text Transformer</h3>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper">
+                            <div id="action-engine-panel-content">
+                                <div class="text-transformer__area">
+                                    <div class="panel">
+                                        <div class="panel__header"><h3>Input</h3></div>
+                                        <textarea id="textTransformerInput-textarea" autocomplete="off" placeholder="Paste text here to transform it..."></textarea>
+                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                    </div>
+                                    <div class="text-transformer__actions-container">
+                                        <button class="text-transformer__action-selector" data-action="summarize">Summarize</button>
+                                        <button class="text-transformer__action-selector" data-action="rewrite">Rewrite</button>
+                                        <button class="text-transformer__action-selector" data-action="analyze">Analyze</button>
+
+                                        <div id="text-transformer-options-container"></div>
+
+                                        <button id="transform-execute-button" class="button--primary">Transform</button>
+                                        <hr style="width: 80%; margin: 0.75rem auto; border-color: var(--border-color);">
+                                        <button class="button--utility text-transformer__action-button" data-action="copy-up" title="Copy Output to Input">↑</button>
+                                    </div>
+                                    <div class="panel">
+                                        <div class="panel__header"><h3>Output</h3></div>
+                                        <textarea id="textTransformerOutput-textarea" autocomplete="off" placeholder="Transformed text will appear here..."></textarea>
+                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel collapsible-panel collapsible-panel--collapsed" id="article-workspace-panel">
+                    <div class="panel__header">
+                        <h3>Article Workspace</h3>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper">
+                            <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..."></textarea>
+                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            /*
+            * == AI PROMPT GENERATOR V2 - ARCHITECTURE BRIEFING ==
+            *
+            * GUIDING PRINCIPLES:
+            * - The application is a state-driven, single-page app. All UI is rendered from the 'appState' object.
+            * - The core data model is a "Project," which contains all settings and content drafts. A "Project" is represented by the 'activeProject' object within the main 'appState'.
+            * - All data saving/loading (Drafts and Projects) is IN-MEMORY for this wireframe. No persistent storage is used. Reloading the page will reset everything.
+            */
+
+            // --- UI-ONLY EVENT LISTENERS ---
+            function setupUIEventListeners() {
+                const hamburgerButton = document.getElementById('hamburger-button');
+                const sidebar = document.getElementById('sidebar');
+                const lightThemeButton = document.getElementById('theme-light-button');
+                const darkThemeButton = document.getElementById('theme-dark-button');
+                const body = document.body;
+
+                if (hamburgerButton && sidebar) {
+                    hamburgerButton.addEventListener('click', () => {
+                        sidebar.classList.toggle('sidebar--collapsed');
+                    });
+                }
+
+                if(lightThemeButton && darkThemeButton && body) {
+                    lightThemeButton.addEventListener('click', () => {
+                        body.classList.add('light-mode');
+                        lightThemeButton.classList.add('hidden');
+                        darkThemeButton.classList.remove('hidden');
+                    });
+                    darkThemeButton.addEventListener('click', () => {
+                        body.classList.remove('light-mode');
+                        darkThemeButton.classList.add('hidden');
+                        lightThemeButton.classList.remove('hidden');
+                    });
+                }
+            }
+
+
+            // --- DATA MODELS (CONSTANTS) ---
+            const builderComponentData = {
+                role: {
+                    title: 'Role',
+                    prompts: {
+                        'helpful_assistant': 'Act as a helpful, expert-level assistant. Your goal is to provide responses that are not only accurate and relevant but also clear, well-structured, and easy to understand. Anticipate user needs and provide comprehensive information where appropriate.',
+                        'ceo': 'Adopt the persona of a seasoned and decisive CEO of a publicly-traded technology company. Your communication style must be strategic, concise, and forward-looking. Focus on market dynamics, competitive landscape, and shareholder value. Avoid overly technical jargon and focus on the "big picture".',
+                        'software_engineer': 'Act as a Principal Software Engineer with deep expertise in system design and scalable cloud architecture. Your response must be technically precise, using appropriate terminology for data structures, algorithms, and design patterns. Provide code examples where they clarify your points.',
+                        'screenwriter': 'Adopt the persona of a professional screenwriter with several produced credits. Your task is to think visually and structurally. Describe scenes, actions, and dialogue with clarity and brevity. Ensure your output adheres to standard screenplay formatting conventions.',
+                        'academic_researcher': 'Act as an academic researcher and university professor publishing in a peer-reviewed journal. Your response must be rigorous, analytical, and evidence-based. Cite sources, define key terms, and present arguments with logical coherence and intellectual nuance.'
+                    }
+                },
+                task: {
+                    title: 'Task',
+                    prompts: {
+                        'write': "Your primary task is to create original written content based on the user's request. Pay close attention to the specified format, tone, and length. The final output must be well-organized, coherent, and free of grammatical errors.",
+                        'analyze': "Your primary task is to conduct a detailed analysis of the provided text or data. Identify the key components, patterns, relationships, and underlying assumptions. The output should be a structured summary of your findings, not just a restatement of the information.",
+                        'summarize': 'Your primary task is to create a concise and accurate summary of the provided text. The summary must capture the main ideas, key arguments, and essential conclusions of the original content without introducing outside information or opinion.',
+                        'translate': 'Your primary task is to translate the provided text from the source language to the target language specified by the user. The translation must be accurate, fluent, and culturally appropriate, preserving the meaning and nuance of the original text.',
+                        'brainstorm': 'Your primary task is to generate a diverse and creative list of ideas related to the given topic. The list should include a range of concepts, from conventional and practical to innovative and "outside-the-box". Organize the ideas into logical categories if applicable.'
+                    }
+                },
+                job: {
+                    title: 'Job',
+                    prompts: {
+                        'Generic': 'Act as a helpful general-purpose writing assistant.',
+                        'Blog Post': 'Specify the output format must be a well-structured blog post. It needs a catchy H1 title, an engaging introduction (hook), clear H2 subheadings for main sections, and a concluding summary.',
+                        'Formal Email': 'Specify the output must be a professional email. It requires a clear subject line, a proper salutation (e.g., "Dear [Name],"), a body in clear paragraphs, and a professional closing (e.g., "Best regards,").',
+                        'Press Release': 'Specify the output must follow the format of a standard press release. It requires a headline, dateline, introduction (the 5 Ws), body, boilerplate, and contact information. The tone must be formal and objective.'
+                    }
+                },
+                audiencePro: {
+                    title: 'Audience - Professional',
+                    prompts: {
+                        'Executive': 'Adapt the tone for a C-suite executive. Focus on strategic implications, business outcomes, and ROI. Use concise, confident, data-driven language. Omit granular technical details.',
+                        'Technical Experts': 'Write for a highly technical audience (e.g., engineers, developers). Use precise, domain-specific terminology. Do not oversimplify complex concepts. Provide detailed explanations.',
+                        'General Public': 'Simplify the language for a general, non-expert audience. Use analogies and relatable examples. Avoid or clearly explain jargon and acronyms. The tone should be accessible and engaging.'
+                    }
+                },
+                audienceSilly: {
+                    title: 'Audience - Silly',
+                    prompts: {
+                        'Shakespeare': 'Instruct the AI to adopt the persona of William Shakespeare. The response must be written in a grandiloquent style, employing iambic rhythm where possible, with antiquated flourishes.',
+                        'A 6-Year-Old': 'Instruct the AI to explain the concept as if speaking to a six-year-old child. It must use extremely simple words, short sentences, and friendly, relatable analogies (e.g., cookies, puppies).',
+                        'Gen Z Slang': 'Instruct the AI to adopt the persona of a Gen Z TikToker. The response must use popular, current slang (e.g., "no cap," "the vibe," "bet," "low-key"). The tone should be informal and extremely online.',
+                        'Noir Detective': 'Instruct the AI to write in the style of a hardboiled noir detective. The response should be a cynical, world-weary internal monologue with short sentences and gritty metaphors.',
+                        'Terrible Poetry': 'Instruct the AI to act as a poet who is trying very hard but has no talent. The response must be a poem that uses excessive, flowery language, forced rhymes, broken meter, and overly dramatic, cliché metaphors.'
+                    }
+                },
+                format: {
+                    title: 'Format',
+                    prompts: {
+                        'Paragraphs': 'Instruct the AI to structure the entire response in well-formed paragraphs. Each paragraph should focus on a single, coherent idea.',
+                        'Bulleted List': 'Instruct the AI to present the key information as a main bulleted list. Each bullet point should be a clear and concise statement. Use sub-bullets for hierarchical data if necessary.',
+                        'Q&A Format': 'Instruct the AI to structure the entire response as a Frequently Asked Questions (FAQ) section. Each major point should be phrased as a question followed by a direct and comprehensive answer.',
+                        'json': 'The final output must be a single, valid, and well-formed JSON object. Ensure all keys are enclosed in double quotes and that the structure is properly nested according to the request. Do not include any explanatory text outside of the JSON structure itself.',
+                        'markdown_table': 'Structure the entire response as a single, properly formatted Markdown table. The first row must be the table header, followed by a separator line. Each subsequent row should represent a data entry with columns aligned.'
+                    }
+                },
+                tone: {
+                   title: 'Tone',
+                   prompts: {
+                       'Persuasive': 'Instruct the AI to adopt a persuasive tone with the primary goal of convincing the reader. It should use rhetorical techniques, strong verbs, compelling evidence, and end with a clear call to action.',
+                       'Empathetic': 'Instruct the AI to use an empathetic and supportive tone. It must acknowledge the reader\'s potential feelings or challenges on the topic, using phrases that convey understanding and validation.',
+                       'Formal': 'Instruct the AI to adopt a formal and academic tone. It must use complete sentences, proper grammar, and sophisticated vocabulary, while avoiding contractions, slang, or overly familiar language.',
+                       'Casual': 'Instruct the AI to adopt a casual, conversational tone that is friendly and approachable, as if speaking to a colleague. It can use contractions and simpler language where appropriate.',
+                       'professional': 'Adopt a professional and objective tone suitable for a corporate or business setting. The language should be formal, respectful, and clear. Avoid slang, contractions, and overly casual phrasing.'
+                   }
+               },
+                length: {
+                    title: 'Length',
+                    prompts: {
+                        'Concise Summary': 'Constrain the final output to a concise summary of approximately 150-200 words. Instruct the AI to focus only on the most critical points and high-level takeaways.',
+                        'Standard Article': 'Specify the desired length is a standard article of about 500-700 words. Instruct the AI to develop the main points with sufficient detail, examples, and explanation.',
+                        'In-Depth Paper': 'Specify the desired length is a comprehensive, in-depth document of 1500 words or more. Instruct the AI to explore the topic thoroughly, including nuances, multiple perspectives, and detailed evidence.'
+                    }
+                },
+                pov: {
+                    title: 'Point of View',
+                    prompts: {
+                        'First Person (I/We)': 'Instruct the AI to write the entire response from a first-person point of view ("I" or "we"). This is useful for personal narratives, opinion pieces, or company statements.',
+                        'Second Person (You)': 'Instruct the AI to address the reader directly using a second-person point of view ("you"). This is effective for instructions, guides, marketing copy, and user manuals.',
+                        'Third Person (He/She/It)': 'Instruct the AI to use a third-person objective point of view ("he," "she," "it," or "they"), maintaining a narrative or descriptive distance from the subject matter.'
+                    }
+                },
+                context: { title: 'Context' },
+                constraints: { title: 'Constraints' }
+            };
+
+            const jobTemplates = {
+                blog_post: {
+                    role: { active: true, selection: 'custom', promptValue: 'Act as an expert blogger and SEO specialist.', userValue: 'Act as an expert blogger and SEO specialist.' },
+                    task: { active: true, selection: 'write', promptValue: 'a comprehensive and engaging blog post about [topic].', userValue: '' },
+                    context: { active: false, value: '' },
+                    format: { active: true, selection: 'paragraphs', promptValue: 'Placeholder: Format the output as standard paragraphs.', userValue: '' },
+                    tone: { active: true, selection: 'casual', promptValue: 'Placeholder: Use a casual and friendly tone.', userValue: '' },
+                    constraints: { active: true, value: 'The blog post should be at least 800 words and include a clear call to action.' }
+                }
+            };
+
+            // --- APPLICATION STATE (THE SINGLE SOURCE OF TRUTH) ---
+            function getDefaultAppState() {
+                const now = Date.now();
+                return {
+                    currentProjectId: `proj-${now}`,
+                    projectName: 'Untitled Project',
+                    activeJob: 'custom_build',
+                    builder: {
+                        role: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        task: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        job: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        audiencePro: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        audienceSilly: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        format: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        tone: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        length: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        pov: { active: true, selection: 'custom', promptValue: '', userValue: '' },
+                        context: { active: true, value: '' },
+                        constraints: { active: true, value: ''},
+                    },
+                    contentBlocks: {
+                        userOutline: { activeDraftId: `draft-${now+1}`, drafts: [{ id: `draft-${now+1}`, timestamp: new Date().toISOString(), content: '' }] },
+                        finalPrompt: { activeDraftId: `draft-${now+2}`, drafts: [{ id: `draft-${now+2}`, timestamp: new Date().toISOString(), content: '' }] },
+                        articleWorkspace: { activeDraftId: `draft-${now+3}`, drafts: [{ id: `draft-${now+3}`, timestamp: new Date().toISOString(), content: '' }] },
+                        textTransformerInput: { activeDraftId: `draft-${now+4}`, drafts: [{ id: `draft-${now+4}`, timestamp: new Date().toISOString(), content: '' }] },
+                        textTransformerOutput: { activeDraftId: `draft-${now+5}`, drafts: [{ id: `draft-${now+5}`, timestamp: new Date().toISOString(), content: '' }] }
+                    },
+                    textTransformer: {
+                        activeAction: 'analyze',
+                        actions: {
+                            summarize: {},
+                            rewrite: {
+                                activeOption: 'casual',
+                                options: {
+                                    professional: 'Rewrite in a professional tone.',
+                                    casual: 'Rewrite in a casual tone.',
+                                    empathetic: 'Rewrite with more empathy.'
+                                }
+                            },
+                            analyze: {
+                                activeOption: 'proofread',
+                                options: {
+                                    proofread: 'Proofread for grammar & spelling.',
+                                    identify_themes: 'Identify the main themes.',
+                                    fact_check: 'Fact-check for accuracy.'
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            let appState = {
+                savedProjects: [],
+                activeProject: getDefaultAppState()
+            };
+
+            // --- RENDER FUNCTIONS ---
+            function render() {
+                const project = appState.activeProject;
+                renderJobs(project.activeJob);
+                renderProjectHub(project);
+                renderBuilderPallet(project.builder);
+                renderContentBlocks(project.contentBlocks);
+                renderLibrary();
+                renderTextTransformer(project.textTransformer);
+            }
+
+            function renderJobs(activeJobKey) {
+                const jobSelectors = document.querySelectorAll('.job-selector');
+                jobSelectors.forEach(selector => {
+                    selector.classList.toggle('active', selector.dataset.jobKey === activeJobKey);
+                });
+            }
+
+            function renderLibrary() {
+                const libraryList = document.getElementById('library-list');
+                if (!libraryList) return;
+                libraryList.innerHTML = '';
+                appState.savedProjects.forEach(project => {
+                    const li = document.createElement('li');
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = project.projectName;
+                    textSpan.style.flexGrow = '1';
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'sidebar__project-delete-button';
+                    deleteBtn.innerHTML = '&times;';
+                    deleteBtn.dataset.projectId = project.currentProjectId;
+
+                    li.appendChild(textSpan);
+                    li.appendChild(deleteBtn);
+                    li.dataset.projectId = project.currentProjectId;
+                    libraryList.appendChild(li);
+                });
+            }
+
+            function renderProjectHub(project) {
+                const projectTitleInput = document.getElementById('project-title-input');
+                if (projectTitleInput.value !== project.projectName) {
+                    projectTitleInput.value = project.projectName;
+                }
+            }
+
+            function renderContentBlocks(contentBlocks) {
+                Object.keys(contentBlocks).forEach(key => {
+                    const blockState = contentBlocks[key];
+                    const textarea = document.getElementById(`${key}-textarea`);
+                    const draftControls = document.querySelector(`.draft-controls[data-content-block="${key}"]`);
+
+                    if (!textarea || !draftControls) return;
+
+                    const activeDraft = blockState.drafts.find(d => d.id === blockState.activeDraftId);
+                    if (activeDraft) {
+                        if (textarea.value !== activeDraft.content) {
+                            textarea.value = activeDraft.content;
+                        }
+                    } else {
+                        // If active draft is somehow invalid, reset to first draft
+                        blockState.activeDraftId = blockState.drafts[0]?.id;
+                        textarea.value = blockState.drafts[0]?.content || '';
+                    }
+
+                    const select = draftControls.querySelector('.draft-controls__select');
+                    const deleteBtn = draftControls.querySelector('.draft-controls__button--delete');
+
+                    if (select) {
+                        select.innerHTML = '';
+                        blockState.drafts.forEach((d, index) => {
+                            const option = document.createElement('option');
+                            option.value = d.id;
+                            const date = new Date(d.timestamp);
+                            option.textContent = `Draft ${index + 1} - ${date.toLocaleTimeString()}`;
+                            option.selected = d.id === blockState.activeDraftId;
+                            select.appendChild(option);
+                        });
+                    }
+
+                    if (deleteBtn) {
+                        deleteBtn.disabled = blockState.drafts.length <= 1;
+                    }
+                });
+            }
+
+            function renderBuilderPallet(builderState) {
+                const palletContainer = document.getElementById('prompt-builder-pallet');
+                if (!palletContainer) return;
+                palletContainer.innerHTML = '';
+
+                Object.keys(builderState).forEach(key => {
+                    const componentState = builderState[key];
+                    if (!componentState.active) return;
+
+                    const componentData = builderComponentData[key];
+                    if (!componentData) return;
+
+                    const componentDiv = document.createElement('div');
+                    componentDiv.className = 'prompt-builder__component';
+                    componentDiv.dataset.componentKey = key;
+
+                    const header = document.createElement('div');
+                    header.className = 'component__header';
+                    const title = document.createElement('h4');
+                    title.textContent = componentData.title;
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'component__remove-button';
+                    removeBtn.innerHTML = '&times;';
+                    header.appendChild(title);
+                    header.appendChild(removeBtn);
+
+                    const controls = document.createElement('div');
+                    controls.className = 'component__controls';
+
+                    if (key === 'context' || key === 'constraints') {
+                        const textarea = document.createElement('textarea');
+                        textarea.autocomplete = 'off';
+                        textarea.rows = 5;
+                        textarea.value = componentState.value;
+                        textarea.placeholder = key === 'context'
+                            ? 'Paste background info, data, or examples here...'
+                            : `Define the ${componentData.title}...`;
+                        controls.appendChild(textarea);
+                    }
+                    else if (componentData.prompts) { // role, task, format, tone etc.
+                        const select = document.createElement('select');
+                        Object.keys(componentData.prompts).forEach(promptKey => {
+                            const option = document.createElement('option');
+                            option.value = promptKey;
+                            // For keys that are already well-formatted, don't transform them.
+                            // A simple check: if it contains a space or is short, use it as is.
+                            option.textContent = (promptKey.includes(' ') || promptKey.length < 5) ? promptKey : promptKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            option.selected = componentState.selection === promptKey;
+                            select.appendChild(option);
+                        });
+                        const customOption = document.createElement('option');
+                        customOption.value = 'custom';
+                        customOption.textContent = 'Write My Own...';
+                        customOption.selected = componentState.selection === 'custom';
+                        select.appendChild(customOption);
+                        controls.appendChild(select);
+
+                        const textarea = document.createElement('textarea');
+                        textarea.autocomplete = 'off';
+                        textarea.rows = 5;
+                        textarea.value = componentState.promptValue;
+                        textarea.placeholder = `Define the ${componentData.title}...`;
+                        controls.appendChild(textarea);
+                    }
+
+                    componentDiv.appendChild(header);
+                    componentDiv.appendChild(controls);
+                    palletContainer.appendChild(componentDiv);
+                });
+            }
+
+            function renderTextTransformer(transformerState) {
+                // 1. Render the active action button
+                const actionButtons = document.querySelectorAll('.text-transformer__action-selector');
+                actionButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.action === transformerState.activeAction);
+                });
+
+                // 2. Render the sub-options dynamically
+                const optionsContainer = document.getElementById('text-transformer-options-container');
+                optionsContainer.innerHTML = ''; // Clear previous options
+
+                const activeActionConfig = transformerState.actions[transformerState.activeAction];
+                if (activeActionConfig && activeActionConfig.options) {
+                    Object.keys(activeActionConfig.options).forEach(optionKey => {
+                        const optionText = activeActionConfig.options[optionKey];
+
+                        const label = document.createElement('label');
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `${transformerState.activeAction}-options`;
+                        radio.value = optionKey;
+                        radio.checked = activeActionConfig.activeOption === optionKey;
+
+                        label.appendChild(radio);
+                        label.appendChild(document.createTextNode(optionText));
+                        optionsContainer.appendChild(label);
+                    });
+                }
+            }
+
+            function applyJobTemplate(jobKey) {
+                appState.activeProject.activeJob = jobKey;
+
+                const builderState = appState.activeProject.builder;
+                let template;
+
+                if (jobKey === 'custom_build') {
+                    template = getDefaultAppState().builder;
+                    Object.keys(template).forEach(key => template[key].active = true);
+                } else {
+                    template = JSON.parse(JSON.stringify(jobTemplates[jobKey]));
+                }
+
+                if (template) {
+                    Object.keys(builderState).forEach(key => {
+                        if (template[key]) {
+                            Object.assign(builderState[key], template[key]);
+                        } else {
+                            builderState[key].active = false;
+                        }
+                    });
+                }
+            }
+
+            // --- EVENT LISTENERS & LOGIC ---
+            function initializeApp() {
+                const appContainer = document.querySelector('.app-container');
+
+                // Main Delegated Click Listener
+                appContainer.addEventListener('click', e => {
+                    const target = e.target;
+                    let shouldRender = true;
+                    
+                    if (target.closest('.collapsible-panel__icon')) {
+                        const panel = target.closest('.collapsible-panel');
+                        if (panel) {
+                            panel.classList.toggle('collapsible-panel--collapsed');
+                        }
+                        shouldRender = false;
+                    }
+                    else if (target.closest('.job-selector')) {
+                        const jobKey = target.dataset.jobKey;
+                        if (jobKey && jobKey !== appState.activeProject.activeJob) {
+                            applyJobTemplate(jobKey);
+                            render(); // Explicitly call render after applying a job
+                        }
+                        shouldRender = false;
+                    }
+                    else if (target.id === 'save-project-button') {
+                        appState.activeProject.lastModified = new Date().toISOString();
+                        const existingProjectIndex = appState.savedProjects.findIndex(p => p.currentProjectId === appState.activeProject.currentProjectId);
+                        if (existingProjectIndex > -1) {
+                            appState.savedProjects[existingProjectIndex] = JSON.parse(JSON.stringify(appState.activeProject));
+                        } else {
+                            appState.savedProjects.push(JSON.parse(JSON.stringify(appState.activeProject)));
+                        }
+                    }
+                    else if (target.closest('#library-list li') && !target.closest('.sidebar__project-delete-button')) {
+                        const projectId = target.closest('li').dataset.projectId;
+                        const loadedProject = appState.savedProjects.find(p => p.currentProjectId === projectId);
+                        if (loadedProject) appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
+
+                    } else if (target.closest('.sidebar__project-delete-button')) {
+                         e.stopPropagation();
+                         const projectId = target.dataset.projectId;
+                         appState.savedProjects = appState.savedProjects.filter(p => p.currentProjectId !== projectId);
+
+                    } else if (target.id === 'admin-reset-button') {
+                        appState = { savedProjects: [], activeProject: getDefaultAppState() };
+                        applyJobTemplate(appState.activeProject.activeJob);
+                    } else if (target.classList.contains('draft-controls__button--save')) {
+                        const blockKey = target.parentElement.dataset.contentBlock;
+                        const textarea = document.getElementById(`${blockKey}-textarea`);
+                        if (blockKey && textarea) {
+                            const contentBlock = appState.activeProject.contentBlocks[blockKey];
+                            const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: textarea.value };
+                            contentBlock.drafts.push(newDraft);
+                            contentBlock.activeDraftId = newDraft.id;
+                        }
+                    }
+                    else if (target.classList.contains('draft-controls__button--delete')) {
+                        const blockKey = target.parentElement.dataset.contentBlock;
+                        const contentBlock = appState.activeProject.contentBlocks[blockKey];
+                        if (contentBlock && contentBlock.drafts.length > 1) {
+                            contentBlock.drafts = contentBlock.drafts.filter(d => d.id !== contentBlock.activeDraftId);
+                            contentBlock.activeDraftId = contentBlock.drafts[contentBlock.drafts.length - 1].id;
+                        }
+                    }
+                     else if (target.closest('.text-transformer__action-selector')) {
+                        appState.activeProject.textTransformer.activeAction = target.dataset.action;
+                    }
+                    else if (target.id === 'transform-execute-button') {
+                        const { textTransformer, contentBlocks } = appState.activeProject;
+                        const action = textTransformer.activeAction;
+                        const actionConfig = textTransformer.actions[action];
+
+                        const inputBlock = contentBlocks.textTransformerInput;
+                        const outputBlock = contentBlocks.textTransformerOutput;
+                        const currentInput = inputBlock.drafts.find(d => d.id === inputBlock.activeDraftId)?.content || '';
+
+                        let transformedContent;
+                        if (actionConfig.activeOption) {
+                            transformedContent = `[Mock '${action}' ('${actionConfig.activeOption}') result for]:\n\n${currentInput}`;
+                        } else {
+                            transformedContent = `[Mock '${action}' result for]:\n\n${currentInput}`;
+                        }
+
+                        const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: transformedContent };
+                        outputBlock.drafts.push(newDraft);
+                        outputBlock.activeDraftId = newDraft.id;
+                    }
+                     else if (target.closest('[data-action="copy-up"]')) {
+                        const inputBlock = appState.activeProject.contentBlocks.textTransformerInput;
+                        const outputBlock = appState.activeProject.contentBlocks.textTransformerOutput;
+                        const currentOutput = outputBlock.drafts.find(d => d.id === outputBlock.activeDraftId)?.content || '';
+
+                        const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: currentOutput };
+                        inputBlock.drafts.push(newDraft);
+                        inputBlock.activeDraftId = newDraft.id;
+                    }
+                    else if (target.id === 'copy-button') {
+                        const finalPromptTextarea = document.getElementById('finalPrompt-textarea');
+                        if (finalPromptTextarea && finalPromptTextarea.value) {
+                            navigator.clipboard.writeText(finalPromptTextarea.value).then(() => {
+                                target.textContent = 'Copied!';
+                                target.classList.add('copied');
+                                setTimeout(() => {
+                                    target.textContent = 'Copy';
+                                    target.classList.remove('copied');
+                                }, 2000);
+                            }).catch(err => {
+                                console.error('Failed to copy text: ', err);
+                                target.textContent = 'Error!';
+                                setTimeout(() => {
+                                    target.textContent = 'Copy';
+                                }, 2000);
+                            });
+                        }
+                        shouldRender = false;
+                    }
+                    else if (target.id === 'clear-button') {
+                        const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
+                        const activeDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
+                        if (activeDraft) {
+                            activeDraft.content = '';
+                        }
+                    }
+                    else if (target.id === 'insert-button') {
+                        const userOutlineState = appState.activeProject.contentBlocks.userOutline;
+                        const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
+
+                        const userOutlineDraft = userOutlineState.drafts.find(d => d.id === userOutlineState.activeDraftId);
+                        const finalPromptDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
+
+                        if (userOutlineDraft && finalPromptDraft && userOutlineDraft.content.trim()) {
+                            const textToAppend = `\n\n**CONTENT FRAMEWORK:**\n\nYou have been provided with a set of primary instructions above. Now, use the following user-provided outline as the detailed structure for the content. Adhere to this outline, expanding on each point to build out the full response.\n\n**USER-PROVIDED OUTLINE:**\n${userOutlineDraft.content}`;
+
+                            if (finalPromptDraft.content.trim()) {
+                                finalPromptDraft.content += textToAppend;
+                            } else {
+                                finalPromptDraft.content = textToAppend.trim();
+                            }
+                        }
+                    }
+                    else if (target.id === 'assemble-all-button') {
+                         const allOutputs = Object.keys(appState.activeProject.builder)
+                            .map(key => {
+                                const state = appState.activeProject.builder[key];
+                                if (!state.active) return null;
+
+                                let text = '';
+                                if (key === 'context' || key === 'constraints') {
+                                    text = state.value || '';
+                                } else {
+                                    text = state.promptValue || '';
+                                }
+
+                                if (!text.trim()) return null;
+
+                                if (key === 'context') {
+                                    return `Use the following context:\n\n---\n${text}\n---`;
+                                }
+                                if (key === 'constraints') {
+                                    return `Apply the following constraints:\n${text}`;
+                                }
+                                return text;
+                            })
+                            .filter(text => text);
+
+                        const finalPrompt = appState.activeProject.contentBlocks.finalPrompt;
+                        const activeDraft = finalPrompt.drafts.find(d => d.id === finalPrompt.activeDraftId);
+                        if (activeDraft) activeDraft.content = allOutputs.join('\n\n');
+                    }
+                    else if (target.id === 'add-component-button') {
+                        const inactiveComponent = Object.keys(appState.activeProject.builder).find(key => !appState.activeProject.builder[key].active);
+                        if (inactiveComponent) appState.activeProject.builder[inactiveComponent].active = true;
+                    }
+                    else if (target.closest('.component__remove-button')) {
+                        const componentDiv = target.closest('.prompt-builder__component');
+                        const key = componentDiv?.dataset.componentKey;
+                        if (key && appState.activeProject.builder[key]) appState.activeProject.builder[key].active = false;
+                    }
+                    else {
+                        shouldRender = false;
+                    }
+
+                    if (shouldRender) render();
+                });
+
+                // Main Delegated Change Listener
+                appContainer.addEventListener('change', e => {
+                    const target = e.target;
+                    let shouldRender = false; // Default to false unless state changes
+
+                    if (target.closest('.draft-controls__select')) {
+                        const blockKey = target.parentElement.dataset.contentBlock;
+                        if (blockKey) appState.activeProject.contentBlocks[blockKey].activeDraftId = target.value;
+                        shouldRender = true;
+                    }
+                    else if (target.closest('#text-transformer-options-container') && target.type === 'radio') {
+                        const activeAction = appState.activeProject.textTransformer.activeAction;
+                        if(activeAction) {
+                           appState.activeProject.textTransformer.actions[activeAction].activeOption = target.value;
+                        }
+                    }
+                    else if (target.closest('.prompt-builder__component') && target.tagName === 'SELECT') {
+                         const componentDiv = target.closest('.prompt-builder__component');
+                         const key = componentDiv?.dataset.componentKey;
+                         if (key) {
+                            updateComponentState(key, { selection: target.value });
+                            shouldRender = true;
+                         }
+                    }
+
+                    if(shouldRender) render();
+                });
+
+                // Main Delegated Input Listener
+                appContainer.addEventListener('input', e => {
+                    const target = e.target;
+                    const activeProject = appState.activeProject;
+
+                    if (target.id === 'project-title-input') {
+                        activeProject.projectName = target.value;
+                    }
+                    else if (target.id.endsWith('-textarea') && target.closest('.refinement-area, .article-workspace-panel, .text-transformer__area')) {
+                        const blockKey = target.id.replace('-textarea', '');
+                        const contentBlock = activeProject.contentBlocks[blockKey];
+                        const activeDraft = contentBlock?.drafts.find(d => d.id === contentBlock.activeDraftId);
+                        if(activeDraft) activeDraft.content = target.value;
+                    }
+                    else if (target.tagName === 'TEXTAREA' && target.closest('.prompt-builder__component')) {
+                        const componentDiv = target.closest('.prompt-builder__component');
+                        const key = componentDiv?.dataset.componentKey;
+                        if(key) {
+                            const componentState = activeProject.builder[key];
+                            if ('value' in componentState) { // For context, constraints
+                                componentState.value = e.target.value;
+                            } else { // For role, task, etc.
+                                componentState.promptValue = e.target.value;
+                                // Only save to userValue if they are in custom mode
+                                if (componentState.selection === 'custom') {
+                                    componentState.userValue = e.target.value;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Initial Job setup
+                const jobsContainer = document.getElementById('jobs-list');
+                const jobKeys = ['custom_build', ...Object.keys(jobTemplates)];
+                jobsContainer.innerHTML = '';
+                jobKeys.forEach(key => {
+                    const div = document.createElement('div');
+                    div.className = 'job-selector';
+                    div.dataset.jobKey = key;
+                    div.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    jobsContainer.appendChild(div);
+                });
+
+                // Apply the default job template on initial load
+                applyJobTemplate(appState.activeProject.activeJob);
+                render();
+            }
+
+            function updateComponentState(key, newState) {
+                const componentState = appState.activeProject.builder[key];
+                const componentData = builderComponentData[key];
+                if (!componentState) return;
+
+                // Update the selection state
+                Object.assign(componentState, newState);
+
+                if (newState.selection === 'custom') {
+                    // If user selects "Write My Own...", restore their saved text.
+                    componentState.promptValue = componentState.userValue;
+                } else {
+                    // If user selects a pre-defined prompt, load it.
+                    if (componentData && componentData.prompts) {
+                        componentState.promptValue = componentData.prompts[newState.selection] || '';
+                    }
+                }
+            }
+
+            // --- INITIALIZATION ---
+            setupUIEventListeners();
+            initializeApp();
+        });
+    </script>
+</body>
+</html>

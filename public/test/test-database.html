@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Maintenance Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success { background-color: #dff0d8; color: #3c763d; }
+        .status.error { background-color: #f2dede; color: #a94442; }
+        .status.warning { background-color: #fcf8e3; color: #8a6d3b; }
+        .results {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .size-info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .guidance {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .guidance h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .guidance ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .guidance p {
+            margin: 10px 0;
+        }
+        .guidance strong {
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Database Maintenance Tests</h1>
+
+    <div class="section">
+        <h2>Overview</h2>
+        <p>This page provides tools for testing and maintaining the database. Each section is numbered for easy reference in discussions.</p>
+        <p><strong>Important:</strong> Always create a backup (1.1) before running maintenance operations.</p>
+    </div>
+
+    <!-- Section 1: Backup and Restore -->
+    <div class="section">
+        <h2>1.1 Backup and Restore</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Create and manage database backups for safety and recovery.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Create Backup" to make a new backup of the current database state</li>
+                <li>Click "List Backups" to see all available backups</li>
+                <li>Click "Select Backup to Restore" to restore from a previous backup</li>
+            </ol>
+            <p><strong>Note:</strong> Always create a backup before running maintenance operations.</p>
+        </div>
+        <div>
+            <button class="button" onclick="createBackup()">Create Backup</button>
+            <button class="button" onclick="listBackups()">List Backups</button>
+            <input type="file" id="restoreFile" accept=".db" style="display: none;">
+            <button class="button" onclick="document.getElementById('restoreFile').click()">Select Backup to Restore</button>
+        </div>
+        <div id="backupStatus" class="status"></div>
+        <div id="backupResults" class="results"></div>
+    </div>
+
+    <!-- Section 2: Integrity Checks -->
+    <div class="section">
+        <h2>1.2 Integrity Checks</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Verify database integrity and identify any corruption or inconsistencies.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Run Integrity Check" to start the verification process</li>
+                <li>Review the results for any issues</li>
+                <li>If issues are found, consider restoring from a backup</li>
+            </ol>
+            <p><strong>Note:</strong> Run this check if you suspect database issues or after a crash.</p>
+        </div>
+        <div>
+            <button class="button" onclick="checkIntegrity()">Run Integrity Check</button>
+        </div>
+        <div id="integrityStatus" class="status"></div>
+        <div id="integrityResults" class="results"></div>
+    </div>
+
+    <!-- Section 3: Optimization -->
+    <div class="section">
+        <h2>1.3 Optimization</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Optimize database performance and reclaim unused space.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Optimize Database" to start the optimization process</li>
+                <li>Wait for the operation to complete</li>
+                <li>Check the results for any issues</li>
+            </ol>
+            <p><strong>Note:</strong> Run this periodically to maintain database performance.</p>
+        </div>
+        <div>
+            <button class="button" onclick="optimizeDatabase()">Optimize Database</button>
+        </div>
+        <div id="optimizeStatus" class="status"></div>
+        <div id="optimizeResults" class="results"></div>
+    </div>
+
+    <!-- Section 4: Cleanup -->
+    <div class="section">
+        <h2>1.4 Cleanup</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Remove unused data and manage database size.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Get Database Size" to see current database and table sizes</li>
+                <li>Click "Create Test Components" to add test data (for testing only)</li>
+                <li>Click "Cleanup Database" to remove inactive components</li>
+            </ol>
+            <p><strong>Note:</strong> Cleanup operations cannot be undone. Always create a backup first.</p>
+        </div>
+        <div>
+            <button class="button" onclick="getDatabaseSize()">Get Database Size</button>
+            <button class="button" onclick="createTestComponents()">Create Test Components</button>
+            <button class="button" onclick="cleanupDatabase()">Cleanup Database</button>
+        </div>
+        <div id="cleanupStatus" class="status"></div>
+        <div id="sizeInfo" class="size-info"></div>
+        <div id="cleanupResults" class="results"></div>
+    </div>
+
+    <script>
+        // Utility functions
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'status ' + type;
+        }
+
+        function showResults(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function formatSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return size.toFixed(2) + ' ' + units[unitIndex];
+        }
+
+        // 1.1 Backup and Restore Functions
+        async function createBackup() {
+            try {
+                showStatus('backupStatus', 'Creating backup...', 'warning');
+                const response = await fetch('/api/db/backup', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('backupStatus', 'Backup created successfully', 'success');
+                } else {
+                    showStatus('backupStatus', 'Failed to create backup: ' + data.message, 'error');
+                }
+                showResults('backupResults', data);
+            } catch (error) {
+                showStatus('backupStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function listBackups() {
+            try {
+                showStatus('backupStatus', 'Listing backups...', 'warning');
+                const response = await fetch('/api/db/backups');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('backupStatus', 'Backups listed successfully', 'success');
+                } else {
+                    showStatus('backupStatus', 'Failed to list backups: ' + data.message, 'error');
+                }
+                showResults('backupResults', data);
+            } catch (error) {
+                showStatus('backupStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('restoreFile').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('backup', file);
+
+            try {
+                showStatus('backupStatus', 'Restoring backup...', 'warning');
+                const response = await fetch('/api/db/restore', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('backupStatus', 'Backup restored successfully', 'success');
+                } else {
+                    showStatus('backupStatus', 'Failed to restore backup: ' + data.message, 'error');
+                }
+                showResults('backupResults', data);
+            } catch (error) {
+                showStatus('backupStatus', 'Error: ' + error.message, 'error');
+            }
+        });
+
+        // 1.2 Integrity Check Functions
+        async function checkIntegrity() {
+            try {
+                showStatus('integrityStatus', 'Running integrity check...', 'warning');
+                const response = await fetch('/api/db/integrity', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('integrityStatus', 'Integrity check completed', 'success');
+                } else {
+                    showStatus('integrityStatus', 'Integrity check failed: ' + data.message, 'error');
+                }
+                showResults('integrityResults', data);
+            } catch (error) {
+                showStatus('integrityStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 1.3 Optimization Functions
+        async function optimizeDatabase() {
+            try {
+                showStatus('optimizeStatus', 'Optimizing database...', 'warning');
+                const response = await fetch('/api/db/optimize', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('optimizeStatus', 'Database optimized successfully', 'success');
+                } else {
+                    showStatus('optimizeStatus', 'Optimization failed: ' + data.message, 'error');
+                }
+                showResults('optimizeResults', data);
+            } catch (error) {
+                showStatus('optimizeStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 1.4 Cleanup Functions
+        async function getDatabaseSize() {
+            try {
+                showStatus('cleanupStatus', 'Getting database size...', 'warning');
+                const response = await fetch('/api/db/size');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('cleanupStatus', 'Size retrieved successfully', 'success');
+                    const sizeInfo = document.getElementById('sizeInfo');
+                    sizeInfo.innerHTML = `
+                        <h3>Database Size: ${formatSize(data.data.totalSize)}</h3>
+                        <h4>Table Sizes:</h4>
+                        <ul>
+                            ${Object.entries(data.data.tableSizes).map(([table, size]) => 
+                                `<li>${table}: ${formatSize(size)}</li>`
+                            ).join('')}
+                        </ul>
+                    `;
+                } else {
+                    showStatus('cleanupStatus', 'Failed to get size: ' + data.message, 'error');
+                }
+                showResults('cleanupResults', data);
+            } catch (error) {
+                showStatus('cleanupStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function createTestComponents() {
+            try {
+                showStatus('cleanupStatus', 'Creating test components...', 'warning');
+                const response = await fetch('/api/db/test-components', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('cleanupStatus', `Test components created: ${data.data.active} active, ${data.data.inactive} inactive`, 'success');
+                    getDatabaseSize();
+                } else {
+                    showStatus('cleanupStatus', 'Failed to create test components: ' + data.message, 'error');
+                }
+                showResults('cleanupResults', data);
+            } catch (error) {
+                showStatus('cleanupStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function cleanupDatabase() {
+            try {
+                showStatus('cleanupStatus', 'Cleaning up database...', 'warning');
+                const response = await fetch('/api/db/cleanup', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('cleanupStatus', `Cleanup completed: ${data.data.removedItems} items removed`, 'success');
+                    getDatabaseSize();
+                } else {
+                    showStatus('cleanupStatus', 'Cleanup failed: ' + data.message, 'error');
+                }
+                showResults('cleanupResults', data);
+            } catch (error) {
+                showStatus('cleanupStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

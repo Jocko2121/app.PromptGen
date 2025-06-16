@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success { background-color: #dff0d8; color: #3c763d; }
+        .status.error { background-color: #f2dede; color: #a94442; }
+        .status.warning { background-color: #fcf8e3; color: #8a6d3b; }
+        .results {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .guidance {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .guidance h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .guidance ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .guidance p {
+            margin: 10px 0;
+        }
+        .guidance strong {
+            color: #d9534f;
+        }
+        .components-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .component-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Tests</h1>
+
+    <div class="section">
+        <h2>Overview</h2>
+        <p>This page provides tools for testing various API endpoints. Each section is numbered for easy reference in discussions.</p>
+        <p><strong>Important:</strong> These tests may modify the database. Use with caution.</p>
+    </div>
+
+    <!-- Section 1: Health Check -->
+    <div class="section">
+        <h2>2.1 Health Check</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Test the health check endpoint to verify server status.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Check Health" to test the health endpoint</li>
+                <li>Verify that the server is responding correctly</li>
+            </ol>
+            <p><strong>Note:</strong> This is a basic health check that should always return success.</p>
+        </div>
+        <div>
+            <button class="button" onclick="checkHealth()">Check Health</button>
+        </div>
+        <div id="healthStatus" class="status"></div>
+        <div id="healthResults" class="results"></div>
+    </div>
+
+    <!-- Section 2: State Management -->
+    <div class="section">
+        <h2>2.2 State Management</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Test the application state management functionality.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Get State" to retrieve current application state</li>
+                <li>Review the state data structure</li>
+            </ol>
+            <p><strong>Note:</strong> This shows the current state of the application.</p>
+        </div>
+        <div>
+            <button class="button" onclick="getState()">Get State</button>
+        </div>
+        <div id="stateStatus" class="status"></div>
+        <div id="stateResults" class="results"></div>
+    </div>
+
+    <!-- Section 3: Component Management -->
+    <div class="section">
+        <h2>2.3 Component Management</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Test component creation, viewing, and management functionality.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Create Test Component" to add a new component</li>
+                <li>Click "View Components" to see all components</li>
+                <li>Click "Test Direct Insert" to test raw database insertion</li>
+            </ol>
+            <p><strong>Note:</strong> Components created here will be visible in the main application.</p>
+        </div>
+        <div>
+            <button class="button" onclick="createComponent()">Create Test Component</button>
+            <button class="button" onclick="viewComponents()">View Components</button>
+            <button class="button" onclick="testInsert()">Test Direct Insert</button>
+        </div>
+        <div id="componentStatus" class="status"></div>
+        <div id="componentsList" class="components-list" style="display: none;">
+            <h3>Created Components</h3>
+            <div id="components"></div>
+        </div>
+        <div id="componentResults" class="results"></div>
+    </div>
+
+    <!-- Section 4: Constraint Testing -->
+    <div class="section">
+        <h2>2.4 Constraint Testing</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Test database constraints and validation rules.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Test Constraints" to run all constraint tests</li>
+                <li>Review the results for each test case</li>
+                <li>Check that constraints are working as expected</li>
+            </ol>
+            <p><strong>Note:</strong> These tests verify that invalid data is properly rejected.</p>
+        </div>
+        <div>
+            <button class="button" onclick="testConstraints()">Test Constraints</button>
+        </div>
+        <div id="constraintStatus" class="status"></div>
+        <div id="constraintResults" class="results"></div>
+    </div>
+
+    <!-- Section 5: Migration Testing -->
+    <div class="section">
+        <h2>2.5 Migration Testing</h2>
+        <div class="guidance">
+            <h3>Purpose</h3>
+            <p>Test database migration functionality.</p>
+            <h3>How to Use</h3>
+            <ol>
+                <li>Click "Test Migrations" to run migration tests</li>
+                <li>Review the results for any issues</li>
+                <li>Check that migrations are applied correctly</li>
+            </ol>
+            <p><strong>Note:</strong> These tests verify the migration system is working properly.</p>
+        </div>
+        <div>
+            <button class="button" onclick="testMigrations()">Test Migrations</button>
+        </div>
+        <div id="migrationStatus" class="status"></div>
+        <div id="migrationResults" class="results"></div>
+    </div>
+
+    <script>
+        // Utility functions
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'status ' + type;
+        }
+
+        function showResults(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 2.1 Health Check Functions
+        async function checkHealth() {
+            try {
+                showStatus('healthStatus', 'Checking health...', 'warning');
+                const response = await fetch('/api/health');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('healthStatus', 'Health check completed', 'success');
+                showResults('healthResults', result);
+            } catch (error) {
+                showStatus('healthStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 2.2 State Management Functions
+        async function getState() {
+            try {
+                showStatus('stateStatus', 'Getting application state...', 'warning');
+                const response = await fetch('/api/state');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('stateStatus', 'State retrieved successfully', 'success');
+                showResults('stateResults', result);
+            } catch (error) {
+                showStatus('stateStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 2.1 Component Management Functions
+        async function testInsert() {
+            try {
+                showStatus('componentStatus', 'Testing direct insert...', 'warning');
+                const response = await fetch('/api/test-insert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('componentStatus', 'Test insert completed', 'success');
+                showResults('componentResults', result);
+            } catch (error) {
+                showStatus('componentStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function createComponent() {
+            const component = {
+                original_starter_id: "role_starter",
+                component_type: "role",
+                is_active: true,
+                selection: "custom",
+                prompt_value: "You are a specialized AI assistant.",
+                user_value: "Custom role description"
+            };
+
+            try {
+                showStatus('componentStatus', 'Creating test component...', 'warning');
+                const response = await fetch('/api/user-components', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(component)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('componentStatus', 'Component created successfully', 'success');
+                showResults('componentResults', result);
+            } catch (error) {
+                showStatus('componentStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function viewComponents() {
+            try {
+                showStatus('componentStatus', 'Loading components...', 'warning');
+                const response = await fetch('/api/user-components');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const components = await response.json();
+                const componentsList = document.getElementById('componentsList');
+                const componentsDiv = document.getElementById('components');
+                
+                componentsList.style.display = 'block';
+                componentsDiv.innerHTML = components.map(comp => `
+                    <div class="component-item">
+                        <strong>ID:</strong> ${comp.id}<br>
+                        <strong>Type:</strong> ${comp.component_type}<br>
+                        <strong>Active:</strong> ${comp.is_active ? 'Yes' : 'No'}<br>
+                        <strong>Selection:</strong> ${comp.selection}<br>
+                        <strong>Prompt Value:</strong> ${comp.prompt_value}<br>
+                        <strong>User Value:</strong> ${comp.user_value}<br>
+                        <strong>Created:</strong> ${new Date(comp.created_at).toLocaleString()}<br>
+                        <strong>Modified:</strong> ${new Date(comp.modified_at).toLocaleString()}
+                    </div>
+                `).join('');
+
+                showStatus('componentStatus', 'Components loaded successfully', 'success');
+                showResults('componentResults', components);
+            } catch (error) {
+                showStatus('componentStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 2.2 Constraint Testing Functions
+        async function testConstraints() {
+            const testCases = [
+                {
+                    name: "Missing required field",
+                    data: {
+                        component_type: "role",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "NOT NULL constraint failed"
+                },
+                {
+                    name: "Invalid component type",
+                    data: {
+                        original_starter_id: "test_starter",
+                        component_type: "invalid_type",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "CHECK constraint failed"
+                },
+                {
+                    name: "Invalid is_active value",
+                    data: {
+                        original_starter_id: "test_starter",
+                        component_type: "role",
+                        is_active: 2,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "CHECK constraint failed"
+                },
+                {
+                    name: "Duplicate component",
+                    data: {
+                        original_starter_id: "role_starter",
+                        component_type: "role",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "UNIQUE constraint failed"
+                }
+            ];
+
+            try {
+                showStatus('constraintStatus', 'Running constraint tests...', 'warning');
+                const results = [];
+                
+                for (const test of testCases) {
+                    try {
+                        const response = await fetch('/api/user-components', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(test.data)
+                        });
+
+                        const result = await response.json();
+                        results.push({
+                            test: test.name,
+                            status: 'failed',
+                            message: 'Expected error but got success'
+                        });
+                    } catch (error) {
+                        if (error.message.includes(test.expectedError)) {
+                            results.push({
+                                test: test.name,
+                                status: 'passed',
+                                message: error.message
+                            });
+                        } else {
+                            results.push({
+                                test: test.name,
+                                status: 'failed',
+                                message: error.message
+                            });
+                        }
+                    }
+                }
+
+                showStatus('constraintStatus', 'Constraint tests completed', 'success');
+                showResults('constraintResults', results);
+            } catch (error) {
+                showStatus('constraintStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // 2.3 Migration Testing Functions
+        async function testMigrations() {
+            try {
+                showStatus('migrationStatus', 'Testing migrations...', 'warning');
+                const response = await fetch('/api/test-db');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showStatus('migrationStatus', 'Migration tests completed', 'success');
+                showResults('migrationResults', result);
+            } catch (error) {
+                showStatus('migrationStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

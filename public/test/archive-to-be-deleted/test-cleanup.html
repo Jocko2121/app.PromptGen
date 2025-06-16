@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Cleanup Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .size-info {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Database Cleanup Test</h1>
+    
+    <div>
+        <button class="button" onclick="getDatabaseSize()">Get Database Size</button>
+        <button class="button" onclick="createTestComponents()">Create Test Components</button>
+        <button class="button" onclick="cleanupDatabase()">Cleanup Database</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="sizeInfo" class="size-info"></div>
+    <div id="results" class="results"></div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function formatSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        function updateSizeInfo(data) {
+            const sizeInfoDiv = document.getElementById('sizeInfo');
+            let html = '<h3>Database Size Information</h3>';
+            html += `<p>Total Size: ${formatSize(data.totalSize)}</p>`;
+            html += '<h4>Table Sizes:</h4><ul>';
+            data.tables.forEach(table => {
+                html += `<li>${table.name}: ${table.row_count} rows</li>`;
+            });
+            html += '</ul>';
+            sizeInfoDiv.innerHTML = html;
+        }
+
+        async function getDatabaseSize() {
+            try {
+                showStatus('Getting database size...', 'warning');
+                const response = await fetch('/api/db/size');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('Database size retrieved successfully', 'success');
+                    updateSizeInfo(data.data);
+                } else {
+                    showStatus('Failed to get database size: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function createTestComponents() {
+            try {
+                showStatus('Creating test components...', 'warning');
+                const response = await fetch('/api/db/test-components', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus(`Test components created: ${data.data.active} active, ${data.data.inactive} inactive`, 'success');
+                    // Refresh size info
+                    getDatabaseSize();
+                } else {
+                    showStatus('Failed to create test components: ' + data.message, 'error');
+                }
+                showResults(data);
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function cleanupDatabase() {
+            if (!confirm('Are you sure you want to clean up the database? This will remove all inactive components.')) {
+                return;
+            }
+
+            try {
+                showStatus('Cleaning up database...', 'warning');
+                const response = await fetch('/api/db/cleanup', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus(`Database cleanup completed. Removed ${data.data.removedItems} items. Backup created: ${data.data.backupName}`, 'success');
+                    // Refresh size info
+                    getDatabaseSize();
+                } else {
+                    showStatus('Database cleanup failed: ' + data.message, 'error');
+                }
+                showResults(data);
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Get initial size info
+        getDatabaseSize();
+    </script>
+</body>
+</html> 

@@ -6,6 +6,7 @@ const statePersistence = require('../services/state-persistence');
 const db = require('../db/database');
 const backup = require('../db/backup');
 const maintenance = require('../db/maintenance');
+const cleanup = require('../db/cleanup');
 
 // Test database connection and structure
 router.get('/test-db', (req, res) => {
@@ -393,6 +394,80 @@ router.post('/db/optimize', async (req, res) => {
             status: 'error',
             message: 'Failed to optimize database',
             error: error.message
+        });
+    }
+});
+
+// Database cleanup endpoint
+router.post('/db/cleanup', async (req, res) => {
+    try {
+        const result = await cleanup.cleanupDatabase();
+        if (result.success) {
+            res.json({
+                status: 'success',
+                message: result.message,
+                data: result.data
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error in cleanup endpoint:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to clean up database'
+        });
+    }
+});
+
+// Get database size endpoint
+router.get('/db/size', (req, res) => {
+    try {
+        const result = cleanup.getDatabaseSize();
+        if (result.success) {
+            res.json({
+                status: 'success',
+                data: result.data
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error in size endpoint:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get database size'
+        });
+    }
+});
+
+// Create test components endpoint
+router.post('/db/test-components', async (req, res) => {
+    try {
+        const result = await cleanup.createTestComponents();
+        if (result.success) {
+            res.json({
+                status: 'success',
+                message: result.message,
+                data: result.data
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error in test components endpoint:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to create test components'
         });
     }
 });

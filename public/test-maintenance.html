@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Maintenance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Database Maintenance Test</h1>
+    
+    <div>
+        <button class="button" onclick="runIntegrityChecks()">Run Integrity Checks</button>
+        <button class="button" onclick="optimizeDatabase()">Optimize Database</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="results" class="results"></div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function runIntegrityChecks() {
+            try {
+                showStatus('Running integrity checks...', 'warning');
+                const response = await fetch('/api/db/integrity');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (data.data.valid) {
+                        showStatus('All integrity checks passed successfully!', 'success');
+                    } else {
+                        showStatus('Integrity checks failed. See details below.', 'error');
+                    }
+                    showResults(data.data);
+                } else {
+                    showStatus('Failed to run integrity checks: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function optimizeDatabase() {
+            try {
+                showStatus('Optimizing database...', 'warning');
+                const response = await fetch('/api/db/optimize', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showStatus('Database optimization completed successfully!', 'success');
+                } else {
+                    showStatus('Database optimization failed: ' + data.message, 'error');
+                }
+                showResults(data);
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

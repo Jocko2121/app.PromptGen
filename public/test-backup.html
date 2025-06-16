@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Backup Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .button.danger {
+            background-color: #f44336;
+        }
+        #backupList {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .backup-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .backup-item:last-child {
+            border-bottom: none;
+        }
+        .backup-info {
+            flex-grow: 1;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Database Backup Test</h1>
+    
+    <button id="createBackup" class="button">Create Backup</button>
+    <button id="refreshList" class="button">Refresh Backup List</button>
+    
+    <div id="status"></div>
+    
+    <h2>Available Backups</h2>
+    <div id="backupList">Loading backups...</div>
+
+    <script>
+        // Show status message
+        function showStatus(message, isError = false, isWarning = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = isError ? 'error' : (isWarning ? 'warning' : 'success');
+        }
+
+        // Create a new backup
+        async function createBackup() {
+            const button = document.getElementById('createBackup');
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/api/backup', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    showStatus(`Backup created successfully: ${data.backup.filename}`);
+                    refreshBackupList();
+                } else {
+                    showStatus(`Backup creation failed: ${data.error}`, true);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // Restore from backup
+        async function restoreBackup(backupName) {
+            if (!confirm(`Are you sure you want to restore from backup "${backupName}"? This will replace the current database.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/restore/${encodeURIComponent(backupName)}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    showStatus(`Database restored from backup: ${backupName}. A backup of the previous state was created: ${data.preRestoreBackup}`);
+                    refreshBackupList();
+                } else {
+                    showStatus(`Restore failed: ${data.error}`, true);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        // Refresh the backup list
+        async function refreshBackupList() {
+            const list = document.getElementById('backupList');
+            list.textContent = 'Loading backups...';
+            
+            try {
+                const response = await fetch('/api/backups');
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    if (data.backups.length === 0) {
+                        list.textContent = 'No backups available';
+                    } else {
+                        list.innerHTML = data.backups.map(backup => `
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <strong>${backup.name}</strong><br>
+                                    Created: ${new Date(backup.time).toLocaleString()}
+                                </div>
+                                <button class="button danger" onclick="restoreBackup('${backup.name}')">
+                                    Restore
+                                </button>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    showStatus(`Failed to load backups: ${data.error}`, true);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        // Add event listeners
+        document.getElementById('createBackup').addEventListener('click', createBackup);
+        document.getElementById('refreshList').addEventListener('click', refreshBackupList);
+
+        // Load initial backup list
+        refreshBackupList();
+    </script>
+</body>
+</html> 

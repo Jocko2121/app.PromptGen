@@ -4,6 +4,8 @@ const dbOps = require('../db/operations');
 const starterComponents = require('../db/starter-components');
 const statePersistence = require('../services/state-persistence');
 const db = require('../db/database');
+const backup = require('../db/backup');
+const maintenance = require('../db/maintenance');
 
 // Test database connection and structure
 router.get('/test-db', (req, res) => {
@@ -269,6 +271,128 @@ router.post('/test-transaction', async (req, res) => {
             status: 'error',
             error: error.message,
             stack: error.stack
+        });
+    }
+});
+
+// Create a new backup
+router.post('/backup', async (req, res) => {
+    try {
+        const result = await backup.createBackup();
+        if (result.success) {
+            res.json({
+                status: 'ok',
+                message: 'Backup created successfully',
+                backup: {
+                    filename: result.filename,
+                    path: result.path
+                }
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: 'Backup creation failed',
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Backup creation failed:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Backup creation failed',
+            error: error.message
+        });
+    }
+});
+
+// List available backups
+router.get('/backups', (req, res) => {
+    try {
+        const backups = backup.getBackups();
+        res.json({
+            status: 'ok',
+            backups: backups.map(b => ({
+                name: b.name,
+                time: b.time,
+                path: b.path
+            }))
+        });
+    } catch (error) {
+        console.error('Error listing backups:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to list backups',
+            error: error.message
+        });
+    }
+});
+
+// Restore from backup
+router.post('/restore/:backupName', async (req, res) => {
+    try {
+        const result = await backup.restoreFromBackup(req.params.backupName);
+        if (result.success) {
+            res.json({
+                status: 'ok',
+                message: result.message,
+                preRestoreBackup: result.preRestoreBackup
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: 'Restore failed',
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Restore failed:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Restore failed',
+            error: error.message
+        });
+    }
+});
+
+// Database maintenance endpoints
+router.get('/db/integrity', async (req, res) => {
+    try {
+        const results = maintenance.runIntegrityChecks();
+        res.json({
+            status: 'success',
+            data: results
+        });
+    } catch (error) {
+        console.error('Error running integrity checks:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to run integrity checks',
+            error: error.message
+        });
+    }
+});
+
+router.post('/db/optimize', async (req, res) => {
+    try {
+        const result = maintenance.optimizeDatabase();
+        if (result.success) {
+            res.json({
+                status: 'success',
+                message: 'Database optimization completed successfully'
+            });
+        } else {
+            res.status(500).json({
+                status: 'error',
+                message: 'Database optimization failed',
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Error optimizing database:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to optimize database',
+            error: error.message
         });
     }
 });

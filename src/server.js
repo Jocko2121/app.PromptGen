@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const db = require('./db/database');
+const { runMigrations } = require('./db/migrations');
 const apiRoutes = require('./routes/api');
 const statePersistence = require('./services/state-persistence');
 
@@ -10,6 +11,15 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Run migrations
+try {
+    runMigrations();
+    console.log('Migrations completed successfully');
+} catch (error) {
+    console.error('Error running migrations:', error);
+    process.exit(1);
+}
 
 // API routes
 app.use('/api', apiRoutes);

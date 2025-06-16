@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const db = require('./db/database');
 const apiRoutes = require('./routes/api');
+const statePersistence = require('./services/state-persistence');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,7 @@ app.get('/api/health', (req, res) => {
         db.prepare('SELECT 1').get();
         res.json({ status: 'ok', database: 'connected' });
     } catch (error) {
+        console.error('Database health check failed:', error);
         res.status(500).json({ status: 'error', message: 'Database connection failed' });
     }
 });
@@ -35,6 +37,17 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-app.listen(PORT, () => {
+// Start the server
+app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
+    
+    try {
+        // Initialize state persistence
+        await statePersistence.loadState();
+        // Start auto-save
+        statePersistence.startAutoSave();
+        console.log('State persistence initialized');
+    } catch (error) {
+        console.error('Failed to initialize state persistence:', error);
+    }
 }); 

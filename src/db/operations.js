@@ -1,28 +1,46 @@
 const db = require('./database');
 
+// Helper function to run operations in a transaction
+function runInTransaction(operations) {
+    const transaction = db.transaction((...args) => {
+        return operations(...args);
+    });
+    return transaction;
+}
+
 // Create a new user component
 function createUserComponent(component) {
-    const stmt = db.prepare(`
-        INSERT INTO user_components (
-            original_starter_id,
-            component_type,
-            is_active,
-            selection,
-            prompt_value,
-            user_value
-        ) VALUES (?, ?, ?, ?, ?, ?)
-    `);
+    try {
+        console.log('Creating user component with data:', component);
+        
+        return runInTransaction(() => {
+            const stmt = db.prepare(`
+                INSERT INTO user_components (
+                    original_starter_id,
+                    component_type,
+                    is_active,
+                    selection,
+                    prompt_value,
+                    user_value
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            `);
 
-    const result = stmt.run(
-        component.original_starter_id,
-        component.component_type,
-        component.is_active ?? true,
-        component.selection,
-        component.prompt_value,
-        component.user_value
-    );
+            const result = stmt.run(
+                component.original_starter_id,
+                component.component_type,
+                component.is_active ? 1 : 0,
+                component.selection,
+                component.prompt_value,
+                component.user_value
+            );
 
-    return result.lastInsertRowid;
+            console.log('Database operation result:', result);
+            return result.lastInsertRowid;
+        });
+    } catch (error) {
+        console.error('Database error in createUserComponent:', error);
+        throw error;
+    }
 }
 
 // Get all user components
@@ -39,48 +57,53 @@ function getUserComponent(id) {
 
 // Update a user component
 function updateUserComponent(id, component) {
-    const stmt = db.prepare(`
-        UPDATE user_components 
-        SET 
-            is_active = ?,
-            selection = ?,
-            prompt_value = ?,
-            user_value = ?,
-            modified_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-    `);
+    return runInTransaction(() => {
+        const stmt = db.prepare(`
+            UPDATE user_components 
+            SET 
+                is_active = ?,
+                selection = ?,
+                prompt_value = ?,
+                user_value = ?
+            WHERE id = ?
+        `);
 
-    const result = stmt.run(
-        component.is_active,
-        component.selection,
-        component.prompt_value,
-        component.user_value,
-        id
-    );
+        const result = stmt.run(
+            component.is_active ? 1 : 0,
+            component.selection,
+            component.prompt_value,
+            component.user_value,
+            id
+        );
 
-    return result.changes > 0;
+        return result.changes > 0;
+    });
 }
 
 // Delete a user component
 function deleteUserComponent(id) {
-    const stmt = db.prepare('DELETE FROM user_components WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+    return runInTransaction(() => {
+        const stmt = db.prepare('DELETE FROM user_components WHERE id = ?');
+        const result = stmt.run(id);
+        return result.changes > 0;
+    });
 }
 
 // Save application state
 function saveAppState(state) {
-    const stmt = db.prepare(`
-        INSERT INTO app_state (id, state_data) 
-        VALUES (1, ?) 
-        ON CONFLICT(id) 
-        DO UPDATE SET 
-            state_data = excluded.state_data,
-            last_modified = CURRENT_TIMESTAMP
-    `);
+    return runInTransaction(() => {
+        const stmt = db.prepare(`
+            INSERT INTO app_state (id, state_data) 
+            VALUES (1, ?) 
+            ON CONFLICT(id) 
+            DO UPDATE SET 
+                state_data = excluded.state_data,
+                last_modified = CURRENT_TIMESTAMP
+        `);
 
-    const result = stmt.run(JSON.stringify(state));
-    return result.changes > 0;
+        const result = stmt.run(JSON.stringify(state));
+        return result.changes > 0;
+    });
 }
 
 // Load application state
@@ -97,5 +120,6 @@ module.exports = {
     updateUserComponent,
     deleteUserComponent,
     saveAppState,
-    loadAppState
+    loadAppState,
+    runInTransaction
 }; 

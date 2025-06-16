@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Component Creation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .components-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .component-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Test Component Creation</h2>
+    <button onclick="testInsert()">Test Direct Insert</button>
+    <button onclick="createComponent()">Create Test Component</button>
+    <button onclick="viewComponents()">View Components</button>
+    <button onclick="testConstraints()">Test Constraints</button>
+    <button onclick="testMigrations()">Test Migrations</button>
+    <div id="result">Response will appear here...</div>
+    <div id="componentsList" class="components-list" style="display: none;">
+        <h3>Created Components</h3>
+        <div id="components"></div>
+    </div>
+
+    <script>
+        async function testInsert() {
+            try {
+                const response = await fetch('/api/test-insert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('result').innerHTML = 
+                    `<pre>Test Insert Result: ${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<pre style="color: red">Test Insert Error: ${error.message}</pre>`;
+            }
+        }
+
+        async function createComponent() {
+            const component = {
+                original_starter_id: "role_starter",
+                component_type: "role",
+                is_active: true,
+                selection: "custom",
+                prompt_value: "You are a specialized AI assistant.",
+                user_value: "Custom role description"
+            };
+
+            try {
+                const response = await fetch('/api/user-components', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(component)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('result').innerHTML = 
+                    `<pre>Component Creation Result: ${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<pre style="color: red">Component Creation Error: ${error.message}</pre>`;
+            }
+        }
+
+        async function viewComponents() {
+            try {
+                const response = await fetch('/api/user-components');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const components = await response.json();
+                const componentsList = document.getElementById('componentsList');
+                const componentsDiv = document.getElementById('components');
+                
+                componentsList.style.display = 'block';
+                componentsDiv.innerHTML = components.map(comp => `
+                    <div class="component-item">
+                        <strong>ID:</strong> ${comp.id}<br>
+                        <strong>Type:</strong> ${comp.component_type}<br>
+                        <strong>Active:</strong> ${comp.is_active ? 'Yes' : 'No'}<br>
+                        <strong>Selection:</strong> ${comp.selection}<br>
+                        <strong>Prompt Value:</strong> ${comp.prompt_value}<br>
+                        <strong>User Value:</strong> ${comp.user_value}<br>
+                        <strong>Created:</strong> ${new Date(comp.created_at).toLocaleString()}<br>
+                        <strong>Modified:</strong> ${new Date(comp.modified_at).toLocaleString()}
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<pre style="color: red">Error viewing components: ${error.message}</pre>`;
+            }
+        }
+
+        // Test cases for database constraints
+        async function testConstraints() {
+            const testCases = [
+                {
+                    name: "Missing required field",
+                    data: {
+                        component_type: "role",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "NOT NULL constraint failed"
+                },
+                {
+                    name: "Invalid component type",
+                    data: {
+                        original_starter_id: "test_starter",
+                        component_type: "invalid_type",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "CHECK constraint failed"
+                },
+                {
+                    name: "Invalid is_active value",
+                    data: {
+                        original_starter_id: "test_starter",
+                        component_type: "role",
+                        is_active: 2,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "CHECK constraint failed"
+                },
+                {
+                    name: "Duplicate component",
+                    data: {
+                        original_starter_id: "role_starter",
+                        component_type: "role",
+                        is_active: true,
+                        selection: "custom",
+                        prompt_value: "Test",
+                        user_value: "Test"
+                    },
+                    expectedError: "UNIQUE constraint failed"
+                }
+            ];
+
+            const results = document.createElement('div');
+            results.innerHTML = '<h3>Constraint Test Results:</h3>';
+
+            for (const test of testCases) {
+                try {
+                    const response = await fetch('/api/user-components', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(test.data)
+                    });
+
+                    const result = await response.json();
+                    results.innerHTML += `
+                        <div style="color: red">
+                            Test "${test.name}" failed: Expected error but got success
+                        </div>
+                    `;
+                } catch (error) {
+                    if (error.message.includes(test.expectedError)) {
+                        results.innerHTML += `
+                            <div style="color: green">
+                                Test "${test.name}" passed: ${error.message}
+                            </div>
+                        `;
+                    } else {
+                        results.innerHTML += `
+                            <div style="color: red">
+                                Test "${test.name}" failed: ${error.message}
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            document.getElementById('result').appendChild(results);
+        }
+
+        // Test migrations
+        async function testMigrations() {
+            try {
+                const response = await fetch('/api/test-db');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const results = document.createElement('div');
+                results.innerHTML = '<h3>Migration Test Results:</h3>';
+
+                // Check if test_column exists
+                const hasTestColumn = result.userComponentsColumns.some(
+                    col => col.name === 'test_column'
+                );
+
+                if (hasTestColumn) {
+                    results.innerHTML += `
+                        <div style="color: green">
+                            Migration test passed: test_column exists
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML += `
+                        <div style="color: red">
+                            Migration test failed: test_column not found
+                        </div>
+                    `;
+                }
+
+                document.getElementById('result').appendChild(results);
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<pre style="color: red">Migration Test Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html> 

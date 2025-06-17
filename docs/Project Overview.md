@@ -1,6 +1,6 @@
 # Project Plan: AI Prompt Generator
 
-## 1. Project Overview
+## *1. Project Overview*
 - **Purpose:**
   - A local-first, Node.js-based AI Prompt Generator web app.
   - Allows users to create, manage, and save prompt projects for LLMs (Large Language Models).
@@ -10,14 +10,14 @@
   - All UI logic and state management handled in the browser (index.html, CSS, JS).
   - No images or binary data—text only.
 
-## 2. Features & Architecture
+## *2. Features & Architecture*
 
 ### UI/UX Structure and Guiding Principles
 - The app is a state-driven, single-page application (SPA). All UI is rendered from a central `appState` object.
 - Uses modern CSS (variables, flexbox, grid) for responsive, themeable design.
 - Supports both dark and light modes via CSS variables and a toggle button.
-- Main layout: sidebar (prompt library, jobs, project management) and main content area (panels for project hub, prompt builder, refinement, text transformer, article workspace).
-- Sidebar is collapsible and contains quick access to jobs, project library, and an admin reset button.
+- Main layout: sidebar (prompt library, jobs, projects) and main content area (panels for project hub, prompt builder, refinement, text transformer, article workspace).
+- Sidebar is collapsible and contains quick access to jobs, project library, and an admin reset button (to be removed later).
 - All interactive UI elements (buttons, selectors, textareas) are styled for clarity and accessibility.
 - Collapsible panels for organization and focus (Prompt Builder, Refinement, Text Transformer, Article Workspace).
 - Draft system for all major content blocks, allowing multiple versions and easy switching.
@@ -151,7 +151,7 @@
 
 ---
 
-## 3. Technical Decisions & Rationale
+## *3. Technical Decisions & Rationale*
 - **Node.js**: Chosen for backend due to familiarity, ecosystem, and ease of local hosting.
 - **Express**: Used for serving static files and simple API endpoints. Chosen for future flexibility, minimal overhead, and wide support.
 - **better-sqlite3**: Chosen for database. Reasons:
@@ -185,7 +185,7 @@
        - Basic error logging
        - Recovery procedures
 
-## 4. Folder Structure (as of initial commit)
+## *4. Folder Structure (as of initial commit)*
 ```
 /app.PromptGen
 ├── public/        # Static files (index.html, CSS, client JS)
@@ -201,64 +201,7 @@
 └── README.md
 ```
 
-## 5. Setup & Verification
-- Analyzed and documented the HTML app structure and state management.
-- Decided on SQLite (better-sqlite3) for persistent storage, with JSON blob for app state.
-- Chose Express for serving static files and future API endpoints.
-- Created the above folder structure.
-- Moved index.html to public/.
-- Installed and tested better-sqlite3 and Express for compatibility with Node.js v18.19.1.
-- Created a basic Express server (src/server.js) that:
-  - Serves static files from public/
-  - Provides a /api/health endpoint
-  - Fallback route for SPA support
-- Verified server runs and app loads at http://localhost:3000
-- Verified /api/health returns {"status": "ok"}
-- Initialized git, made initial commit, and pushed to GitHub.
-- Static file serving (index.html loads in browser)
-- Express server starts with no errors
-- Health endpoint works
-- Git integration and remote push confirmed
 
-## 6. Completed Features
-- Database Integration:
-  - SQLite database setup with proper schema
-  - User components table with all required fields
-  - CRUD operations for user components
-  - Boolean-to-number conversion for SQLite compatibility
-  - Database connection and error handling
-  - Test endpoints for database operations
-- State Persistence:
-  - Auto-save functionality (30-second intervals)
-  - Manual save triggers for component modifications
-  - State dirty flag management
-  - Database-backed state storage
-  - Error handling and recovery
-- Testing Infrastructure:
-  - Test component creation page
-  - Database operation verification
-  - Error logging and debugging tools
-  - Component viewing and validation
-
-## 7. Open Questions & Next Steps
-- Add backup/export functionality for app state
-- Write more documentation and split docs as project grows
-- Add more tests (API, DB, integration)
-- Consider user content export/import (Markdown, JSON)
-- Plan for future features (multi-user, authentication, etc.)
-- Implement component management UI in main application
-- Add component versioning and history
-- Create component templates and presets
-
-## 8. Important Context & Lessons Learned
-- All decisions and changes are discussed and approved before implementation
-- Minimal dependencies to avoid bloat and compatibility issues
-- Express was chosen after careful consideration and explicit approval
-- All setup steps are documented for reproducibility
-- Project is designed for local-first, but with an eye toward future expansion
-- SQLite requires explicit type handling (e.g., boolean to number conversion)
-- State persistence should be handled carefully to avoid data loss
-- Testing tools should be kept for future development and debugging
 
 ---
 

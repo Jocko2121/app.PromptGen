@@ -13,25 +13,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Run migrations
-try {
-    runMigrations();
-    console.log('Migrations completed successfully');
-} catch (error) {
-    console.error('Error running migrations:', error);
-    process.exit(1);
-}
-
-// Initialize database with starter components if needed
-(async () => {
-    try {
-        await initializeDatabaseIfNeeded();
-    } catch (error) {
-        console.error('Error during database initialization:', error);
-        process.exit(1);
-    }
-})();
-
 // API routes
 app.use('/api', apiRoutes);
 
@@ -58,17 +39,32 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Start the server
-app.listen(PORT, async () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-    
+// Main startup sequence
+(async () => {
     try {
-        // Initialize state persistence
-        await statePersistence.loadState();
-        // Start auto-save
-        statePersistence.startAutoSave();
-        console.log('State persistence initialized');
+        // Run migrations before any DB access
+        await runMigrations();
+        console.log('Migrations completed successfully');
+
+        // Initialize database with starter components if needed
+        await initializeDatabaseIfNeeded();
+        console.log('Database initialization completed successfully');
+
+        // Start the server only after DB is ready
+        app.listen(PORT, async () => {
+            console.log(`Server is running at http://localhost:${PORT}`);
+            try {
+                // Initialize state persistence
+                await statePersistence.loadState();
+                // Start auto-save
+                statePersistence.startAutoSave();
+                console.log('State persistence initialized');
+            } catch (error) {
+                console.error('Failed to initialize state persistence:', error);
+            }
+        });
     } catch (error) {
-        console.error('Failed to initialize state persistence:', error);
+        console.error('Fatal error during startup:', error);
+        process.exit(1);
     }
-}); 
+})(); 

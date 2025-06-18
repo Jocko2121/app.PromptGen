@@ -58,34 +58,14 @@
         <div id="error-message" class="error" style="display: none;"></div>
 
         <div class="component-section">
-            <h2>App State Components</h2>
-            <table id="app-state-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Title</th>
-                        <th>Is Active</th>
-                        <th>Selection</th>
-                        <th>Prompt Value</th>
-                        <th>User Value</th>
-                        <th>Available Prompts</th>
-                    </tr>
-                </thead>
-                <tbody id="app-state-body">
-                    <!-- App state data will be populated here -->
-                </tbody>
-            </table>
-        </div>
-
-        <div class="component-section">
-            <h2>User Components</h2>
-            <table id="user-components-table">
+            <h2>All Components</h2>
+            <table id="all-components-table">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Original Starter ID</th>
                         <th>Type</th>
+                        <th>Is Starter</th>
                         <th>Is Active</th>
                         <th>Selection</th>
                         <th>Prompt Value</th>
@@ -94,8 +74,8 @@
                         <th>Modified At</th>
                     </tr>
                 </thead>
-                <tbody id="user-components-body">
-                    <!-- User components data will be populated here -->
+                <tbody id="all-components-body">
+                    <!-- All components data will be populated here -->
                 </tbody>
             </table>
         </div>
@@ -104,51 +84,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Fetch app state components
-                const appStateResponse = await fetch('/api/starter-components');
-                if (!appStateResponse.ok) {
-                    throw new Error(`HTTP error! status: ${appStateResponse.status}`);
+                // Fetch all components
+                const response = await fetch('/api/user-components');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const appStateData = await appStateResponse.json();
+                const components = await response.json();
                 
-                const appStateBody = document.getElementById('app-state-body');
-                appStateBody.innerHTML = '';
-
-                // appStateData is now an array of component objects
-                appStateData.forEach(component => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${component.id || ''}</td>
-                        <td>${component.component_type || ''}</td>
-                        <td>${component.title || ''}</td>
-                        <td>${component.is_active ? 'Yes' : 'No'}</td>
-                        <td>${component.selection || ''}</td>
-                        <td>${component.prompt_value || ''}</td>
-                        <td>${component.user_value || ''}</td>
-                        <td>${component.prompts ? JSON.stringify(component.prompts) : ''}</td>
-                    `;
-                    appStateBody.appendChild(row);
-                });
-
-                // Fetch user components
-                const userComponentsResponse = await fetch('/api/user-components');
-                if (!userComponentsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${userComponentsResponse.status}`);
-                }
-                const userComponentsData = await userComponentsResponse.json();
-                
-                const userComponentsBody = document.getElementById('user-components-body');
-                userComponentsBody.innerHTML = '';
+                const allComponentsBody = document.getElementById('all-components-body');
+                allComponentsBody.innerHTML = '';
 
                 // Sort data by created_at in descending order
-                userComponentsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                components.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-                userComponentsData.forEach(component => {
+                components.forEach(component => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${component.id}</td>
                         <td>${component.original_starter_id || ''}</td>
                         <td>${component.component_type}</td>
+                        <td>${component.is_starter ? 'Yes' : 'No'}</td>
                         <td>${component.is_active ? 'Yes' : 'No'}</td>
                         <td>${component.selection || ''}</td>
                         <td>${component.prompt_value || ''}</td>
@@ -156,7 +111,7 @@
                         <td>${new Date(component.created_at).toLocaleString()}</td>
                         <td>${new Date(component.modified_at).toLocaleString()}</td>
                     `;
-                    userComponentsBody.appendChild(row);
+                    allComponentsBody.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error fetching components:', error);

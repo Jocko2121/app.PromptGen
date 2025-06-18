@@ -20,8 +20,9 @@ async function initializeDatabaseIfNeeded() {
             is_active,
             selection,
             prompt_value,
-            user_value
-        ) VALUES (?, ?, ?, ?, ?, ?)
+            user_value,
+            is_starter
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertMany = db.transaction((components) => {
@@ -35,7 +36,8 @@ async function initializeDatabaseIfNeeded() {
                         1, // is_active
                         selection,
                         promptValue,
-                        '' // user_value (empty by default)
+                        '', // user_value (empty by default)
+                        1  // is_starter (true)
                     );
                 }
             } else {
@@ -46,7 +48,8 @@ async function initializeDatabaseIfNeeded() {
                     1,
                     'default',
                     '',
-                    ''
+                    '',
+                    1 // is_starter (true)
                 );
             }
         }

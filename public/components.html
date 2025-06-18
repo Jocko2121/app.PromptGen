@@ -18,24 +18,37 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: #333;
             margin-bottom: 20px;
+        }
+        .component-group {
+            margin-bottom: 40px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            margin-bottom: 40px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            table-layout: fixed;
         }
         th, td {
-            padding: 12px;
+            padding: 6px 4px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            vertical-align: top;
+            font-size: 0.97em;
+            word-break: break-word;
+            white-space: normal;
         }
         th {
             background-color: #f8f9fa;
             font-weight: bold;
+            white-space: nowrap;
+        }
+        td:not(:nth-child(4)) { /* All except Prompt Value */
+            font-size: 0.95em;
+            white-space: nowrap;
         }
         tr:hover {
             background-color: #f5f5f5;
@@ -47,8 +60,27 @@
             border-radius: 4px;
             margin: 10px 0;
         }
-        .component-section {
-            margin-bottom: 40px;
+        .group-title {
+            margin-top: 40px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            color: #2a2a2a;
+        }
+        .tier2-col {
+            display: none;
+        }
+        .show-tier2 .tier2-col {
+            display: table-cell;
+        }
+        .tier2-details-row {
+            background: #f6f6fa;
+        }
+        .tier2-details-box {
+            font-size: 0.97em;
+            color: #444;
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
         }
     </style>
 </head>
@@ -56,33 +88,24 @@
     <div class="container">
         <h1>Components Database View</h1>
         <div id="error-message" class="error" style="display: none;"></div>
-
-        <div class="component-section">
-            <h2>All Components</h2>
-            <table id="all-components-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Original Starter ID</th>
-                        <th>Type</th>
-                        <th>Is Starter</th>
-                        <th>Is Active</th>
-                        <th>Selection</th>
-                        <th>Prompt Value</th>
-                        <th>User Value</th>
-                        <th>Created At</th>
-                        <th>Modified At</th>
-                    </tr>
-                </thead>
-                <tbody id="all-components-body">
-                    <!-- All components data will be populated here -->
-                </tbody>
-            </table>
-        </div>
+        <button id="toggle-details-btn" style="margin-bottom: 20px;">Show Details</button>
+        <div id="components-grouped-view"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            let showTier2 = false;
+            const toggleBtn = document.getElementById('toggle-details-btn');
+            const groupedView = document.getElementById('components-grouped-view');
+
+            toggleBtn.addEventListener('click', () => {
+                showTier2 = !showTier2;
+                toggleBtn.textContent = showTier2 ? 'Hide Details' : 'Show Details';
+                document.querySelectorAll('.tier2-details-row').forEach(row => {
+                    row.style.display = showTier2 ? '' : 'none';
+                });
+            });
+
             try {
                 // Fetch all components
                 const response = await fetch('/api/user-components');
@@ -90,36 +113,85 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const components = await response.json();
-                
-                const allComponentsBody = document.getElementById('all-components-body');
-                allComponentsBody.innerHTML = '';
 
-                // Sort data by created_at in descending order
-                components.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+                // Group components by component_type
+                const grouped = {};
                 components.forEach(component => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${component.id}</td>
-                        <td>${component.original_starter_id || ''}</td>
-                        <td>${component.component_type}</td>
-                        <td>${component.is_starter ? 'Yes' : 'No'}</td>
-                        <td>${component.is_active ? 'Yes' : 'No'}</td>
-                        <td>${component.selection || ''}</td>
-                        <td>${component.prompt_value || ''}</td>
-                        <td>${component.user_value || ''}</td>
-                        <td>${new Date(component.created_at).toLocaleString()}</td>
-                        <td>${new Date(component.modified_at).toLocaleString()}</td>
+                    const type = component.component_type;
+                    if (!grouped[type]) grouped[type] = [];
+                    grouped[type].push(component);
+                });
+
+                // Sort group keys alphabetically
+                const groupKeys = Object.keys(grouped).sort();
+
+                groupedView.innerHTML = '';
+
+                groupKeys.forEach(type => {
+                    const groupSection = document.createElement('div');
+                    groupSection.className = 'component-group';
+
+                    const groupTitle = document.createElement('h2');
+                    groupTitle.className = 'group-title';
+                    groupTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+                    groupSection.appendChild(groupTitle);
+
+                    // Table for subcomponents
+                    const table = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = `
+                        <tr>
+                            <th style="width:5%">Is Active</th>
+                            <th style="width:20%">Selection</th>
+                            <th style="width:75%">Prompt Value</th>
+                        </tr>
                     `;
-                    allComponentsBody.appendChild(row);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    // Sort by created_at descending
+                    grouped[type].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    grouped[type].forEach(component => {
+                        // Main row (Tier 1)
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="width:5%"><input type="checkbox" disabled ${component.is_active ? 'checked' : ''}></td>
+                            <td style="width:20%">${component.selection || ''}</td>
+                            <td style="width:75%; word-break: break-word; white-space: normal;">${component.prompt_value || ''}</td>
+                        `;
+                        tbody.appendChild(row);
+
+                        // Details row for Tier 2
+                        const detailsRow = document.createElement('tr');
+                        detailsRow.className = 'tier2-details-row';
+                        detailsRow.style.display = 'none';
+                        const detailsCell = document.createElement('td');
+                        detailsCell.colSpan = 3;
+                        detailsCell.innerHTML = `
+                            <div class="tier2-details-box">
+                                <strong>ID:</strong> ${component.id} &nbsp;|
+                                <strong>User Value:</strong> ${component.user_value || ''} &nbsp;|
+                                <strong>Original Starter ID:</strong> ${component.original_starter_id || ''} &nbsp;|
+                                <strong>Created At:</strong> ${new Date(component.created_at).toLocaleString()} &nbsp;|
+                                <strong>Modified At:</strong> ${new Date(component.modified_at).toLocaleString()} &nbsp;|
+                                <strong>Is Starter:</strong> ${component.is_starter ? 'Yes' : 'No'}
+                            </div>
+                        `;
+                        detailsRow.appendChild(detailsCell);
+                        tbody.appendChild(detailsRow);
+                    });
+
+                    table.appendChild(tbody);
+                    groupSection.appendChild(table);
+                    groupedView.appendChild(groupSection);
                 });
             } catch (error) {
                 console.error('Error fetching components:', error);
-                const errorDiv = document.getElementById('error-message');
-                errorDiv.textContent = `Error loading components: ${error.message}`;
-                errorDiv.style.display = 'block';
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'An error occurred while fetching components. Please try again later.';
+                errorMessage.style.display = 'block';
             }
         });
     </script>
 </body>
-</html> 
+</html>

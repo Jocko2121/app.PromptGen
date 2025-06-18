@@ -1,21 +1,21 @@
 # *Phase 2: Settings for components*
 
 **[ ] Epic 2.1 - Database Restructuring**
-    - [ ] Create new database table for master components
-      - [ ] Define schema for master_components table
-      - [ ] Add necessary indexes and constraints
-      - [ ] Create migration script
-    - [ ] Modify existing user_components table
-      - [ ] Update foreign key relationships
-      - [ ] Add any necessary new fields
-      - [ ] Create migration script
+    - [ ] Move hardcoded components to initialization
+      - [ ] Create starter-components.js file
+      - [ ] Move builderComponentData from index.html
+      - [ ] Add initialization function
+    - [ ] Update database initialization
+      - [ ] Add check for database existence
+      - [ ] Add function to populate starter components
+      - [ ] Create initialization script
     - [ ] Update server initialization
       - [ ] Modify server.js to handle initialization
       - [ ] Add initialization checks
       - [ ] Update error handling
-    - [DECISION NEEDED] Define migration strategy for existing databases
-      - [ ] Create migration path for existing user components
-      - [ ] Define how to handle existing relationships
+    - [DECISION NEEDED] Define initialization strategy
+      - [ ] Determine when initialization should occur
+      - [ ] Define how to handle initialization failures
       - [ ] Plan for potential data loss scenarios
 
 **[ ] Epic 2.2 - Initialization System Setup**
@@ -223,52 +223,6 @@ The most important part of Phase 2 is moving the default components from `builde
 - It enables the database-driven component system
 - It allows users to backup their database and start fresh
 - It removes hardcoded data from the app
-
-## Files to Modify
-1. `src/db/database.js`
-   - Add database existence check
-   - If no database exists, run starter-components.js to create one
-   - No other changes needed
-
-2. `src/server.js`
-   - Update initialization sequence
-   - No other changes needed
-
-3. `public/index.html`
-   - Remove hardcoded components from builderComponentData
-   - Keep component structure
-   - No other changes needed
-
-4. `src/routes/api.js`
-   - Update `/starter-components` endpoint to read from database
-   - Add proper error handling for database failures
-   - No other API endpoint changes needed
-
-5. `src/services/state-persistence.js`
-   - Add database readiness check before loading state
-   - Update initialization sequence
-   - No other changes needed
-
-6. `src/db/starter-components.js`
-   - Move all default components from builderComponentData to this file
-   - This file will be the source of truth for new database creation
-   - No other changes needed
-
-## Critical Aspects of Phase 2
-1. Move hardcoded components from builderComponentData to database
-   - Components will be moved to starter-components.js
-   - Used to create initial database
-   - No longer hardcoded in the app
-
-2. Update app to read components from database
-   - App currently assumes components are hardcoded
-   - Need to check for any hidden dependencies
-   - State management remains the same, just different data source
-
-## Potential Risks
-- App might assume certain components always exist (because they were hardcoded)
-- App might expect certain component properties (because they were hardcoded)
-- Need to verify app can handle components as regular database entries
 
 ## Files to Modify
 1. `src/db/database.js`

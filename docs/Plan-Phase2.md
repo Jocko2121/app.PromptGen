@@ -166,3 +166,41 @@ The most important part of Phase 2 is moving the default components from `builde
    - Move all default components from builderComponentData to this file
    - This file will be the source of truth for new database creation
    - No other changes needed 
+
+# *Phase 2: Refactoring Job/Template Terminology*
+
+## Refactoring Plan
+
+Here's what we need to refactor:
+
+1. **JavaScript Variables/Functions**:
+   - `jobTemplates` → `promptSets`
+   - `activeJob` → `activePromptSet`
+   - `applyJobTemplate` → `applyPromptSet`
+   - `renderJobs` → `renderPromptSets`
+   - `jobKeys` → `promptSetKeys`
+   - `jobKey` → `promptSetKey`
+
+2. **HTML Elements/IDs**:
+   - `jobs-list` → `prompt-sets-list`
+   - `job-selector` → `prompt-set-selector`
+   - `data-job-key` → `data-prompt-set-key`
+
+3. **CSS Classes**:
+   - `.sidebar__jobs-list` → `.sidebar__prompt-sets-list`
+   - `.job-selector` → `.prompt-set-selector`
+   - `.job-selector:hover` → `.prompt-set-selector:hover`
+   - `.job-selector.active` → `.prompt-set-selector.active`
+
+4. **Component References**:
+   - In `starter-components.js`: `job` component type remains (as it's a specific component type)
+   - In `maintenance.js`: `job` in component type list remains
+
+5. **Documentation**:
+   - Update references in `Project Overview.md` and other docs
+   - Update comments in code
+
+Note: The database schema doesn't use these terms, so no database changes are needed.
+
+
+   

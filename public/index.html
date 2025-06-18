@@ -15,18 +15,24 @@
                 <h2>Prompt Gen</h2>
             </div>
             <div class="sidebar__content">
-                <h4 class="sidebar__sub-heading">Quick Start</h4>
-                <details open>
-                    <summary>Jobs</summary>
-                    <div class="sidebar__jobs-list" id="jobs-list">
-                        </div>
-                </details>
-                <h4 class="sidebar__sub-heading">Library</h4>
-                <details open>
-                    <summary>Work Projects</summary>
-                    <ul id="library-list">
-                        </ul>
-                </details>
+                <h4 class="sidebar__sub-heading">Projects</h4>
+                <ul id="library-list" class="sidebar__list">
+                </ul>
+
+                <h4 class="sidebar__sub-heading">Prompt Sets</h4>
+                <div id="prompt-sets-list" class="sidebar__list">
+                </div>
+
+                <h4 class="sidebar__sub-heading">Settings</h4>
+                <div class="sidebar__settings-container">
+                    <span class="sidebar__sub-heading">Theme</span>
+                    <button id="theme-light-button" class="button--utility button--theme">☀️</button>
+                    <button id="theme-dark-button" class="button--utility button--theme hidden">🌙</button>
+                    <div class="sidebar__database-controls">
+                        <span class="sidebar__sub-heading">Database Tools</span>
+                        <button id="toggle-database-section" class="button--utility">Database</button>
+                    </div>
+                </div>
             </div>
             <div class="sidebar__footer">
                 <button id="admin-reset-button">Admin: Hard Reset</button>
@@ -35,17 +41,22 @@
 
         <div class="main-content-wrapper">
             <main class="main-content">
-
-                <section class="panel" id="project-hub-panel">
-                     <div class="panel__header">
-                        <h3>Project Hub</h3>
-                        <div class="panel__header-buttons">
-                            <button id="save-project-button" class="button--utility">Save Project</button>
-                            <button id="theme-light-button" class="button--utility button--theme">☀️</button>
-                            <button id="theme-dark-button" class="button--utility button--theme hidden">🌙</button>
+                <section class="panel collapsible-panel" id="database-components-panel" style="display: none;">
+                    <div class="panel__header">
+                        <h3>Database Components</h3>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper components-admin">
+                            <div class="header__container">
+                                <h1 class="header__title">Prompt Components Admin</h1>
+                                <button id="save-all-btn" disabled class="button--utility">Save All</button>
+                            </div>
+                            <div id="error-message" class="error error__message"></div>
+                            <button id="toggle-details-btn" class="button--utility">Show Details</button>
+                            <div id="components-grouped-view"></div>
                         </div>
                     </div>
-                    <input type="text" id="project-title-input" class="panel__title-input" placeholder="Enter Project Title...">
                 </section>
 
                 <section class="panel collapsible-panel" id="prompt-builder-panel">
@@ -60,7 +71,7 @@
                         <div class="collapsible-panel__inner-wrapper">
                             <div class="prompt-builder__pallet" id="prompt-builder-pallet">
                                 </div>
-                            <div id="prompt-assembler-output" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                            <div class="prompt-assembler__output">
                                 <div class="generate-button-container">
                                     <button id="assemble-all-button" class="button--primary">Add All to Final Prompt</button>
                                 </div>
@@ -68,6 +79,19 @@
                         </div>
                     </div>
                 </section>
+
+
+                <section class="panel" id="project-hub-panel">
+                    <div class="panel__header">
+                       <h3>Project Hub</h3>
+                       <div class="panel__header-buttons">
+                           <button id="save-project-button" class="button--utility">Save</button>
+                           <button id="save-as-project-button" class="button--utility">Save As...</button>
+                       </div>
+                   </div>
+                   <input type="text" id="project-title-input" class="panel__title-input" placeholder="Enter Project Title...">
+               </section>
+
 
                 <section class="panel collapsible-panel" id="refinement-panel">
                      <div class="panel__header">
@@ -83,7 +107,7 @@
                                     <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
                                 </div>
                                 <div class="insert-button-container">
-                                    <button id="insert-button" title="Insert Outline into Final Prompt" class="button--primary">&rarr;</button>
+                                    <button id="insert-button" class="button--primary" title="Insert Outline into Final Prompt">&rarr;</button>
                                 </div>
                                 <div class="panel final-prompt-panel">
                                     <div class="panel__header">
@@ -123,7 +147,7 @@
                                         <div id="text-transformer-options-container"></div>
 
                                         <button id="transform-execute-button" class="button--primary">Transform</button>
-                                        <hr style="width: 80%; margin: 0.75rem auto; border-color: var(--border-color);">
+                                        <hr class="text-transformer__divider">
                                         <button class="button--utility text-transformer__action-button" data-action="copy-up" title="Copy Output to Input">↑</button>
                                     </div>
                                     <div class="panel">
@@ -172,6 +196,8 @@
                 const lightThemeButton = document.getElementById('theme-light-button');
                 const darkThemeButton = document.getElementById('theme-dark-button');
                 const body = document.body;
+                const dbToggleButton = document.getElementById('toggle-database-section');
+                const dbPanel = document.getElementById('database-components-panel');
 
                 if (hamburgerButton && sidebar) {
                     hamburgerButton.addEventListener('click', () => {
@@ -191,6 +217,15 @@
                         lightThemeButton.classList.remove('hidden');
                     });
                 }
+
+                if (dbToggleButton && dbPanel) {
+                    dbToggleButton.addEventListener('click', () => {
+                        const isVisible = dbPanel.style.display !== 'none';
+                        dbPanel.style.display = isVisible ? 'none' : '';
+                        dbToggleButton.classList.toggle('button--primary', !isVisible);
+                        dbToggleButton.classList.toggle('button--utility', isVisible);
+                    });
+                }
             }
 
 
@@ -198,7 +233,7 @@
             // builderComponentData has been moved to the backend and is now seeded from starter-components.js into the database.
             let builderComponentData = {};
 
-            const jobTemplates = {
+            const promptSets = {
                 blog_post: {
                     role: { active: true, selection: 'custom', promptValue: 'Act as an expert blogger and SEO specialist.', userValue: 'Act as an expert blogger and SEO specialist.' },
                     task: { active: true, selection: 'write', promptValue: 'a comprehensive and engaging blog post about [topic].', userValue: '' },
@@ -215,7 +250,7 @@
                 return {
                     currentProjectId: `proj-${now}`,
                     projectName: 'Untitled Project',
-                    activeJob: 'custom_build',
+                    activePromptSet: 'custom_build',
                     builder: {
                         role: { active: true, selection: 'custom', promptValue: '', userValue: '' },
                         task: { active: true, selection: 'custom', promptValue: '', userValue: '' },
@@ -269,7 +304,7 @@
             // --- RENDER FUNCTIONS ---
             function render() {
                 const project = appState.activeProject;
-                renderJobs(project.activeJob);
+                renderPromptSets(project.activePromptSet);
                 renderProjectHub(project);
                 renderBuilderPallet(project.builder);
                 renderContentBlocks(project.contentBlocks);
@@ -277,10 +312,10 @@
                 renderTextTransformer(project.textTransformer);
             }
 
-            function renderJobs(activeJobKey) {
-                const jobSelectors = document.querySelectorAll('.job-selector');
-                jobSelectors.forEach(selector => {
-                    selector.classList.toggle('active', selector.dataset.jobKey === activeJobKey);
+            function renderPromptSets(activePromptSetKey) {
+                const promptSetSelectors = document.querySelectorAll('.prompt-set-selector');
+                promptSetSelectors.forEach(selector => {
+                    selector.classList.toggle('active', selector.dataset.promptSetKey === activePromptSetKey);
                 });
             }
 
@@ -288,8 +323,14 @@
                 const libraryList = document.getElementById('library-list');
                 if (!libraryList) return;
                 libraryList.innerHTML = '';
+
+                let foundActive = false;
                 appState.savedProjects.forEach(project => {
                     const li = document.createElement('li');
+                    if (project.currentProjectId === appState.activeProject.currentProjectId) {
+                        li.className = 'active';
+                        foundActive = true;
+                    }
 
                     const textSpan = document.createElement('span');
                     textSpan.textContent = project.projectName;
@@ -305,6 +346,18 @@
                     li.dataset.projectId = project.currentProjectId;
                     libraryList.appendChild(li);
                 });
+
+                // If the active project is not in savedProjects, show it at the end with '(Unsaved)'
+                if (!foundActive && appState.activeProject) {
+                    const li = document.createElement('li');
+                    li.className = 'active';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = appState.activeProject.projectName + ' (Unsaved)';
+                    textSpan.style.flexGrow = '1';
+                    li.appendChild(textSpan);
+                    li.dataset.projectId = appState.activeProject.currentProjectId;
+                    libraryList.appendChild(li);
+                }
             }
 
             function renderProjectHub(project) {
@@ -455,17 +508,17 @@
                 }
             }
 
-            function applyJobTemplate(jobKey) {
-                appState.activeProject.activeJob = jobKey;
+            function applyPromptSet(promptSetKey) {
+                appState.activeProject.activePromptSet = promptSetKey;
 
                 const builderState = appState.activeProject.builder;
                 let template;
 
-                if (jobKey === 'custom_build') {
+                if (promptSetKey === 'custom_build') {
                     template = getDefaultAppState().builder;
                     Object.keys(template).forEach(key => template[key].active = true);
                 } else {
-                    template = JSON.parse(JSON.stringify(jobTemplates[jobKey]));
+                    template = JSON.parse(JSON.stringify(promptSets[promptSetKey]));
                 }
 
                 if (template) {
@@ -495,11 +548,11 @@
                         }
                         shouldRender = false;
                     }
-                    else if (target.closest('.job-selector')) {
-                        const jobKey = target.dataset.jobKey;
-                        if (jobKey && jobKey !== appState.activeProject.activeJob) {
-                            applyJobTemplate(jobKey);
-                            render(); // Explicitly call render after applying a job
+                    else if (target.closest('.prompt-set-selector')) {
+                        const promptSetKey = target.dataset.promptSetKey;
+                        if (promptSetKey && promptSetKey !== appState.activeProject.activePromptSet) {
+                            applyPromptSet(promptSetKey);
+                            render(); // Explicitly call render after applying a prompt set
                         }
                         shouldRender = false;
                     }
@@ -507,25 +560,45 @@
                         appState.activeProject.lastModified = new Date().toISOString();
                         const existingProjectIndex = appState.savedProjects.findIndex(p => p.currentProjectId === appState.activeProject.currentProjectId);
                         if (existingProjectIndex > -1) {
+                            // Update existing project in place
                             appState.savedProjects[existingProjectIndex] = JSON.parse(JSON.stringify(appState.activeProject));
                         } else {
+                            // Add to end if not present
                             appState.savedProjects.push(JSON.parse(JSON.stringify(appState.activeProject)));
                         }
+                        render();
+                    }
+                    else if (target.id === 'save-as-project-button') {
+                        // Create new project with current content
+                        const newProject = JSON.parse(JSON.stringify(appState.activeProject));
+                        newProject.currentProjectId = `proj-${Date.now()}`;
+                        // Remove any trailing (Copy) to avoid stacking
+                        newProject.projectName = appState.activeProject.projectName.replace(/( \(Copy\))+$/, '') + ' (Copy)';
+                        newProject.lastModified = new Date().toISOString();
+                        appState.savedProjects.push(newProject);
+                        appState.activeProject = newProject;
+                        render(); // Explicitly call render to update the UI
                     }
                     else if (target.closest('#library-list li') && !target.closest('.sidebar__project-delete-button')) {
                         const projectId = target.closest('li').dataset.projectId;
                         const loadedProject = appState.savedProjects.find(p => p.currentProjectId === projectId);
-                        if (loadedProject) appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
-
-                    } else if (target.closest('.sidebar__project-delete-button')) {
+                        if (loadedProject) {
+                            appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
+                            applyPromptSet(appState.activeProject.activePromptSet);
+                            render();
+                        }
+                    }
+                    else if (target.closest('.sidebar__project-delete-button')) {
                          e.stopPropagation();
                          const projectId = target.dataset.projectId;
                          appState.savedProjects = appState.savedProjects.filter(p => p.currentProjectId !== projectId);
 
-                    } else if (target.id === 'admin-reset-button') {
+                    }
+                    else if (target.id === 'admin-reset-button') {
                         appState = { savedProjects: [], activeProject: getDefaultAppState() };
-                        applyJobTemplate(appState.activeProject.activeJob);
-                    } else if (target.classList.contains('draft-controls__button--save')) {
+                        applyPromptSet(appState.activeProject.activePromptSet);
+                    }
+                    else if (target.classList.contains('draft-controls__button--save')) {
                         const blockKey = target.parentElement.dataset.contentBlock;
                         const textarea = document.getElementById(`${blockKey}-textarea`);
                         if (blockKey && textarea) {
@@ -724,20 +797,20 @@
                     }
                 });
 
-                // Initial Job setup
-                const jobsContainer = document.getElementById('jobs-list');
-                const jobKeys = ['custom_build', ...Object.keys(jobTemplates)];
-                jobsContainer.innerHTML = '';
-                jobKeys.forEach(key => {
+                // Initial Prompt Set setup
+                const promptSetsContainer = document.getElementById('prompt-sets-list');
+                const promptSetKeys = ['custom_build', ...Object.keys(promptSets)];
+                promptSetsContainer.innerHTML = '';
+                promptSetKeys.forEach(key => {
                     const div = document.createElement('div');
-                    div.className = 'job-selector';
-                    div.dataset.jobKey = key;
+                    div.className = 'prompt-set-selector';
+                    div.dataset.promptSetKey = key;
                     div.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    jobsContainer.appendChild(div);
+                    promptSetsContainer.appendChild(div);
                 });
 
-                // Apply the default job template on initial load
-                applyJobTemplate(appState.activeProject.activeJob);
+                // Apply the default prompt set on initial load
+                applyPromptSet(appState.activeProject.activePromptSet);
                 render();
             }
 
@@ -760,8 +833,135 @@
                 }
             }
 
+            // --- COMPONENTS ADMIN FUNCTIONALITY ---
+            async function initializeComponentsAdmin() {
+                let showTier2 = false;
+                const toggleBtn = document.getElementById('toggle-details-btn');
+                const groupedView = document.getElementById('components-grouped-view');
+
+                if (!toggleBtn || !groupedView) return; // Only initialize if elements exist
+
+                toggleBtn.addEventListener('click', () => {
+                    showTier2 = !showTier2;
+                    toggleBtn.textContent = showTier2 ? 'Hide Details' : 'Show Details';
+                    document.querySelectorAll('.tier2-details-row').forEach(row => {
+                        row.style.display = showTier2 ? '' : 'none';
+                    });
+                });
+
+                try {
+                    // Fetch all components
+                    const response = await fetch('/api/user-components');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const components = await response.json();
+
+                    // Group components by component_type
+                    const grouped = {};
+                    components.forEach(component => {
+                        const type = component.component_type;
+                        if (!grouped[type]) grouped[type] = [];
+                        grouped[type].push(component);
+                    });
+
+                    // Sort group keys alphabetically
+                    const groupKeys = Object.keys(grouped).sort();
+
+                    groupedView.innerHTML = '';
+
+                    groupKeys.forEach(type => {
+                        const groupSection = document.createElement('div');
+                        groupSection.className = 'component-group';
+
+                        const groupTitleRow = document.createElement('div');
+                        groupTitleRow.className = 'group-title__row';
+
+                        const groupTitle = document.createElement('span');
+                        groupTitle.className = 'group-title__label';
+                        groupTitle.innerHTML = `
+                            <input type="checkbox" disabled class="group-title__checkbox">
+                            <span class="group-title__text">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                        `;
+
+                        const addPromptBtn = document.createElement('button');
+                        addPromptBtn.textContent = 'Add Prompt';
+                        addPromptBtn.disabled = true;
+                        addPromptBtn.className = 'button--utility';
+
+                        groupTitleRow.appendChild(groupTitle);
+                        groupTitleRow.appendChild(addPromptBtn);
+
+                        const groupTitleContainer = document.createElement('h2');
+                        groupTitleContainer.className = 'group-title group-title__container';
+                        groupTitleContainer.appendChild(groupTitleRow);
+                        groupSection.appendChild(groupTitleContainer);
+
+                        // Table for subcomponents
+                        const table = document.createElement('table');
+                        table.id = `component-table--${type}`;
+                        const thead = document.createElement('thead');
+                        thead.innerHTML = `
+                            <tr>
+                                <th class="table__header--active">Active</th>
+                                <th class="table__header--selection">Selection</th>
+                                <th class="table__header--prompt">Prompt Value</th>
+                            </tr>
+                        `;
+                        table.appendChild(thead);
+
+                        const tbody = document.createElement('tbody');
+                        // Sort by created_at descending
+                        grouped[type].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                        grouped[type].forEach(component => {
+                            // Main row (Tier 1)
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="table__cell--active"><input type="checkbox" disabled ${component.is_active ? 'checked' : ''}></td>
+                                <td class="table__cell--selection"><input type="text" value="${component.selection || ''}" class="input--selection"></td>
+                                <td class="table__cell--prompt"><textarea class="textarea--prompt">${component.prompt_value || ''}</textarea></td>
+                            `;
+                            tbody.appendChild(row);
+
+                            // Details row for Tier 2
+                            const detailsRow = document.createElement('tr');
+                            detailsRow.className = 'tier2-details-row';
+                            detailsRow.style.display = 'none';
+                            const detailsCell = document.createElement('td');
+                            detailsCell.colSpan = 3;
+                            detailsCell.innerHTML = `
+                                <div class="tier2-details-box">
+                                    <strong>ID:</strong> ${component.id} &nbsp;|
+                                    <strong>User Value:</strong> ${component.user_value || ''} &nbsp;|
+                                    <strong>Created At:</strong> ${new Date(component.created_at).toLocaleString()} &nbsp;|
+                                    <strong>Modified At:</strong> ${new Date(component.modified_at).toLocaleString()} &nbsp;|
+                                    <strong>Is Starter:</strong> ${component.is_starter ? 'Yes' : 'No'}
+                                </div>
+                            `;
+                            detailsRow.appendChild(detailsCell);
+                            tbody.appendChild(detailsRow);
+                        });
+
+                        table.appendChild(tbody);
+                        groupSection.appendChild(table);
+                        groupedView.appendChild(groupSection);
+                    });
+                } catch (error) {
+                    console.error('Error fetching components:', error);
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = 'An error occurred while fetching components. Please try again later.';
+                        errorMessage.style.display = 'block';
+                    }
+                }
+            }
+
             // --- INITIALIZATION ---
             setupUIEventListeners();
+            
+            // Initialize components admin functionality
+            initializeComponentsAdmin();
+            
             // Fetch components from backend before initializing app
             fetch('/api/starter-components')
                 .then(res => {

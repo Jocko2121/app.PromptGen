@@ -4,6 +4,7 @@ const db = require('./db/database');
 const { runMigrations } = require('./db/migrations');
 const apiRoutes = require('./routes/api');
 const statePersistence = require('./services/state-persistence');
+const { initializeDatabaseIfNeeded } = require('./db/initialization');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,16 @@ try {
     console.error('Error running migrations:', error);
     process.exit(1);
 }
+
+// Initialize database with starter components if needed
+(async () => {
+    try {
+        await initializeDatabaseIfNeeded();
+    } catch (error) {
+        console.error('Error during database initialization:', error);
+        process.exit(1);
+    }
+})();
 
 // API routes
 app.use('/api', apiRoutes);

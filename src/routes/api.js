@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const dbOps = require('../db/operations');
-const starterComponents = require('../db/starter-components');
 const statePersistence = require('../services/state-persistence');
 const db = require('../db/database');
 const backup = require('../db/backup');
@@ -103,7 +102,13 @@ router.post('/test-insert', (req, res) => {
 
 // Get all starter components
 router.get('/starter-components', (req, res) => {
-    res.json(starterComponents);
+    try {
+        const components = dbOps.getAllUserComponents();
+        res.json(components);
+    } catch (error) {
+        console.error('Error fetching starter components:', error);
+        res.status(500).json({ error: 'Failed to fetch starter components', details: error.message });
+    }
 });
 
 // Get all user components

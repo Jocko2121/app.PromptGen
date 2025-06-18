@@ -114,23 +114,18 @@
                 const appStateBody = document.getElementById('app-state-body');
                 appStateBody.innerHTML = '';
 
-                Object.entries(appStateData).forEach(([key, component]) => {
+                // appStateData is now an array of component objects
+                appStateData.forEach(component => {
                     const row = document.createElement('tr');
-                    const promptsList = component.prompts ? 
-                        Object.entries(component.prompts)
-                            .map(([k, v]) => `<strong>${k}:</strong> ${v}`)
-                            .join('<br>') : 
-                        'Custom input field';
-                    
                     row.innerHTML = `
                         <td>${component.id || ''}</td>
-                        <td>${key}</td>
+                        <td>${component.component_type || ''}</td>
                         <td>${component.title || ''}</td>
                         <td>${component.is_active ? 'Yes' : 'No'}</td>
                         <td>${component.selection || ''}</td>
                         <td>${component.prompt_value || ''}</td>
                         <td>${component.user_value || ''}</td>
-                        <td>${promptsList}</td>
+                        <td>${component.prompts ? JSON.stringify(component.prompts) : ''}</td>
                     `;
                     appStateBody.appendChild(row);
                 });

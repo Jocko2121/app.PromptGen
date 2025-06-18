@@ -1,22 +1,13 @@
 # *Phase 2: Settings for components*
 
-**[ ] Epic 2.1 - Database Restructuring**
-    - [ ] Move hardcoded components to initialization
-      - [ ] Create starter-components.js file
-      - [ ] Move builderComponentData from index.html
-      - [ ] Add initialization function
-    - [ ] Update database initialization
-      - [ ] Add check for database existence
-      - [ ] Add function to populate starter components
-      - [ ] Create initialization script
-    - [ ] Update server initialization
-      - [ ] Modify server.js to handle initialization
-      - [ ] Add initialization checks
-      - [ ] Update error handling
-    - [DECISION NEEDED] Define initialization strategy
-      - [ ] Determine when initialization should occur
-      - [ ] Define how to handle initialization failures
-      - [ ] Plan for potential data loss scenarios
+**[x] Epic 2.1 - Database Restructuring**
+    - [x] Create starter-components.js file with default components
+    - [x] Remove builderComponentData from index.html
+    - [x] Create initialization.js to seed database with starter components if needed
+    - [x] Update database initialization logic in server.js to run initialization before serving
+    - [x] Update /starter-components API endpoint to serve components from the database
+    - [x] Update frontend (index.html) to fetch and use components from the API for the Prompt Builder
+    - [x] Verify end-to-end functionality: Prompt Builder loads from database-driven source
 
 **[ ] Epic 2.2 - Initialization System Setup**
     - [ ] Create separate initialization system

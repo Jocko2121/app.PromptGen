@@ -16,17 +16,15 @@ function createUserComponent(component) {
         return runInTransaction(() => {
             const stmt = db.prepare(`
                 INSERT INTO user_components (
-                    original_starter_id,
                     component_type,
                     is_active,
                     selection,
                     prompt_value,
                     user_value
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?)
             `);
 
             const result = stmt.run(
-                component.original_starter_id,
                 component.component_type,
                 component.is_active ? 1 : 0,
                 component.selection,

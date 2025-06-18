@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Components Database View</title>
+    <title>Prompt Components Admin</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -82,11 +82,34 @@
             border-radius: 4px;
             border: 1px solid #e0e0e0;
         }
+        .pc_group-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pc_group-title-label {
+            display: flex;
+            align-items: center;
+        }
+        .pc_add-prompt-btn {
+            opacity: 0.6;
+            cursor: not-allowed;
+            padding: 4px 14px;
+            border-radius: 4px;
+            border: 1px solid #d0d0d0;
+            background: #f5f5f5;
+            color: #888;
+            font-size: 0.97em;
+            margin-left: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Components Database View</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin-bottom: 0;">Prompt Components Admin</h1>
+            <button id="save-all-btn" disabled style="opacity:0.6;cursor:not-allowed;padding:8px 22px;border-radius:4px;border:1px solid #d0d0d0;background:#f5f5f5;color:#888;font-size:1em;">Save All</button>
+        </div>
         <div id="error-message" class="error" style="display: none;"></div>
         <button id="toggle-details-btn" style="margin-bottom: 20px;">Show Details</button>
         <div id="components-grouped-view"></div>
@@ -131,17 +154,36 @@
                     const groupSection = document.createElement('div');
                     groupSection.className = 'component-group';
 
-                    const groupTitle = document.createElement('h2');
-                    groupTitle.className = 'group-title';
-                    groupTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-                    groupSection.appendChild(groupTitle);
+                    const groupTitleRow = document.createElement('div');
+                    groupTitleRow.className = 'pc_group-title-row';
+
+                    const groupTitle = document.createElement('span');
+                    groupTitle.className = 'pc_group-title-label';
+                    groupTitle.innerHTML = `
+                        <input type="checkbox" disabled style="margin-right:8px;vertical-align:middle;">
+                        <span style="vertical-align:middle;">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                    `;
+
+                    const addPromptBtn = document.createElement('button');
+                    addPromptBtn.textContent = 'Add Prompt';
+                    addPromptBtn.disabled = true;
+                    addPromptBtn.className = 'pc_add-prompt-btn';
+
+                    groupTitleRow.appendChild(groupTitle);
+                    groupTitleRow.appendChild(addPromptBtn);
+
+                    const groupTitleContainer = document.createElement('h2');
+                    groupTitleContainer.className = 'group-title';
+                    groupTitleContainer.style.marginBottom = '0.5em';
+                    groupTitleContainer.appendChild(groupTitleRow);
+                    groupSection.appendChild(groupTitleContainer);
 
                     // Table for subcomponents
                     const table = document.createElement('table');
                     const thead = document.createElement('thead');
                     thead.innerHTML = `
                         <tr>
-                            <th style="width:5%">Is Active</th>
+                            <th style="width:5%">Active</th>
                             <th style="width:20%">Selection</th>
                             <th style="width:75%">Prompt Value</th>
                         </tr>
@@ -156,8 +198,8 @@
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td style="width:5%"><input type="checkbox" disabled ${component.is_active ? 'checked' : ''}></td>
-                            <td style="width:20%">${component.selection || ''}</td>
-                            <td style="width:75%; word-break: break-word; white-space: normal;">${component.prompt_value || ''}</td>
+                            <td style="width:20%"><input type="text" value="${component.selection || ''}" style="width:100%;box-sizing:border-box;padding:2px 4px;border:1px solid #d0d0d0;border-radius:3px;background:#fafbfc;"></td>
+                            <td style="width:75%; word-break: break-word; white-space: normal;"><textarea style="width:100%;box-sizing:border-box;resize:vertical;min-height:2.2em;padding:2px 4px;border:1px solid #d0d0d0;border-radius:3px;background:#fafbfc;">${component.prompt_value || ''}</textarea></td>
                         `;
                         tbody.appendChild(row);
 
@@ -171,7 +213,6 @@
                             <div class="tier2-details-box">
                                 <strong>ID:</strong> ${component.id} &nbsp;|
                                 <strong>User Value:</strong> ${component.user_value || ''} &nbsp;|
-                                <strong>Original Starter ID:</strong> ${component.original_starter_id || ''} &nbsp;|
                                 <strong>Created At:</strong> ${new Date(component.created_at).toLocaleString()} &nbsp;|
                                 <strong>Modified At:</strong> ${new Date(component.modified_at).toLocaleString()} &nbsp;|
                                 <strong>Is Starter:</strong> ${component.is_starter ? 'Yes' : 'No'}

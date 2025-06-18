@@ -15,14 +15,13 @@ async function initializeDatabaseIfNeeded() {
 
     const insertStmt = db.prepare(`
         INSERT INTO user_components (
-            original_starter_id,
             component_type,
             is_active,
             selection,
             prompt_value,
             user_value,
             is_starter
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const insertMany = db.transaction((components) => {
@@ -31,7 +30,6 @@ async function initializeDatabaseIfNeeded() {
             if (componentData.prompts) {
                 for (const [selection, promptValue] of Object.entries(componentData.prompts)) {
                     insertStmt.run(
-                        `${componentType}_${selection}`,
                         componentType,
                         1, // is_active
                         selection,
@@ -43,7 +41,6 @@ async function initializeDatabaseIfNeeded() {
             } else {
                 // For context/constraints or other non-prompt components
                 insertStmt.run(
-                    `${componentType}`,
                     componentType,
                     1,
                     'default',

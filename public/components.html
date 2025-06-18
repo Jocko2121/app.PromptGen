@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Components Database View</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .component-section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Components Database View</h1>
+        <div id="error-message" class="error" style="display: none;"></div>
+
+        <div class="component-section">
+            <h2>App State Components</h2>
+            <table id="app-state-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>Is Active</th>
+                        <th>Selection</th>
+                        <th>Prompt Value</th>
+                        <th>User Value</th>
+                        <th>Available Prompts</th>
+                    </tr>
+                </thead>
+                <tbody id="app-state-body">
+                    <!-- App state data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="component-section">
+            <h2>User Components</h2>
+            <table id="user-components-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Original Starter ID</th>
+                        <th>Type</th>
+                        <th>Is Active</th>
+                        <th>Selection</th>
+                        <th>Prompt Value</th>
+                        <th>User Value</th>
+                        <th>Created At</th>
+                        <th>Modified At</th>
+                    </tr>
+                </thead>
+                <tbody id="user-components-body">
+                    <!-- User components data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch app state components
+                const appStateResponse = await fetch('/api/starter-components');
+                if (!appStateResponse.ok) {
+                    throw new Error(`HTTP error! status: ${appStateResponse.status}`);
+                }
+                const appStateData = await appStateResponse.json();
+                
+                const appStateBody = document.getElementById('app-state-body');
+                appStateBody.innerHTML = '';
+
+                Object.entries(appStateData).forEach(([key, component]) => {
+                    const row = document.createElement('tr');
+                    const promptsList = component.prompts ? 
+                        Object.entries(component.prompts)
+                            .map(([k, v]) => `<strong>${k}:</strong> ${v}`)
+                            .join('<br>') : 
+                        'Custom input field';
+                    
+                    row.innerHTML = `
+                        <td>${component.id || ''}</td>
+                        <td>${key}</td>
+                        <td>${component.title || ''}</td>
+                        <td>${component.is_active ? 'Yes' : 'No'}</td>
+                        <td>${component.selection || ''}</td>
+                        <td>${component.prompt_value || ''}</td>
+                        <td>${component.user_value || ''}</td>
+                        <td>${promptsList}</td>
+                    `;
+                    appStateBody.appendChild(row);
+                });
+
+                // Fetch user components
+                const userComponentsResponse = await fetch('/api/user-components');
+                if (!userComponentsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${userComponentsResponse.status}`);
+                }
+                const userComponentsData = await userComponentsResponse.json();
+                
+                const userComponentsBody = document.getElementById('user-components-body');
+                userComponentsBody.innerHTML = '';
+
+                // Sort data by created_at in descending order
+                userComponentsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                userComponentsData.forEach(component => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${component.id}</td>
+                        <td>${component.original_starter_id || ''}</td>
+                        <td>${component.component_type}</td>
+                        <td>${component.is_active ? 'Yes' : 'No'}</td>
+                        <td>${component.selection || ''}</td>
+                        <td>${component.prompt_value || ''}</td>
+                        <td>${component.user_value || ''}</td>
+                        <td>${new Date(component.created_at).toLocaleString()}</td>
+                        <td>${new Date(component.modified_at).toLocaleString()}</td>
+                    `;
+                    userComponentsBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching components:', error);
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = `Error loading components: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html> 

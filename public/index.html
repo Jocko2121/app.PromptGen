@@ -262,6 +262,20 @@
                         context: { active: true, value: '' },
                         constraints: { active: true, value: ''},
                     },
+                    // New: Prompt-level active states for each component type
+                    promptActiveStates: {
+                        role: {},
+                        task: {},
+                        job: {},
+                        audiencePro: {},
+                        audienceSilly: {},
+                        format: {},
+                        tone: {},
+                        length: {},
+                        pov: {},
+                        context: {},
+                        constraints: {}
+                    },
                     contentBlocks: {
                         userOutline: { activeDraftId: `draft-${now+1}`, drafts: [{ id: `draft-${now+1}`, timestamp: new Date().toISOString(), content: '' }] },
                         finalPrompt: { activeDraftId: `draft-${now+2}`, drafts: [{ id: `draft-${now+2}`, timestamp: new Date().toISOString(), content: '' }] },
@@ -457,15 +471,26 @@
                     }
                     else if (componentData.prompts) { // role, task, format, tone etc.
                         const select = document.createElement('select');
+                        
+                        // Get active states for this component type
+                        const activeStates = appState.activeProject.promptActiveStates[key] || {};
+                        
+                        // Only show prompts that are active
                         Object.keys(componentData.prompts).forEach(promptKey => {
-                            const option = document.createElement('option');
-                            option.value = promptKey;
-                            // For keys that are already well-formatted, don't transform them.
-                            // A simple check: if it contains a space or is short, use it as is.
-                            option.textContent = (promptKey.includes(' ') || promptKey.length < 5) ? promptKey : promptKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            option.selected = componentState.selection === promptKey;
-                            select.appendChild(option);
+                            // Check if this prompt is active (default to true if not in activeStates)
+                            const isActive = activeStates[promptKey] !== false; // Default to true if not explicitly set
+                            
+                            if (isActive) {
+                                const option = document.createElement('option');
+                                option.value = promptKey;
+                                // For keys that are already well-formatted, don't transform them.
+                                // A simple check: if it contains a space or is short, use it as is.
+                                option.textContent = (promptKey.includes(' ') || promptKey.length < 5) ? promptKey : promptKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                option.selected = componentState.selection === promptKey;
+                                select.appendChild(option);
+                            }
                         });
+                        
                         const customOption = document.createElement('option');
                         customOption.value = 'custom';
                         customOption.textContent = 'Write My Own...';
@@ -739,6 +764,46 @@
                         const key = componentDiv?.dataset.componentKey;
                         if (key && appState.activeProject.builder[key]) appState.activeProject.builder[key].active = false;
                     }
+                    else if (target.closest('.component-group__prompt-set-checkbox')) {
+                        const checkbox = target;
+                        const path = checkbox.dataset.path;
+                        if (path) {
+                            const pathArray = path.split('.');
+                            handleCheckboxChange(pathArray, checkbox.checked);
+                        }
+                        shouldRender = false; // handleCheckboxChange already calls render()
+                    }
+                    else if (target.closest('.component-active-checkbox')) {
+                        const checkbox = target;
+                        const componentType = checkbox.dataset.componentType;
+                        const selection = checkbox.dataset.selection;
+                        const componentId = checkbox.dataset.componentId;
+                        
+                        if (componentType && selection) {
+                            // Update the prompt active state in appState
+                            if (!appState.activeProject.promptActiveStates[componentType]) {
+                                appState.activeProject.promptActiveStates[componentType] = {};
+                            }
+                            appState.activeProject.promptActiveStates[componentType][selection] = checkbox.checked;
+                            
+                            // Update the database
+                            fetch(`/api/user-components/${componentId}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    is_active: checkbox.checked ? 1 : 0
+                                })
+                            }).catch(error => {
+                                console.error('Error updating component active state:', error);
+                            });
+                            
+                            // Trigger UI update
+                            render();
+                        }
+                        shouldRender = false; // We already called render()
+                    }
                     else {
                         shouldRender = false;
                     }
@@ -987,7 +1052,7 @@
                             // Main row (Tier 1)
                             const row = document.createElement('tr');
                             row.innerHTML = `
-                                <td class="table__cell--active"><input type="checkbox" disabled ${component.is_active ? 'checked' : ''}></td>
+                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.component_type}" data-selection="${component.selection}"></td>
                                 <td class="table__cell--selection"><input type="text" value="${component.selection || ''}" class="input--selection"></td>
                                 <td class="table__cell--prompt"><textarea class="textarea--prompt">${component.prompt_value || ''}</textarea></td>
                             `;
@@ -1086,6 +1151,34 @@
             // Initialize components admin functionality
             initializeComponentsAdmin();
             
+            // Function to populate prompt active states from database
+            async function populatePromptActiveStates() {
+                try {
+                    const response = await fetch('/api/user-components');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const components = await response.json();
+                    
+                    // Group components by component_type and populate active states
+                    components.forEach(component => {
+                        const type = component.component_type;
+                        const selection = component.selection;
+                        
+                        if (!appState.activeProject.promptActiveStates[type]) {
+                            appState.activeProject.promptActiveStates[type] = {};
+                        }
+                        
+                        // Set the active state based on the database is_active field
+                        appState.activeProject.promptActiveStates[type][selection] = component.is_active === 1;
+                    });
+                    
+                    console.log('Prompt active states populated:', appState.activeProject.promptActiveStates);
+                } catch (error) {
+                    console.error('Error populating prompt active states:', error);
+                }
+            }
+            
             // Fetch components from backend before initializing app
             fetch('/api/starter-components')
                 .then(res => {
@@ -1108,6 +1201,11 @@
                             builderComponentData[type].prompts[component.selection] = component.prompt_value;
                         }
                     });
+                    
+                    // Populate prompt active states and then initialize app
+                    return populatePromptActiveStates();
+                })
+                .then(() => {
                     initializeApp();
                 })
                 .catch(err => {

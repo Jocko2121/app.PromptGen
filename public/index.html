@@ -44,16 +44,15 @@
                 <section class="panel collapsible-panel" id="database-components-panel" style="display: none;">
                     <div class="panel__header">
                         <h3>Database Components</h3>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
+                            <button id="toggle-details-btn" class="button--utility">Show Details</button>
+                            <button id="save-all-btn" disabled class="button--utility">Save All</button>
+                        </div>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
                     <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper components-admin">
-                            <div class="header__container">
-                                <h1 class="header__title">Prompt Components Admin</h1>
-                                <button id="save-all-btn" disabled class="button--utility">Save All</button>
-                            </div>
                             <div id="error-message" class="error error__message"></div>
-                            <button id="toggle-details-btn" class="button--utility">Show Details</button>
                             <div id="components-grouped-view"></div>
                         </div>
                     </div>
@@ -873,29 +872,26 @@
                     groupKeys.forEach(type => {
                         const groupSection = document.createElement('div');
                         groupSection.className = 'component-group';
-
-                        const groupTitleRow = document.createElement('div');
-                        groupTitleRow.className = 'group-title__row';
-
-                        const groupTitle = document.createElement('span');
-                        groupTitle.className = 'group-title__label';
+                        
+                        // Group title with checkbox
+                        const groupTitle = document.createElement('div');
+                        groupTitle.className = 'group-title';
                         groupTitle.innerHTML = `
-                            <input type="checkbox" disabled class="group-title__checkbox">
-                            <span class="group-title__text">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                            <div class="group-title__row">
+                                <div class="group-title__label">
+                                    <span class="group-title__text">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                </div>
+                            </div>
                         `;
+                        groupSection.appendChild(groupTitle);
 
-                        const addPromptBtn = document.createElement('button');
-                        addPromptBtn.textContent = 'Add Prompt';
-                        addPromptBtn.disabled = true;
-                        addPromptBtn.className = 'button--utility';
+                        // Create flex container for side-by-side layout
+                        const flexContainer = document.createElement('div');
+                        flexContainer.className = 'component-group__layout';
 
-                        groupTitleRow.appendChild(groupTitle);
-                        groupTitleRow.appendChild(addPromptBtn);
-
-                        const groupTitleContainer = document.createElement('h2');
-                        groupTitleContainer.className = 'group-title group-title__container';
-                        groupTitleContainer.appendChild(groupTitleRow);
-                        groupSection.appendChild(groupTitleContainer);
+                        // Left side - Table
+                        const tableContainer = document.createElement('div');
+                        tableContainer.className = 'component-group__table-container';
 
                         // Table for subcomponents
                         const table = document.createElement('table');
@@ -943,7 +939,55 @@
                         });
 
                         table.appendChild(tbody);
-                        groupSection.appendChild(table);
+                        tableContainer.appendChild(table);
+
+                        // Right side - Content Box
+                        const contentBox = document.createElement('div');
+                        contentBox.className = 'component-group__content-box';
+                        
+                        // Get prompt sets from appState
+                        const promptSetKeys = ['custom_build', 'blog_post'];
+                        const promptSetNames = {
+                            'custom_build': 'Custom Build',
+                            'blog_post': 'Blog Post'
+                        };
+                        
+                        let contentHTML = `<h4>Prompt Set Status</h4>`;
+                        contentHTML += `<p>Shows which prompt sets include ${type} components:</p>`;
+                        
+                        promptSetKeys.forEach(promptSetKey => {
+                            const promptSetName = promptSetNames[promptSetKey];
+                            let isActive = false;
+                            
+                            // Check if this component type is active in this prompt set
+                            if (promptSetKey === 'custom_build') {
+                                // Custom build has all components active by default
+                                isActive = true;
+                            } else if (promptSets[promptSetKey] && promptSets[promptSetKey][type]) {
+                                // Check the specific prompt set configuration
+                                isActive = promptSets[promptSetKey][type].active;
+                            }
+                            
+                            const statusText = isActive ? 'Active' : 'Inactive';
+                            const itemClass = isActive ? 'component-group__prompt-set-item component-group__prompt-set-item--active' : 'component-group__prompt-set-item';
+                            const statusClass = isActive ? 'component-group__status-text component-group__status-text--active' : 'component-group__status-text';
+                            
+                            contentHTML += `
+                                <div class="${itemClass}">
+                                    <input type="checkbox" ${isActive ? 'checked' : ''} disabled class="component-group__prompt-set-checkbox">
+                                    <span class="component-group__prompt-set-name">${promptSetName}</span>
+                                    <span class="${statusClass}">${statusText}</span>
+                                </div>
+                            `;
+                        });
+                        
+                        contentBox.innerHTML = contentHTML;
+
+                        // Add both to flex container
+                        flexContainer.appendChild(tableContainer);
+                        flexContainer.appendChild(contentBox);
+                        
+                        groupSection.appendChild(flexContainer);
                         groupedView.appendChild(groupSection);
                     });
                 } catch (error) {

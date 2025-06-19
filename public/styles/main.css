@@ -268,19 +268,28 @@ h4 {
     transform: rotate(-90deg);
 }
 
+/* 
+  Collapsible panel workaround:
+  Use max-height transition instead of grid-template-rows for smoother collapse/expand.
+  This avoids issues with min-height/padding/content interfering with grid-based collapse.
+  Adjust max-height as needed for content size.
+*/
 .collapsible-panel__content {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.35s ease-in-out;
+    transition: max-height 0.35s ease-in-out;
+    max-height: 0;
+    overflow: hidden;
 }
 
 .collapsible-panel:not(.collapsible-panel--collapsed) .collapsible-panel__content {
     grid-template-rows: 1fr;
-    margin-top: 1.5rem;
+    /* margin-top: 1.5rem; */
+    max-height: 2000px;
 }
 
 .collapsible-panel__inner-wrapper {
-    overflow: hidden;
+    /* overflow: hidden; */
     min-height: 0;
 }
 
@@ -686,7 +695,7 @@ body.light-mode .button--primary {
     width: 100%;
     box-sizing: border-box;
     resize: vertical;
-    min-height: 2.2em;
+    min-height: 3.3em;
     padding: 2px 4px;
     border: 1px solid var(--border-color);
     border-radius: 3px;
@@ -708,6 +717,7 @@ body.light-mode .button--primary {
 
 .collapsible-panel__inner-wrapper.components-admin .error__message {
     display: none;
+    overflow: hidden;
 }
 
 .collapsible-panel__inner-wrapper.components-admin .group-title__checkbox {
@@ -747,4 +757,71 @@ body.light-mode .button--primary {
     width: 75%;
     word-break: break-word;
     white-space: normal;
+}
+
+/* --- COMPONENTS ADMIN LAYOUT --- */
+.component-group__layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.component-group__table-container {
+    flex: 1;
+}
+
+.component-group__content-box {
+    width: 285px;
+    min-height: 200px;
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    background-color: var(--panel-bg-color);
+    border-radius: 4px;
+}
+
+.component-group__content-box h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text-color);
+    border-bottom: none;
+}
+
+.component-group__content-box p {
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: var(--text-color-secondary);
+}
+
+.component-group__prompt-set-item {
+    margin-bottom: 8px;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: var(--input-bg-color);
+    transition: background-color 0.2s ease;
+}
+
+.component-group__prompt-set-item--active {
+    background-color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.component-group__prompt-set-checkbox {
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: var(--success-color);
+}
+
+.component-group__prompt-set-name {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.component-group__status-text {
+    float: right;
+    font-size: 0.8em;
+    color: var(--text-color-secondary);
+}
+
+.component-group__status-text--active {
+    color: var(--success-color);
 } 

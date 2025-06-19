@@ -59,6 +59,7 @@ function updateUserComponent(id, component) {
         const stmt = db.prepare(`
             UPDATE user_components 
             SET 
+                component_type = ?,
                 is_active = ?,
                 selection = ?,
                 prompt_value = ?,
@@ -67,6 +68,7 @@ function updateUserComponent(id, component) {
         `);
 
         const result = stmt.run(
+            component.component_type,
             component.is_active ? 1 : 0,
             component.selection,
             component.prompt_value,

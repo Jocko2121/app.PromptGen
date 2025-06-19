@@ -678,55 +678,48 @@ body.light-mode .button--primary {
 .collapsible-panel__inner-wrapper.components-admin .group-title__label {
     display: flex;
     align-items: center;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .input--selection {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 2px 4px;
-    border: 1px solid var(--border-color);
-    border-radius: 3px;
-    background: var(--input-bg-color);
-    color: var(--text-color);
-    font-size: 0.97em;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .textarea--prompt {
-    width: 100%;
-    box-sizing: border-box;
-    resize: vertical;
-    min-height: 3.3em;
-    padding: 2px 4px;
-    border: 1px solid var(--border-color);
-    border-radius: 3px;
-    background: var(--input-bg-color);
-    color: var(--text-color);
-    font-size: 0.97em;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .header__container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .header__title {
-    margin-bottom: 0;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .error__message {
-    display: none;
-    overflow: hidden;
-}
-
-.collapsible-panel__inner-wrapper.components-admin .group-title__checkbox {
-    margin-right: 8px;
-    vertical-align: middle;
+    gap: 8px;
 }
 
 .collapsible-panel__inner-wrapper.components-admin .group-title__text {
-    vertical-align: middle;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__rename-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 12px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__rename-btn:hover {
+    opacity: 1;
+    background-color: #f0f0f0;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__rename-input {
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--input-bg-color);
+    color: var(--text-color);
+    min-width: 100px;
+    outline: none;
+    font-family: inherit;
+    text-transform: none !important;
+    text-decoration: none !important;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__rename-input:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 .collapsible-panel__inner-wrapper.components-admin .group-title__container {
@@ -833,4 +826,58 @@ body.light-mode .button--primary {
 
 .component-group__status-text--active {
     color: var(--success-color);
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__rename-input:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.collapsible-panel__inner-wrapper.components-admin .input--selection {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2px 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--input-bg-color);
+    color: var(--text-color);
+    font-size: 0.97em;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .textarea--prompt {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 3.3em;
+    padding: 2px 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--input-bg-color);
+    color: var(--text-color);
+    font-size: 0.97em;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .header__container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .header__title {
+    margin-bottom: 0;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .error__message {
+    display: none;
+    overflow: hidden;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__checkbox {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.collapsible-panel__inner-wrapper.components-admin .group-title__text {
+    vertical-align: middle;
 } 

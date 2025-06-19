@@ -276,6 +276,8 @@
                         context: {},
                         constraints: {}
                     },
+                    // New: Store all components in appState
+                    components: [],
                     contentBlocks: {
                         userOutline: { activeDraftId: `draft-${now+1}`, drafts: [{ id: `draft-${now+1}`, timestamp: new Date().toISOString(), content: '' }] },
                         finalPrompt: { activeDraftId: `draft-${now+2}`, drafts: [{ id: `draft-${now+2}`, timestamp: new Date().toISOString(), content: '' }] },
@@ -804,6 +806,129 @@
                         }
                         shouldRender = false; // We already called render()
                     }
+                    else if (target.closest('.group-title__rename-btn')) {
+                        const renameBtn = target;
+                        const componentType = renameBtn.dataset.componentType;
+                        const titleText = renameBtn.parentElement.querySelector('.group-title__text');
+                        
+                        if (componentType && titleText) {
+                            // Create input outside the problematic parent element
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            // Use the display text instead of the raw componentType
+                            input.value = titleText.textContent;
+                            input.className = 'group-title__rename-input';
+                            
+                            // Style the input to be completely isolated with more aggressive CSS reset
+                            input.style.cssText = `
+                                position: absolute !important;
+                                z-index: 1000 !important;
+                                min-width: 120px !important;
+                                border: 2px solid #007bff !important;
+                                border-radius: 4px !important;
+                                padding: 4px 8px !important;
+                                font-size: 14px !important;
+                                font-weight: normal !important;
+                                outline: none !important;
+                                font-family: Arial, sans-serif !important;
+                                text-transform: none !important;
+                                text-decoration: none !important;
+                                margin: 0 !important;
+                                box-sizing: border-box !important;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+                                text-align: left !important;
+                                letter-spacing: normal !important;
+                                word-spacing: normal !important;
+                                line-height: normal !important;
+                                vertical-align: baseline !important;
+                                direction: ltr !important;
+                                unicode-bidi: normal !important;
+                                writing-mode: horizontal-tb !important;
+                            `;
+                            
+                            // Position the input over the title text
+                            const rect = titleText.getBoundingClientRect();
+                            input.style.left = rect.left + 'px';
+                            input.style.top = rect.top + 'px';
+                            
+                            // Add to body to avoid parent CSS inheritance
+                            document.body.appendChild(input);
+                            input.focus();
+                            input.select();
+                            
+                            // Handle save on Enter or blur
+                            const saveRename = async () => {
+                                // Store exactly what the user typed, just trim whitespace
+                                const newName = input.value.trim();
+                                
+                                if (newName && newName !== componentType) {
+                                    try {
+                                        // Use appState components instead of fetching from database
+                                        const components = appState.activeProject.components;
+                                        
+                                        const componentsToUpdate = components.filter(c => c.component_type === componentType);
+                                        
+                                        if (componentsToUpdate.length === 0) {
+                                            alert('No components found to rename. Please try again.');
+                                            return;
+                                        }
+                                        
+                                        // Update each component with the new name
+                                        const updatePromises = componentsToUpdate.map(component => 
+                                            fetch(`/api/user-components/${component.id}`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    component_type: newName,
+                                                    is_active: component.is_active,
+                                                    selection: component.selection,
+                                                    prompt_value: component.prompt_value,
+                                                    user_value: component.user_value
+                                                })
+                                            })
+                                        );
+                                        
+                                        await Promise.all(updatePromises);
+                                        
+                                        // Update appState components array
+                                        componentsToUpdate.forEach(component => {
+                                            component.component_type = newName;
+                                        });
+                                        
+                                        // Update appState references
+                                        updateComponentTypeInAppState(componentType, newName);
+                                        
+                                        // Re-initialize the components admin panel
+                                        await initializeComponentsAdmin();
+                                        
+                                    } catch (error) {
+                                        console.error('Error renaming component:', error);
+                                        alert('Failed to rename component. Please try again.');
+                                    }
+                                }
+                                
+                                // Remove the input
+                                input.remove();
+                            };
+                            
+                            // Handle cancel on Escape
+                            const cancelRename = () => {
+                                input.remove();
+                            };
+                            
+                            input.addEventListener('blur', saveRename);
+                            input.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    saveRename();
+                                } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelRename();
+                                }
+                            });
+                        }
+                        shouldRender = false; // We handle rendering manually
+                    }
                     else {
                         shouldRender = false;
                     }
@@ -971,6 +1096,41 @@
                 console.log('=== END DEBUG ===');
             }
 
+            // Function to update component type references in appState when renaming
+            function updateComponentTypeInAppState(oldName, newName) {
+                console.log(`Updating component type from "${oldName}" to "${newName}" in appState`);
+                
+                // Update builder references
+                if (appState.activeProject.builder[oldName]) {
+                    appState.activeProject.builder[newName] = appState.activeProject.builder[oldName];
+                    delete appState.activeProject.builder[oldName];
+                }
+                
+                // Update promptActiveStates references
+                if (appState.activeProject.promptActiveStates[oldName]) {
+                    appState.activeProject.promptActiveStates[newName] = appState.activeProject.promptActiveStates[oldName];
+                    delete appState.activeProject.promptActiveStates[oldName];
+                }
+                
+                // Update promptSets references
+                Object.keys(appState.activeProject.promptSets).forEach(promptSetKey => {
+                    const promptSet = appState.activeProject.promptSets[promptSetKey];
+                    if (promptSet[oldName]) {
+                        promptSet[newName] = promptSet[oldName];
+                        delete promptSet[oldName];
+                    }
+                });
+                
+                // Update builderComponentData references
+                if (builderComponentData[oldName]) {
+                    builderComponentData[newName] = builderComponentData[oldName];
+                    builderComponentData[newName].title = newName.charAt(0).toUpperCase() + newName.slice(1);
+                    delete builderComponentData[oldName];
+                }
+                
+                console.log('appState updated successfully');
+            }
+
             // --- COMPONENTS ADMIN FUNCTIONALITY ---
             async function initializeComponentsAdmin() {
                 let showTier2 = false;
@@ -988,12 +1148,8 @@
                 });
 
                 try {
-                    // Fetch all components
-                    const response = await fetch('/api/user-components');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const components = await response.json();
+                    // Use appState components instead of fetching from database
+                    const components = appState.activeProject.components;
 
                     // Group components by component_type
                     const grouped = {};
@@ -1018,7 +1174,8 @@
                         groupTitle.innerHTML = `
                             <div class="group-title__row">
                                 <div class="group-title__label">
-                                    <span class="group-title__text">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                    <span class="group-title__text" data-component-type="${type}">${type}</span>
+                                    <button class="group-title__rename-btn" data-component-type="${type}" title="Rename component">✏️</button>
                                 </div>
                             </div>
                         `;
@@ -1154,11 +1311,8 @@
             // Function to populate prompt active states from database
             async function populatePromptActiveStates() {
                 try {
-                    const response = await fetch('/api/user-components');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const components = await response.json();
+                    // Use appState components instead of fetching from database
+                    const components = appState.activeProject.components;
                     
                     // Group components by component_type and populate active states
                     components.forEach(component => {
@@ -1179,20 +1333,24 @@
                 }
             }
             
-            // Fetch components from backend before initializing app
-            fetch('/api/starter-components')
-                .then(res => {
-                    if (!res.ok) throw new Error('Failed to fetch starter components');
-                    return res.json();
-                })
-                .then(data => {
-                    // Transform array into object grouped by component_type
+            // Function to load components into appState
+            async function loadComponentsIntoAppState() {
+                try {
+                    const response = await fetch('/api/user-components');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const components = await response.json();
+                    appState.activeProject.components = components;
+                    console.log('Components loaded into appState:', components.length, 'components');
+                    
+                    // Build builderComponentData from actual components
                     builderComponentData = {};
-                    data.forEach(component => {
+                    components.forEach(component => {
                         const type = component.component_type;
                         if (!builderComponentData[type]) {
                             builderComponentData[type] = {
-                                title: type.charAt(0).toUpperCase() + type.slice(1),
+                                title: type,
                                 prompts: {}
                             };
                         }
@@ -1201,15 +1359,24 @@
                             builderComponentData[type].prompts[component.selection] = component.prompt_value;
                         }
                     });
-                    
-                    // Populate prompt active states and then initialize app
+                    console.log('builderComponentData built from components:', builderComponentData);
+                } catch (error) {
+                    console.error('Error loading components into appState:', error);
+                }
+            }
+            
+            // Fetch components from backend before initializing app
+            loadComponentsIntoAppState()
+                .then(() => {
                     return populatePromptActiveStates();
                 })
                 .then(() => {
+                    // Initialize components admin functionality AFTER components are loaded
+                    initializeComponentsAdmin();
                     initializeApp();
                 })
                 .catch(err => {
-                    alert('Error loading starter components: ' + err.message);
+                    alert('Error loading components: ' + err.message);
                 });
         });
     </script>

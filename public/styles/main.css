@@ -285,7 +285,7 @@ h4 {
 .collapsible-panel:not(.collapsible-panel--collapsed) .collapsible-panel__content {
     grid-template-rows: 1fr;
     /* margin-top: 1.5rem; */
-    max-height: 2000px;
+    max-height: 10000px;
 }
 
 .collapsible-panel__inner-wrapper {
@@ -805,15 +805,24 @@ body.light-mode .button--primary {
     background-color: rgba(40, 167, 69, 0.1);
 }
 
+.component-group__prompt-set-radio {
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: var(--success-color);
+    cursor: pointer;
+}
+
 .component-group__prompt-set-checkbox {
     margin-right: 8px;
     transform: scale(1.2);
     accent-color: var(--success-color);
+    cursor: pointer;
 }
 
 .component-group__prompt-set-name {
     font-weight: 500;
     color: var(--text-color);
+    cursor: pointer;
 }
 
 .component-group__status-text {

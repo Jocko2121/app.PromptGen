@@ -232,17 +232,6 @@
             // builderComponentData has been moved to the backend and is now seeded from starter-components.js into the database.
             let builderComponentData = {};
 
-            const promptSets = {
-                blog_post: {
-                    role: { active: true, selection: 'custom', promptValue: 'Act as an expert blogger and SEO specialist.', userValue: 'Act as an expert blogger and SEO specialist.' },
-                    task: { active: true, selection: 'write', promptValue: 'a comprehensive and engaging blog post about [topic].', userValue: '' },
-                    context: { active: false, value: '' },
-                    format: { active: true, selection: 'paragraphs', promptValue: 'Placeholder: Format the output as standard paragraphs.', userValue: '' },
-                    tone: { active: true, selection: 'casual', promptValue: 'Placeholder: Use a casual and friendly tone.', userValue: '' },
-                    constraints: { active: true, value: 'The blog post should be at least 800 words and include a clear call to action.' }
-                }
-            };
-
             // --- APPLICATION STATE (THE SINGLE SOURCE OF TRUTH) ---
             function getDefaultAppState() {
                 const now = Date.now();
@@ -250,6 +239,16 @@
                     currentProjectId: `proj-${now}`,
                     projectName: 'Untitled Project',
                     activePromptSet: 'custom_build',
+                    promptSets: {
+                        blog_post: {
+                            role: { active: true, selection: 'custom', promptValue: 'Act as an expert blogger and SEO specialist.', userValue: 'Act as an expert blogger and SEO specialist.' },
+                            task: { active: true, selection: 'write', promptValue: 'a comprehensive and engaging blog post about [topic].', userValue: '' },
+                            context: { active: false, value: '' },
+                            format: { active: true, selection: 'paragraphs', promptValue: 'Placeholder: Format the output as standard paragraphs.', userValue: '' },
+                            tone: { active: true, selection: 'casual', promptValue: 'Placeholder: Use a casual and friendly tone.', userValue: '' },
+                            constraints: { active: true, value: 'The blog post should be at least 800 words and include a clear call to action.' }
+                        }
+                    },
                     builder: {
                         role: { active: true, selection: 'custom', promptValue: '', userValue: '' },
                         task: { active: true, selection: 'custom', promptValue: '', userValue: '' },
@@ -407,17 +406,28 @@
             }
 
             function renderBuilderPallet(builderState) {
+                console.log('=== RENDER BUILDER PALLET DEBUG ===');
+                console.log('Builder state:', builderState);
+                
                 const palletContainer = document.getElementById('prompt-builder-pallet');
                 if (!palletContainer) return;
                 palletContainer.innerHTML = '';
 
                 Object.keys(builderState).forEach(key => {
                     const componentState = builderState[key];
-                    if (!componentState.active) return;
+                    console.log(`Component ${key}:`, componentState);
+                    if (!componentState.active) {
+                        console.log(`Skipping ${key} - not active`);
+                        return;
+                    }
 
                     const componentData = builderComponentData[key];
-                    if (!componentData) return;
+                    if (!componentData) {
+                        console.log(`Skipping ${key} - no component data`);
+                        return;
+                    }
 
+                    console.log(`Rendering component ${key}`);
                     const componentDiv = document.createElement('div');
                     componentDiv.className = 'prompt-builder__component';
                     componentDiv.dataset.componentKey = key;
@@ -475,6 +485,7 @@
                     componentDiv.appendChild(controls);
                     palletContainer.appendChild(componentDiv);
                 });
+                console.log('=== END RENDER DEBUG ===');
             }
 
             function renderTextTransformer(transformerState) {
@@ -513,12 +524,11 @@
                 const builderState = appState.activeProject.builder;
                 let template;
 
-                if (promptSetKey === 'custom_build') {
-                    template = getDefaultAppState().builder;
-                    Object.keys(template).forEach(key => template[key].active = true);
-                } else {
-                    template = JSON.parse(JSON.stringify(promptSets[promptSetKey]));
+                // Check if the prompt set exists, if not create it
+                if (!appState.activeProject.promptSets[promptSetKey]) {
+                    appState.activeProject.promptSets[promptSetKey] = {};
                 }
+                template = JSON.parse(JSON.stringify(appState.activeProject.promptSets[promptSetKey]));
 
                 if (template) {
                     Object.keys(builderState).forEach(key => {
@@ -760,6 +770,15 @@
                             shouldRender = true;
                          }
                     }
+                    else if (target.closest('.component-group__prompt-set-checkbox')) {
+                        const checkbox = target;
+                        const path = checkbox.dataset.path;
+                        if (path) {
+                            const pathArray = path.split('.');
+                            handleCheckboxChange(pathArray, checkbox.checked);
+                        }
+                        shouldRender = false; // handleCheckboxChange already calls render()
+                    }
 
                     if(shouldRender) render();
                 });
@@ -798,7 +817,7 @@
 
                 // Initial Prompt Set setup
                 const promptSetsContainer = document.getElementById('prompt-sets-list');
-                const promptSetKeys = ['custom_build', ...Object.keys(promptSets)];
+                const promptSetKeys = Object.keys(appState.activeProject.promptSets);
                 promptSetsContainer.innerHTML = '';
                 promptSetKeys.forEach(key => {
                     const div = document.createElement('div');
@@ -830,6 +849,61 @@
                         componentState.promptValue = componentData.prompts[newState.selection] || '';
                     }
                 }
+            }
+
+            // Generic checkbox handler for all checkbox interactions
+            function handleCheckboxChange(checkboxPath, value) {
+                console.log('=== CHECKBOX CHANGE DEBUG ===');
+                console.log('Path:', checkboxPath);
+                console.log('Value:', value);
+                console.log('Current active prompt set:', appState.activeProject.activePromptSet);
+                console.log('Available prompt sets:', Object.keys(appState.activeProject.promptSets));
+                console.log('Blog post components:', appState.activeProject.promptSets.blog_post);
+                console.log('Custom build components:', appState.activeProject.promptSets.custom_build);
+                
+                // Navigate to the target object in appState
+                let target = appState;
+                for (let i = 0; i < checkboxPath.length - 1; i++) {
+                    target = target[checkboxPath[i]];
+                    if (!target) {
+                        console.error(`Path not found: ${checkboxPath.join('.')}`);
+                        return;
+                    }
+                }
+                
+                // Set the final property
+                const finalKey = checkboxPath[checkboxPath.length - 1];
+                target[finalKey] = value;
+                console.log(`Updated ${checkboxPath.join('.')} to ${value}`);
+                
+                // Check if this change affects the current prompt set
+                if (checkboxPath[0] === 'activeProject' && checkboxPath[1] === 'promptSets') {
+                    const promptSetKey = checkboxPath[2];
+                    const componentType = checkboxPath[3];
+                    
+                    console.log('Prompt set key:', promptSetKey);
+                    console.log('Component type:', componentType);
+                    console.log('Is current prompt set?', promptSetKey === appState.activeProject.activePromptSet);
+                    
+                    // If this is the current active prompt set, update the builder
+                    if (promptSetKey === appState.activeProject.activePromptSet) {
+                        console.log('Updating builder for current prompt set');
+                        // For Custom Build, ensure the component exists in the builder
+                        if (!appState.activeProject.builder[componentType]) {
+                            console.log('Creating missing builder component');
+                            appState.activeProject.builder[componentType] = { active: true, selection: 'custom', promptValue: '', userValue: '' };
+                        }
+                        appState.activeProject.builder[componentType].active = value;
+                        console.log(`Builder ${componentType}.active set to ${value}`);
+                    } else {
+                        console.log('Not current prompt set, skipping builder update');
+                    }
+                }
+                
+                // Trigger UI update
+                console.log('Triggering render...');
+                render();
+                console.log('=== END DEBUG ===');
             }
 
             // --- COMPONENTS ADMIN FUNCTIONALITY ---
@@ -953,7 +1027,7 @@
                         };
                         
                         let contentHTML = `<h4>Prompt Set Status</h4>`;
-                        contentHTML += `<p>Shows which prompt sets include ${type} components:</p>`;
+                        contentHTML += `<p>Select which prompt set should include ${type} components:</p>`;
                         
                         promptSetKeys.forEach(promptSetKey => {
                             const promptSetName = promptSetNames[promptSetKey];
@@ -961,20 +1035,26 @@
                             
                             // Check if this component type is active in this prompt set
                             if (promptSetKey === 'custom_build') {
-                                // Custom build has all components active by default
-                                isActive = true;
-                            } else if (promptSets[promptSetKey] && promptSets[promptSetKey][type]) {
+                                // Check if custom_build exists in promptSets, if not create it with default active state
+                                if (!appState.activeProject.promptSets[promptSetKey]) {
+                                    appState.activeProject.promptSets[promptSetKey] = {};
+                                }
+                                if (!appState.activeProject.promptSets[promptSetKey][type]) {
+                                    appState.activeProject.promptSets[promptSetKey][type] = { active: true };
+                                }
+                                isActive = appState.activeProject.promptSets[promptSetKey][type].active;
+                            } else if (appState.activeProject.promptSets[promptSetKey] && appState.activeProject.promptSets[promptSetKey][type]) {
                                 // Check the specific prompt set configuration
-                                isActive = promptSets[promptSetKey][type].active;
+                                isActive = appState.activeProject.promptSets[promptSetKey][type].active;
                             }
                             
                             const statusText = isActive ? 'Active' : 'Inactive';
-                            const itemClass = isActive ? 'component-group__prompt-set-item component-group__prompt-set-item--active' : 'component-group__prompt-set-item';
-                            const statusClass = isActive ? 'component-group__status-text component-group__status-text--active' : 'component-group__status-text';
+                            const itemClass = isActive ? 'component-group__prompt-set-item component-group__prompt-set-item--active' : 'component-group__prompt-set-item component-group__prompt-set-item--inactive';
+                            const statusClass = isActive ? 'component-group__status-text component-group__status-text--active' : 'component-group__status-text component-group__status-text--inactive';
                             
                             contentHTML += `
-                                <div class="${itemClass}">
-                                    <input type="checkbox" ${isActive ? 'checked' : ''} disabled class="component-group__prompt-set-checkbox">
+                                <div class="${itemClass}" data-component-type="${type}" data-prompt-set="${promptSetKey}">
+                                    <input type="checkbox" ${isActive ? 'checked' : ''} class="component-group__prompt-set-checkbox" data-path="activeProject.promptSets.${promptSetKey}.${type}.active">
                                     <span class="component-group__prompt-set-name">${promptSetName}</span>
                                     <span class="${statusClass}">${statusText}</span>
                                 </div>

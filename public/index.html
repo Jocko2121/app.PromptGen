@@ -806,126 +806,13 @@
                         }
                         shouldRender = false; // We already called render()
                     }
-                    else if (target.closest('.group-title__rename-btn')) {
-                        const renameBtn = target;
-                        const componentType = renameBtn.dataset.componentType;
-                        const titleText = renameBtn.parentElement.querySelector('.group-title__text');
+                    else if (target.closest('.group-title__editable-text')) {
+                        const input = target;
+                        const originalType = input.dataset.originalType;
+                        const newType = input.value.trim();
                         
-                        if (componentType && titleText) {
-                            // Create input outside the problematic parent element
-                            const input = document.createElement('input');
-                            input.type = 'text';
-                            // Use the display text instead of the raw componentType
-                            input.value = titleText.textContent;
-                            input.className = 'group-title__rename-input';
-                            
-                            // Style the input to be completely isolated with more aggressive CSS reset
-                            input.style.cssText = `
-                                position: absolute !important;
-                                z-index: 1000 !important;
-                                min-width: 120px !important;
-                                border: 2px solid #007bff !important;
-                                border-radius: 4px !important;
-                                padding: 4px 8px !important;
-                                font-size: 14px !important;
-                                font-weight: normal !important;
-                                outline: none !important;
-                                font-family: Arial, sans-serif !important;
-                                text-transform: none !important;
-                                text-decoration: none !important;
-                                margin: 0 !important;
-                                box-sizing: border-box !important;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-                                text-align: left !important;
-                                letter-spacing: normal !important;
-                                word-spacing: normal !important;
-                                line-height: normal !important;
-                                vertical-align: baseline !important;
-                                direction: ltr !important;
-                                unicode-bidi: normal !important;
-                                writing-mode: horizontal-tb !important;
-                            `;
-                            
-                            // Position the input over the title text
-                            const rect = titleText.getBoundingClientRect();
-                            input.style.left = rect.left + 'px';
-                            input.style.top = rect.top + 'px';
-                            
-                            // Add to body to avoid parent CSS inheritance
-                            document.body.appendChild(input);
-                            input.focus();
-                            input.select();
-                            
-                            // Handle save on Enter or blur
-                            const saveRename = async () => {
-                                // Store exactly what the user typed, just trim whitespace
-                                const newName = input.value.trim();
-                                
-                                if (newName && newName !== componentType) {
-                                    try {
-                                        // Use appState components instead of fetching from database
-                                        const components = appState.activeProject.components;
-                                        
-                                        const componentsToUpdate = components.filter(c => c.component_type === componentType);
-                                        
-                                        if (componentsToUpdate.length === 0) {
-                                            alert('No components found to rename. Please try again.');
-                                            return;
-                                        }
-                                        
-                                        // Update each component with the new name
-                                        const updatePromises = componentsToUpdate.map(component => 
-                                            fetch(`/api/user-components/${component.id}`, {
-                                                method: 'PUT',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    component_type: newName,
-                                                    is_active: component.is_active,
-                                                    selection: component.selection,
-                                                    prompt_value: component.prompt_value,
-                                                    user_value: component.user_value
-                                                })
-                                            })
-                                        );
-                                        
-                                        await Promise.all(updatePromises);
-                                        
-                                        // Update appState components array
-                                        componentsToUpdate.forEach(component => {
-                                            component.component_type = newName;
-                                        });
-                                        
-                                        // Update appState references
-                                        updateComponentTypeInAppState(componentType, newName);
-                                        
-                                        // Re-initialize the components admin panel
-                                        await initializeComponentsAdmin();
-                                        
-                                    } catch (error) {
-                                        console.error('Error renaming component:', error);
-                                        alert('Failed to rename component. Please try again.');
-                                    }
-                                }
-                                
-                                // Remove the input
-                                input.remove();
-                            };
-                            
-                            // Handle cancel on Escape
-                            const cancelRename = () => {
-                                input.remove();
-                            };
-                            
-                            input.addEventListener('blur', saveRename);
-                            input.addEventListener('keydown', (e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    saveRename();
-                                } else if (e.key === 'Escape') {
-                                    e.preventDefault();
-                                    cancelRename();
-                                }
-                            });
+                        if (newType && newType !== originalType) {
+                            handleComponentTypeRename(originalType, newType);
                         }
                         shouldRender = false; // We handle rendering manually
                     }
@@ -1097,6 +984,39 @@
             }
 
             // Function to update component type references in appState when renaming
+            async function handleComponentTypeRename(oldType, newType) {
+                try {
+                    const components = appState.activeProject.components.filter(c => c.component_type === oldType);
+                    await Promise.all(components.map(component => 
+                        fetch(`/api/user-components/${component.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                component_type: newType,
+                                is_active: component.is_active,
+                                selection: component.selection,
+                                prompt_value: component.prompt_value,
+                                user_value: component.user_value
+                            })
+                        })
+                    ));
+                    
+                    updateComponentTypeInAppState(oldType, newType);
+                    
+                    const input = document.querySelector(`[data-original-type="${oldType}"]`);
+                    if (input) {
+                        input.dataset.originalType = newType;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error renaming component:', error);
+                    const input = document.querySelector(`[data-original-type="${oldType}"]`);
+                    if (input) {
+                        input.value = oldType;
+                    }
+                }
+            }
+
             function updateComponentTypeInAppState(oldName, newName) {
                 console.log(`Updating component type from "${oldName}" to "${newName}" in appState`);
                 
@@ -1174,8 +1094,7 @@
                         groupTitle.innerHTML = `
                             <div class="group-title__row">
                                 <div class="group-title__label">
-                                    <span class="group-title__text" data-component-type="${type}">${type}</span>
-                                    <button class="group-title__rename-btn" data-component-type="${type}" title="Rename component">✏️</button>
+                                    <input type="text" class="group-title__editable-text" value="${type}" data-original-type="${type}">
                                 </div>
                             </div>
                         `;

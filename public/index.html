@@ -424,6 +424,7 @@
             function renderBuilderPallet(builderState) {
                 console.log('=== RENDER BUILDER PALLET DEBUG ===');
                 console.log('Builder state:', builderState);
+                console.log('builderComponentData:', builderComponentData);
                 
                 const palletContainer = document.getElementById('prompt-builder-pallet');
                 if (!palletContainer) return;
@@ -438,12 +439,13 @@
                     }
 
                     const componentData = builderComponentData[key];
+                    console.log(`Component data for ${key}:`, componentData);
                     if (!componentData) {
                         console.log(`Skipping ${key} - no component data`);
                         return;
                     }
 
-                    console.log(`Rendering component ${key}`);
+                    console.log(`Rendering component ${key} with title:`, componentData.title);
                     const componentDiv = document.createElement('div');
                     componentDiv.className = 'prompt-builder__component';
                     componentDiv.dataset.componentKey = key;
@@ -568,6 +570,326 @@
                 }
             }
 
+            // --- EVENT HANDLER FUNCTIONS ---
+            
+            // UI Handlers
+            function handlePanelToggle(target) {
+                const panel = target.closest('.collapsible-panel');
+                if (panel) {
+                    panel.classList.toggle('collapsible-panel--collapsed');
+                }
+            }
+
+            function handlePromptSetChange(target) {
+                const promptSetKey = target.dataset.promptSetKey;
+                if (promptSetKey && promptSetKey !== appState.activeProject.activePromptSet) {
+                    applyPromptSet(promptSetKey);
+                    render(); // Explicitly call render after applying a prompt set
+                }
+            }
+
+            // Project Handlers
+            function handleProjectSave() {
+                appState.activeProject.lastModified = new Date().toISOString();
+                const existingProjectIndex = appState.savedProjects.findIndex(p => p.currentProjectId === appState.activeProject.currentProjectId);
+                if (existingProjectIndex > -1) {
+                    // Update existing project in place
+                    appState.savedProjects[existingProjectIndex] = JSON.parse(JSON.stringify(appState.activeProject));
+                } else {
+                    // Add to end if not present
+                    appState.savedProjects.push(JSON.parse(JSON.stringify(appState.activeProject)));
+                }
+                render();
+            }
+
+            function handleProjectSaveAs() {
+                // Create new project with current content
+                const newProject = JSON.parse(JSON.stringify(appState.activeProject));
+                newProject.currentProjectId = `proj-${Date.now()}`;
+                // Remove any trailing (Copy) to avoid stacking
+                newProject.projectName = appState.activeProject.projectName.replace(/( \(Copy\))+$/, '') + ' (Copy)';
+                newProject.lastModified = new Date().toISOString();
+                appState.savedProjects.push(newProject);
+                appState.activeProject = newProject;
+                render(); // Explicitly call render to update the UI
+            }
+
+            function handleProjectLoad(target) {
+                const projectId = target.closest('li').dataset.projectId;
+                const loadedProject = appState.savedProjects.find(p => p.currentProjectId === projectId);
+                if (loadedProject) {
+                    appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
+                    applyPromptSet(appState.activeProject.activePromptSet);
+                    render();
+                }
+            }
+
+            function handleProjectDelete(target) {
+                const projectId = target.dataset.projectId;
+                appState.savedProjects = appState.savedProjects.filter(p => p.currentProjectId !== projectId);
+            }
+
+            function handleAdminReset() {
+                appState = { savedProjects: [], activeProject: getDefaultAppState() };
+                applyPromptSet(appState.activeProject.activePromptSet);
+            }
+
+            // Draft Handlers
+            function handleDraftSave(target) {
+                const blockKey = target.parentElement.dataset.contentBlock;
+                const textarea = document.getElementById(`${blockKey}-textarea`);
+                if (blockKey && textarea) {
+                    const contentBlock = appState.activeProject.contentBlocks[blockKey];
+                    const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: textarea.value };
+                    contentBlock.drafts.push(newDraft);
+                    contentBlock.activeDraftId = newDraft.id;
+                }
+            }
+
+            function handleDraftDelete(target) {
+                const blockKey = target.parentElement.dataset.contentBlock;
+                const contentBlock = appState.activeProject.contentBlocks[blockKey];
+                if (contentBlock && contentBlock.drafts.length > 1) {
+                    contentBlock.drafts = contentBlock.drafts.filter(d => d.id !== contentBlock.activeDraftId);
+                    contentBlock.activeDraftId = contentBlock.drafts[contentBlock.drafts.length - 1].id;
+                }
+            }
+
+            // Text Transformer Handlers
+            function handleTextTransformerAction(target) {
+                appState.activeProject.textTransformer.activeAction = target.dataset.action;
+            }
+
+            function handleTextTransformExecute() {
+                const { textTransformer, contentBlocks } = appState.activeProject;
+                const action = textTransformer.activeAction;
+                const actionConfig = textTransformer.actions[action];
+
+                const inputBlock = contentBlocks.textTransformerInput;
+                const outputBlock = contentBlocks.textTransformerOutput;
+                const currentInput = inputBlock.drafts.find(d => d.id === inputBlock.activeDraftId)?.content || '';
+
+                let transformedContent;
+                if (actionConfig.activeOption) {
+                    transformedContent = `[Mock '${action}' ('${actionConfig.activeOption}') result for]:\n\n${currentInput}`;
+                } else {
+                    transformedContent = `[Mock '${action}' result for]:\n\n${currentInput}`;
+                }
+
+                const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: transformedContent };
+                outputBlock.drafts.push(newDraft);
+                outputBlock.activeDraftId = newDraft.id;
+            }
+
+            function handleTextCopyUp() {
+                const inputBlock = appState.activeProject.contentBlocks.textTransformerInput;
+                const outputBlock = appState.activeProject.contentBlocks.textTransformerOutput;
+                const currentOutput = outputBlock.drafts.find(d => d.id === outputBlock.activeDraftId)?.content || '';
+
+                const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: currentOutput };
+                inputBlock.drafts.push(newDraft);
+                inputBlock.activeDraftId = newDraft.id;
+            }
+
+            // Final Prompt Handlers
+            function handleCopyToClipboard(target) {
+                const finalPromptTextarea = document.getElementById('finalPrompt-textarea');
+                if (finalPromptTextarea && finalPromptTextarea.value) {
+                    navigator.clipboard.writeText(finalPromptTextarea.value).then(() => {
+                        target.textContent = 'Copied!';
+                        target.classList.add('copied');
+                        setTimeout(() => {
+                            target.textContent = 'Copy';
+                            target.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        target.textContent = 'Error!';
+                        setTimeout(() => {
+                            target.textContent = 'Copy';
+                        }, 2000);
+                    });
+                }
+            }
+
+            function handleClearContent() {
+                const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
+                const activeDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
+                if (activeDraft) {
+                    activeDraft.content = '';
+                }
+            }
+
+            // Content Assembly Handlers
+            function handleInsertOutline() {
+                const userOutlineState = appState.activeProject.contentBlocks.userOutline;
+                const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
+
+                const userOutlineDraft = userOutlineState.drafts.find(d => d.id === userOutlineState.activeDraftId);
+                const finalPromptDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
+
+                if (userOutlineDraft && finalPromptDraft && userOutlineDraft.content.trim()) {
+                    const textToAppend = `\n\n**CONTENT FRAMEWORK:**\n\nYou have been provided with a set of primary instructions above. Now, use the following user-provided outline as the detailed structure for the content. Adhere to this outline, expanding on each point to build out the full response.\n\n**USER-PROVIDED OUTLINE:**\n${userOutlineDraft.content}`;
+
+                    if (finalPromptDraft.content.trim()) {
+                        finalPromptDraft.content += textToAppend;
+                    } else {
+                        finalPromptDraft.content = textToAppend.trim();
+                    }
+                }
+            }
+
+            function handleAssembleAll() {
+                const allOutputs = Object.keys(appState.activeProject.builder)
+                    .map(key => {
+                        const state = appState.activeProject.builder[key];
+                        if (!state.active) return null;
+
+                        let text = '';
+                        if (key === 'context' || key === 'constraints') {
+                            text = state.value || '';
+                        } else {
+                            text = state.promptValue || '';
+                        }
+
+                        if (!text.trim()) return null;
+
+                        if (key === 'context') {
+                            return `Use the following context:\n\n---\n${text}\n---`;
+                        }
+                        if (key === 'constraints') {
+                            return `Apply the following constraints:\n${text}`;
+                        }
+                        return text;
+                    })
+                    .filter(text => text);
+
+                const finalPrompt = appState.activeProject.contentBlocks.finalPrompt;
+                const activeDraft = finalPrompt.drafts.find(d => d.id === finalPrompt.activeDraftId);
+                if (activeDraft) activeDraft.content = allOutputs.join('\n\n');
+            }
+
+            // Component Handlers
+            function handleAddComponent() {
+                const inactiveComponent = Object.keys(appState.activeProject.builder).find(key => !appState.activeProject.builder[key].active);
+                if (inactiveComponent) appState.activeProject.builder[inactiveComponent].active = true;
+            }
+
+            function handleRemoveComponent(target) {
+                const componentDiv = target.closest('.prompt-builder__component');
+                const key = componentDiv?.dataset.componentKey;
+                if (key && appState.activeProject.builder[key]) appState.activeProject.builder[key].active = false;
+            }
+
+            function handleComponentCheckbox(target) {
+                const checkbox = target;
+                const path = checkbox.dataset.path;
+                if (path) {
+                    const pathArray = path.split('.');
+                    handleCheckboxChange(pathArray, checkbox.checked);
+                }
+            }
+
+            function handleComponentActiveToggle(target) {
+                const checkbox = target;
+                const componentType = checkbox.dataset.componentType;
+                const selection = checkbox.dataset.selection;
+                const componentId = checkbox.dataset.componentId;
+                
+                if (componentType && selection) {
+                    // Update the prompt active state in appState
+                    if (!appState.activeProject.promptActiveStates[componentType]) {
+                        appState.activeProject.promptActiveStates[componentType] = {};
+                    }
+                    appState.activeProject.promptActiveStates[componentType][selection] = checkbox.checked;
+                    
+                    // Update the database
+                    fetch(`/api/user-components/${componentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            is_active: checkbox.checked ? 1 : 0
+                        })
+                    }).catch(error => {
+                        console.error('Error updating component active state:', error);
+                    });
+                    
+                    // Trigger UI update
+                    render();
+                }
+            }
+
+            function handleComponentRename(target) {
+                const input = target;
+                const originalType = input.dataset.originalType;
+                const newType = input.value.trim();
+                
+                if (newType && newType !== originalType) {
+                    handleComponentTypeRename(originalType, newType);
+                }
+            }
+
+            // Change Event Handlers
+            function handleDraftSelect(target) {
+                const blockKey = target.parentElement.dataset.contentBlock;
+                if (blockKey) appState.activeProject.contentBlocks[blockKey].activeDraftId = target.value;
+            }
+
+            function handleTextTransformerOption(target) {
+                const activeAction = appState.activeProject.textTransformer.activeAction;
+                if(activeAction) {
+                   appState.activeProject.textTransformer.actions[activeAction].activeOption = target.value;
+                }
+            }
+
+            function handleComponentSelect(target) {
+                const componentDiv = target.closest('.prompt-builder__component');
+                const key = componentDiv?.dataset.componentKey;
+                if (key) {
+                   updateComponentState(key, { selection: target.value });
+                }
+            }
+
+            function handleComponentGroupCheckbox(target) {
+                const checkbox = target;
+                const path = checkbox.dataset.path;
+                if (path) {
+                    const pathArray = path.split('.');
+                    handleCheckboxChange(pathArray, checkbox.checked);
+                }
+            }
+
+            // Input Event Handlers
+            function handleProjectTitleInput(target) {
+                appState.activeProject.projectName = target.value;
+            }
+
+            function handleContentBlockInput(target) {
+                const blockKey = target.id.replace('-textarea', '');
+                const contentBlock = appState.activeProject.contentBlocks[blockKey];
+                const activeDraft = contentBlock?.drafts.find(d => d.id === contentBlock.activeDraftId);
+                if(activeDraft) activeDraft.content = target.value;
+            }
+
+            function handleComponentInput(target) {
+                const componentDiv = target.closest('.prompt-builder__component');
+                const key = componentDiv?.dataset.componentKey;
+                if(key) {
+                    const componentState = appState.activeProject.builder[key];
+                    if ('value' in componentState) { // For context, constraints
+                        componentState.value = target.value;
+                    } else { // For role, task, etc.
+                        componentState.promptValue = target.value;
+                        // Only save to userValue if they are in custom mode
+                        if (componentState.selection === 'custom') {
+                            componentState.userValue = target.value;
+                        }
+                    }
+                }
+            }
+
             // --- EVENT LISTENERS & LOGIC ---
             function initializeApp() {
                 const appContainer = document.querySelector('.app-container');
@@ -578,243 +900,70 @@
                     let shouldRender = true;
                     
                     if (target.closest('.collapsible-panel__icon')) {
-                        const panel = target.closest('.collapsible-panel');
-                        if (panel) {
-                            panel.classList.toggle('collapsible-panel--collapsed');
-                        }
+                        handlePanelToggle(target);
                         shouldRender = false;
                     }
                     else if (target.closest('.prompt-set-selector')) {
-                        const promptSetKey = target.dataset.promptSetKey;
-                        if (promptSetKey && promptSetKey !== appState.activeProject.activePromptSet) {
-                            applyPromptSet(promptSetKey);
-                            render(); // Explicitly call render after applying a prompt set
-                        }
+                        handlePromptSetChange(target);
                         shouldRender = false;
                     }
                     else if (target.id === 'save-project-button') {
-                        appState.activeProject.lastModified = new Date().toISOString();
-                        const existingProjectIndex = appState.savedProjects.findIndex(p => p.currentProjectId === appState.activeProject.currentProjectId);
-                        if (existingProjectIndex > -1) {
-                            // Update existing project in place
-                            appState.savedProjects[existingProjectIndex] = JSON.parse(JSON.stringify(appState.activeProject));
-                        } else {
-                            // Add to end if not present
-                            appState.savedProjects.push(JSON.parse(JSON.stringify(appState.activeProject)));
-                        }
-                        render();
+                        handleProjectSave();
                     }
                     else if (target.id === 'save-as-project-button') {
-                        // Create new project with current content
-                        const newProject = JSON.parse(JSON.stringify(appState.activeProject));
-                        newProject.currentProjectId = `proj-${Date.now()}`;
-                        // Remove any trailing (Copy) to avoid stacking
-                        newProject.projectName = appState.activeProject.projectName.replace(/( \(Copy\))+$/, '') + ' (Copy)';
-                        newProject.lastModified = new Date().toISOString();
-                        appState.savedProjects.push(newProject);
-                        appState.activeProject = newProject;
-                        render(); // Explicitly call render to update the UI
+                        handleProjectSaveAs();
                     }
                     else if (target.closest('#library-list li') && !target.closest('.sidebar__project-delete-button')) {
-                        const projectId = target.closest('li').dataset.projectId;
-                        const loadedProject = appState.savedProjects.find(p => p.currentProjectId === projectId);
-                        if (loadedProject) {
-                            appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
-                            applyPromptSet(appState.activeProject.activePromptSet);
-                            render();
-                        }
+                        handleProjectLoad(target);
                     }
                     else if (target.closest('.sidebar__project-delete-button')) {
                          e.stopPropagation();
-                         const projectId = target.dataset.projectId;
-                         appState.savedProjects = appState.savedProjects.filter(p => p.currentProjectId !== projectId);
-
+                         handleProjectDelete(target);
                     }
                     else if (target.id === 'admin-reset-button') {
-                        appState = { savedProjects: [], activeProject: getDefaultAppState() };
-                        applyPromptSet(appState.activeProject.activePromptSet);
+                        handleAdminReset();
                     }
                     else if (target.classList.contains('draft-controls__button--save')) {
-                        const blockKey = target.parentElement.dataset.contentBlock;
-                        const textarea = document.getElementById(`${blockKey}-textarea`);
-                        if (blockKey && textarea) {
-                            const contentBlock = appState.activeProject.contentBlocks[blockKey];
-                            const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: textarea.value };
-                            contentBlock.drafts.push(newDraft);
-                            contentBlock.activeDraftId = newDraft.id;
-                        }
+                        handleDraftSave(target);
                     }
                     else if (target.classList.contains('draft-controls__button--delete')) {
-                        const blockKey = target.parentElement.dataset.contentBlock;
-                        const contentBlock = appState.activeProject.contentBlocks[blockKey];
-                        if (contentBlock && contentBlock.drafts.length > 1) {
-                            contentBlock.drafts = contentBlock.drafts.filter(d => d.id !== contentBlock.activeDraftId);
-                            contentBlock.activeDraftId = contentBlock.drafts[contentBlock.drafts.length - 1].id;
-                        }
+                        handleDraftDelete(target);
                     }
                      else if (target.closest('.text-transformer__action-selector')) {
-                        appState.activeProject.textTransformer.activeAction = target.dataset.action;
+                        handleTextTransformerAction(target);
                     }
                     else if (target.id === 'transform-execute-button') {
-                        const { textTransformer, contentBlocks } = appState.activeProject;
-                        const action = textTransformer.activeAction;
-                        const actionConfig = textTransformer.actions[action];
-
-                        const inputBlock = contentBlocks.textTransformerInput;
-                        const outputBlock = contentBlocks.textTransformerOutput;
-                        const currentInput = inputBlock.drafts.find(d => d.id === inputBlock.activeDraftId)?.content || '';
-
-                        let transformedContent;
-                        if (actionConfig.activeOption) {
-                            transformedContent = `[Mock '${action}' ('${actionConfig.activeOption}') result for]:\n\n${currentInput}`;
-                        } else {
-                            transformedContent = `[Mock '${action}' result for]:\n\n${currentInput}`;
-                        }
-
-                        const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: transformedContent };
-                        outputBlock.drafts.push(newDraft);
-                        outputBlock.activeDraftId = newDraft.id;
+                        handleTextTransformExecute();
                     }
                      else if (target.closest('[data-action="copy-up"]')) {
-                        const inputBlock = appState.activeProject.contentBlocks.textTransformerInput;
-                        const outputBlock = appState.activeProject.contentBlocks.textTransformerOutput;
-                        const currentOutput = outputBlock.drafts.find(d => d.id === outputBlock.activeDraftId)?.content || '';
-
-                        const newDraft = { id: `draft-${Date.now()}`, timestamp: new Date().toISOString(), content: currentOutput };
-                        inputBlock.drafts.push(newDraft);
-                        inputBlock.activeDraftId = newDraft.id;
+                        handleTextCopyUp();
                     }
                     else if (target.id === 'copy-button') {
-                        const finalPromptTextarea = document.getElementById('finalPrompt-textarea');
-                        if (finalPromptTextarea && finalPromptTextarea.value) {
-                            navigator.clipboard.writeText(finalPromptTextarea.value).then(() => {
-                                target.textContent = 'Copied!';
-                                target.classList.add('copied');
-                                setTimeout(() => {
-                                    target.textContent = 'Copy';
-                                    target.classList.remove('copied');
-                                }, 2000);
-                            }).catch(err => {
-                                console.error('Failed to copy text: ', err);
-                                target.textContent = 'Error!';
-                                setTimeout(() => {
-                                    target.textContent = 'Copy';
-                                }, 2000);
-                            });
-                        }
-                        shouldRender = false;
+                        handleCopyToClipboard(target);
                     }
                     else if (target.id === 'clear-button') {
-                        const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
-                        const activeDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
-                        if (activeDraft) {
-                            activeDraft.content = '';
-                        }
+                        handleClearContent();
                     }
                     else if (target.id === 'insert-button') {
-                        const userOutlineState = appState.activeProject.contentBlocks.userOutline;
-                        const finalPromptState = appState.activeProject.contentBlocks.finalPrompt;
-
-                        const userOutlineDraft = userOutlineState.drafts.find(d => d.id === userOutlineState.activeDraftId);
-                        const finalPromptDraft = finalPromptState.drafts.find(d => d.id === finalPromptState.activeDraftId);
-
-                        if (userOutlineDraft && finalPromptDraft && userOutlineDraft.content.trim()) {
-                            const textToAppend = `\n\n**CONTENT FRAMEWORK:**\n\nYou have been provided with a set of primary instructions above. Now, use the following user-provided outline as the detailed structure for the content. Adhere to this outline, expanding on each point to build out the full response.\n\n**USER-PROVIDED OUTLINE:**\n${userOutlineDraft.content}`;
-
-                            if (finalPromptDraft.content.trim()) {
-                                finalPromptDraft.content += textToAppend;
-                            } else {
-                                finalPromptDraft.content = textToAppend.trim();
-                            }
-                        }
+                        handleInsertOutline();
                     }
                     else if (target.id === 'assemble-all-button') {
-                         const allOutputs = Object.keys(appState.activeProject.builder)
-                            .map(key => {
-                                const state = appState.activeProject.builder[key];
-                                if (!state.active) return null;
-
-                                let text = '';
-                                if (key === 'context' || key === 'constraints') {
-                                    text = state.value || '';
-                                } else {
-                                    text = state.promptValue || '';
-                                }
-
-                                if (!text.trim()) return null;
-
-                                if (key === 'context') {
-                                    return `Use the following context:\n\n---\n${text}\n---`;
-                                }
-                                if (key === 'constraints') {
-                                    return `Apply the following constraints:\n${text}`;
-                                }
-                                return text;
-                            })
-                            .filter(text => text);
-
-                        const finalPrompt = appState.activeProject.contentBlocks.finalPrompt;
-                        const activeDraft = finalPrompt.drafts.find(d => d.id === finalPrompt.activeDraftId);
-                        if (activeDraft) activeDraft.content = allOutputs.join('\n\n');
+                        handleAssembleAll();
                     }
                     else if (target.id === 'add-component-button') {
-                        const inactiveComponent = Object.keys(appState.activeProject.builder).find(key => !appState.activeProject.builder[key].active);
-                        if (inactiveComponent) appState.activeProject.builder[inactiveComponent].active = true;
+                        handleAddComponent();
                     }
                     else if (target.closest('.component__remove-button')) {
-                        const componentDiv = target.closest('.prompt-builder__component');
-                        const key = componentDiv?.dataset.componentKey;
-                        if (key && appState.activeProject.builder[key]) appState.activeProject.builder[key].active = false;
+                        handleRemoveComponent(target);
                     }
                     else if (target.closest('.component-group__prompt-set-checkbox')) {
-                        const checkbox = target;
-                        const path = checkbox.dataset.path;
-                        if (path) {
-                            const pathArray = path.split('.');
-                            handleCheckboxChange(pathArray, checkbox.checked);
-                        }
-                        shouldRender = false; // handleCheckboxChange already calls render()
+                        handleComponentGroupCheckbox(target);
                     }
                     else if (target.closest('.component-active-checkbox')) {
-                        const checkbox = target;
-                        const componentType = checkbox.dataset.componentType;
-                        const selection = checkbox.dataset.selection;
-                        const componentId = checkbox.dataset.componentId;
-                        
-                        if (componentType && selection) {
-                            // Update the prompt active state in appState
-                            if (!appState.activeProject.promptActiveStates[componentType]) {
-                                appState.activeProject.promptActiveStates[componentType] = {};
-                            }
-                            appState.activeProject.promptActiveStates[componentType][selection] = checkbox.checked;
-                            
-                            // Update the database
-                            fetch(`/api/user-components/${componentId}`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    is_active: checkbox.checked ? 1 : 0
-                                })
-                            }).catch(error => {
-                                console.error('Error updating component active state:', error);
-                            });
-                            
-                            // Trigger UI update
-                            render();
-                        }
-                        shouldRender = false; // We already called render()
+                        handleComponentActiveToggle(target);
                     }
                     else if (target.closest('.group-title__editable-text')) {
-                        const input = target;
-                        const originalType = input.dataset.originalType;
-                        const newType = input.value.trim();
-                        
-                        if (newType && newType !== originalType) {
-                            handleComponentTypeRename(originalType, newType);
-                        }
-                        shouldRender = false; // We handle rendering manually
+                        handleComponentRename(target);
                     }
                     else {
                         shouldRender = false;
@@ -826,35 +975,24 @@
                 // Main Delegated Change Listener
                 appContainer.addEventListener('change', e => {
                     const target = e.target;
-                    let shouldRender = false; // Default to false unless state changes
+                    let shouldRender = false;
 
                     if (target.closest('.draft-controls__select')) {
-                        const blockKey = target.parentElement.dataset.contentBlock;
-                        if (blockKey) appState.activeProject.contentBlocks[blockKey].activeDraftId = target.value;
+                        handleDraftSelect(target);
                         shouldRender = true;
                     }
                     else if (target.closest('#text-transformer-options-container') && target.type === 'radio') {
-                        const activeAction = appState.activeProject.textTransformer.activeAction;
-                        if(activeAction) {
-                           appState.activeProject.textTransformer.actions[activeAction].activeOption = target.value;
-                        }
+                        handleTextTransformerOption(target);
                     }
                     else if (target.closest('.prompt-builder__component') && target.tagName === 'SELECT') {
-                         const componentDiv = target.closest('.prompt-builder__component');
-                         const key = componentDiv?.dataset.componentKey;
-                         if (key) {
-                            updateComponentState(key, { selection: target.value });
-                            shouldRender = true;
-                         }
+                         handleComponentSelect(target);
+                         shouldRender = true;
                     }
                     else if (target.closest('.component-group__prompt-set-checkbox')) {
-                        const checkbox = target;
-                        const path = checkbox.dataset.path;
-                        if (path) {
-                            const pathArray = path.split('.');
-                            handleCheckboxChange(pathArray, checkbox.checked);
-                        }
-                        shouldRender = false; // handleCheckboxChange already calls render()
+                        handleComponentGroupCheckbox(target);
+                    }
+                    else if (target.closest('.group-title__editable-text')) {
+                        handleComponentRename(target);
                     }
 
                     if(shouldRender) render();
@@ -866,29 +1004,13 @@
                     const activeProject = appState.activeProject;
 
                     if (target.id === 'project-title-input') {
-                        activeProject.projectName = target.value;
+                        handleProjectTitleInput(target);
                     }
                     else if (target.id.endsWith('-textarea') && target.closest('.refinement-area, .article-workspace-panel, .text-transformer__area')) {
-                        const blockKey = target.id.replace('-textarea', '');
-                        const contentBlock = activeProject.contentBlocks[blockKey];
-                        const activeDraft = contentBlock?.drafts.find(d => d.id === contentBlock.activeDraftId);
-                        if(activeDraft) activeDraft.content = target.value;
+                        handleContentBlockInput(target);
                     }
                     else if (target.tagName === 'TEXTAREA' && target.closest('.prompt-builder__component')) {
-                        const componentDiv = target.closest('.prompt-builder__component');
-                        const key = componentDiv?.dataset.componentKey;
-                        if(key) {
-                            const componentState = activeProject.builder[key];
-                            if ('value' in componentState) { // For context, constraints
-                                componentState.value = e.target.value;
-                            } else { // For role, task, etc.
-                                componentState.promptValue = e.target.value;
-                                // Only save to userValue if they are in custom mode
-                                if (componentState.selection === 'custom') {
-                                    componentState.userValue = e.target.value;
-                                }
-                            }
-                        }
+                        handleComponentInput(target);
                     }
                 });
 
@@ -985,28 +1107,23 @@
 
             // Function to update component type references in appState when renaming
             async function handleComponentTypeRename(oldType, newType) {
+                console.log('=== RENAME DEBUG ===');
+                console.log('Renaming from:', oldType, 'to:', newType);
+                console.log('Before update - builderComponentData:', builderComponentData);
+                
                 try {
-                    const components = appState.activeProject.components.filter(c => c.component_type === oldType);
-                    await Promise.all(components.map(component => 
-                        fetch(`/api/user-components/${component.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                component_type: newType,
-                                is_active: component.is_active,
-                                selection: component.selection,
-                                prompt_value: component.prompt_value,
-                                user_value: component.user_value
-                            })
-                        })
-                    ));
-                    
                     updateComponentTypeInAppState(oldType, newType);
+                    console.log('After update - builderComponentData:', builderComponentData);
                     
                     const input = document.querySelector(`[data-original-type="${oldType}"]`);
                     if (input) {
                         input.dataset.originalType = newType;
                     }
+                    
+                    // ADD: Re-render to update Prompt Builder
+                    console.log('Calling render() to update UI...');
+                    render();
+                    console.log('=== END RENAME DEBUG ===');
                     
                 } catch (error) {
                     console.error('Error renaming component:', error);

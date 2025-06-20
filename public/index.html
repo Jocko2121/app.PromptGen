@@ -930,19 +930,21 @@
                         addComponent: handleAddComponent,
                         removeComponent: handleRemoveComponent,
                         assembleAll: handleAssembleAll,
-                        // To be refactored in later steps...
+                        // Database Admin
+                        componentActiveToggle: handleComponentActiveToggle,
                     },
                     change: {
                         draftSelect: handleDraftSelect,
                         selectTextTransformerOption: handleTextTransformerOption,
                         componentSelect: handleComponentSelect,
-                        // To be refactored in later steps...
+                        // Database Admin
+                        componentGroupCheckbox: handleComponentGroupCheckbox,
+                        componentRename: handleComponentRename,
                     },
                     input: {
                         projectTitleInput: handleProjectTitleInput,
                         contentBlockInput: handleContentBlockInput,
                         componentInput: handleComponentInput,
-                        // To be refactored in later steps...
                     }
                 };
 
@@ -973,15 +975,6 @@
                     else if (target.closest('.prompt-set-selector')) {
                         handlePromptSetChange(target);
                     }
-                    else if (target.closest('.component-group__prompt-set-checkbox')) {
-                        handleComponentGroupCheckbox(target);
-                    }
-                    else if (target.closest('.component-active-checkbox')) {
-                        handleComponentActiveToggle(target);
-                    }
-                    else if (target.closest('.group-title__editable-text')) {
-                        handleComponentRename(target);
-                    }
                 });
 
                 // Main Delegated Change Listener - HYBRID MODEL
@@ -1001,13 +994,7 @@
                         }
                     }
 
-                    // Legacy imperative actions
-                    if (target.closest('.component-group__prompt-set-checkbox')) {
-                        handleComponentGroupCheckbox(target);
-                    }
-                    else if (target.closest('.group-title__editable-text')) {
-                        handleComponentRename(target);
-                    }
+                    // Legacy imperative actions (none remain)
                 });
 
                 // Main Delegated Input Listener - HYBRID MODEL
@@ -1237,7 +1224,7 @@
                         groupTitle.innerHTML = `
                             <div class="group-title__row">
                                 <div class="group-title__label">
-                                    <input type="text" class="group-title__editable-text" value="${type}" data-original-type="${type}">
+                                    <input type="text" class="group-title__editable-text" value="${type}" data-original-type="${type}" data-action="componentRename">
                                 </div>
                             </div>
                         `;
@@ -1271,7 +1258,7 @@
                             // Main row (Tier 1)
                             const row = document.createElement('tr');
                             row.innerHTML = `
-                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.type_key}" data-selection="${component.selection}"></td>
+                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.type_key}" data-selection="${component.selection}" data-action="componentActiveToggle"></td>
                                 <td class="table__cell--selection"><input type="text" value="${component.selection || ''}" class="input--selection"></td>
                                 <td class="table__cell--prompt"><textarea class="textarea--prompt">${component.prompt_value || ''}</textarea></td>
                             `;
@@ -1338,7 +1325,7 @@
                             
                             contentHTML += `
                                 <div class="${itemClass}" data-component-type="${type}" data-prompt-set="${promptSetKey}">
-                                    <input type="checkbox" ${isActive ? 'checked' : ''} class="component-group__prompt-set-checkbox" data-path="activeProject.promptSets.${promptSetKey}.${type}.active">
+                                    <input type="checkbox" ${isActive ? 'checked' : ''} class="component-group__prompt-set-checkbox" data-path="activeProject.promptSets.${promptSetKey}.${type}.active" data-action="componentGroupCheckbox">
                                     <span class="component-group__prompt-set-name">${promptSetName}</span>
                                     <span class="${statusClass}">${statusText}</span>
                                 </div>

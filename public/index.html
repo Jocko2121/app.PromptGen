@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="sidebar__footer">
-                <button id="admin-reset-button">Admin: Hard Reset</button>
+                <button id="admin-reset-button" data-action="adminReset">Admin: Hard Reset</button>
             </div>
         </aside>
 
@@ -62,7 +62,7 @@
                     <div class="panel__header">
                         <h3>Prompt Builder</h3>
                         <div class="panel__header-buttons">
-                             <button id="add-component-button" class="button--utility">Add Component</button>
+                             <button id="add-component-button" class="button--utility" data-action="addComponent">Add Component</button>
                         </div>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
@@ -72,7 +72,7 @@
                                 </div>
                             <div class="prompt-assembler__output">
                                 <div class="generate-button-container">
-                                    <button id="assemble-all-button" class="button--primary">Add All to Final Prompt</button>
+                                    <button id="assemble-all-button" class="button--primary" data-action="assembleAll">Add All to Final Prompt</button>
                                 </div>
                             </div>
                         </div>
@@ -84,11 +84,11 @@
                     <div class="panel__header">
                        <h3>Project Hub</h3>
                        <div class="panel__header-buttons">
-                           <button id="save-project-button" class="button--utility">Save</button>
-                           <button id="save-as-project-button" class="button--utility">Save As...</button>
+                           <button id="save-project-button" class="button--utility" data-action="saveProject">Save</button>
+                           <button id="save-as-project-button" class="button--utility" data-action="saveAsProject">Save As...</button>
                        </div>
                    </div>
-                   <input type="text" id="project-title-input" class="panel__title-input" placeholder="Enter Project Title...">
+                   <input type="text" id="project-title-input" class="panel__title-input" data-action="projectTitleInput" placeholder="Enter Project Title...">
                </section>
 
 
@@ -102,22 +102,22 @@
                             <div class="refinement-area">
                                 <div class="panel user-outline-panel">
                                     <div class="panel__header"><h3>User Outline</h3></div>
-                                    <textarea id="userOutline-textarea" autocomplete="off" placeholder="Write your outline or dump your thoughts here..."></textarea>
-                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                    <textarea id="userOutline-textarea" autocomplete="off" placeholder="Write your outline or dump your thoughts here..." data-action="contentBlockInput"></textarea>
+                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                                 <div class="insert-button-container">
-                                    <button id="insert-button" class="button--primary" title="Insert Outline into Final Prompt">&rarr;</button>
+                                    <button id="insert-button" class="button--primary" title="Insert Outline into Final Prompt" data-action="insertOutline">&rarr;</button>
                                 </div>
                                 <div class="panel final-prompt-panel">
                                     <div class="panel__header">
                                         <h3>Final Prompt</h3>
                                         <div class="panel__header-buttons">
-                                            <button id="copy-button" class="button--utility">Copy</button>
-                                            <button id="clear-button" class="button--utility">Clear</button>
+                                            <button id="copy-button" class="button--utility" data-action="copyToClipboard">Copy</button>
+                                            <button id="clear-button" class="button--utility" data-action="clearContent">Clear</button>
                                         </div>
                                     </div>
-                                    <textarea id="finalPrompt-textarea" autocomplete="off" placeholder="The final, combined prompt will appear here..."></textarea>
-                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                    <textarea id="finalPrompt-textarea" autocomplete="off" placeholder="The final, combined prompt will appear here..." data-action="contentBlockInput"></textarea>
+                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                             </div>
                         </div>
@@ -135,24 +135,24 @@
                                 <div class="text-transformer__area">
                                     <div class="panel">
                                         <div class="panel__header"><h3>Input</h3></div>
-                                        <textarea id="textTransformerInput-textarea" autocomplete="off" placeholder="Paste text here to transform it..."></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                        <textarea id="textTransformerInput-textarea" autocomplete="off" placeholder="Paste text here to transform it..." data-action="contentBlockInput"></textarea>
+                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                     <div class="text-transformer__actions-container">
-                                        <button class="text-transformer__action-selector" data-action="summarize">Summarize</button>
-                                        <button class="text-transformer__action-selector" data-action="rewrite">Rewrite</button>
-                                        <button class="text-transformer__action-selector" data-action="analyze">Analyze</button>
+                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="summarize">Summarize</button>
+                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="rewrite">Rewrite</button>
+                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="analyze">Analyze</button>
 
                                         <div id="text-transformer-options-container"></div>
 
-                                        <button id="transform-execute-button" class="button--primary">Transform</button>
+                                        <button id="transform-execute-button" class="button--primary" data-action="executeTextTransform">Transform</button>
                                         <hr class="text-transformer__divider">
-                                        <button class="button--utility text-transformer__action-button" data-action="copy-up" title="Copy Output to Input">↑</button>
+                                        <button class="button--utility text-transformer__action-button" data-action="copyUp" title="Copy Output to Input">↑</button>
                                     </div>
                                     <div class="panel">
                                         <div class="panel__header"><h3>Output</h3></div>
-                                        <textarea id="textTransformerOutput-textarea" autocomplete="off" placeholder="Transformed text will appear here..."></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                                        <textarea id="textTransformerOutput-textarea" autocomplete="off" placeholder="Transformed text will appear here..." data-action="contentBlockInput"></textarea>
+                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                 </div>
                             </div>
@@ -167,8 +167,8 @@
                     </div>
                     <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper">
-                            <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..."></textarea>
-                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select"></select><button class="draft-controls__button--save">Save</button><button class="draft-controls__button--delete">🗑️</button></div>
+                            <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..." data-action="contentBlockInput"></textarea>
+                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
                         </div>
                     </div>
                 </section>
@@ -363,11 +363,13 @@
                     const textSpan = document.createElement('span');
                     textSpan.textContent = project.projectName;
                     textSpan.style.flexGrow = '1';
+                    textSpan.setAttribute('data-action', 'loadProject');
 
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'sidebar__project-delete-button';
                     deleteBtn.innerHTML = '&times;';
                     deleteBtn.dataset.projectId = project.currentProjectId;
+                    deleteBtn.setAttribute('data-action', 'deleteProject');
 
                     li.appendChild(textSpan);
                     li.appendChild(deleteBtn);
@@ -382,6 +384,7 @@
                     const textSpan = document.createElement('span');
                     textSpan.textContent = appState.activeProject.projectName + ' (Unsaved)';
                     textSpan.style.flexGrow = '1';
+                    textSpan.setAttribute('data-action', 'loadProject');
                     li.appendChild(textSpan);
                     li.dataset.projectId = appState.activeProject.currentProjectId;
                     libraryList.appendChild(li);
@@ -471,6 +474,7 @@
                     const removeBtn = document.createElement('button');
                     removeBtn.className = 'component__remove-button';
                     removeBtn.innerHTML = '&times;';
+                    removeBtn.setAttribute('data-action', 'removeComponent');
                     header.appendChild(title);
                     header.appendChild(removeBtn);
 
@@ -485,10 +489,12 @@
                         textarea.placeholder = key === 'context'
                             ? 'Paste background info, data, or examples here...'
                             : `Define the ${componentData.title}...`;
+                        textarea.setAttribute('data-action', 'componentInput');
                         controls.appendChild(textarea);
                     }
                     else if (componentData.prompts) { // role, task, format, tone etc.
                         const select = document.createElement('select');
+                        select.setAttribute('data-action', 'componentSelect');
                         
                         // Get active states for this component type
                         const activeStates = appState.activeProject.promptActiveStates[key] || {};
@@ -521,6 +527,7 @@
                         textarea.rows = 5;
                         textarea.value = componentState.promptValue;
                         textarea.placeholder = `Define the ${componentData.title}...`;
+                        textarea.setAttribute('data-action', 'componentInput');
                         controls.appendChild(textarea);
                     }
 
@@ -535,7 +542,7 @@
                 // 1. Render the active action button
                 const actionButtons = document.querySelectorAll('.text-transformer__action-selector');
                 actionButtons.forEach(button => {
-                    button.classList.toggle('active', button.dataset.action === transformerState.activeAction);
+                    button.classList.toggle('active', button.dataset.transformerAction === transformerState.activeAction);
                 });
 
                 // 2. Render the sub-options dynamically
@@ -553,6 +560,7 @@
                         radio.name = `${transformerState.activeAction}-options`;
                         radio.value = optionKey;
                         radio.checked = activeActionConfig.activeOption === optionKey;
+                        radio.setAttribute('data-action', 'selectTextTransformerOption');
 
                         label.appendChild(radio);
                         label.appendChild(document.createTextNode(optionText));
@@ -598,34 +606,28 @@
                 const promptSetKey = target.dataset.promptSetKey;
                 if (promptSetKey && promptSetKey !== appState.activeProject.activePromptSet) {
                     applyPromptSet(promptSetKey);
-                    render(); // Explicitly call render after applying a prompt set
+                    render();
                 }
             }
 
-            // Project Handlers
+            // Project Handlers - Refactored for declarative model
             function handleProjectSave() {
                 appState.activeProject.lastModified = new Date().toISOString();
                 const existingProjectIndex = appState.savedProjects.findIndex(p => p.currentProjectId === appState.activeProject.currentProjectId);
                 if (existingProjectIndex > -1) {
-                    // Update existing project in place
                     appState.savedProjects[existingProjectIndex] = JSON.parse(JSON.stringify(appState.activeProject));
                 } else {
-                    // Add to end if not present
                     appState.savedProjects.push(JSON.parse(JSON.stringify(appState.activeProject)));
                 }
-                render();
             }
 
             function handleProjectSaveAs() {
-                // Create new project with current content
                 const newProject = JSON.parse(JSON.stringify(appState.activeProject));
                 newProject.currentProjectId = `proj-${Date.now()}`;
-                // Remove any trailing (Copy) to avoid stacking
                 newProject.projectName = appState.activeProject.projectName.replace(/( \(Copy\))+$/, '') + ' (Copy)';
                 newProject.lastModified = new Date().toISOString();
                 appState.savedProjects.push(newProject);
                 appState.activeProject = newProject;
-                render(); // Explicitly call render to update the UI
             }
 
             function handleProjectLoad(target) {
@@ -634,12 +636,12 @@
                 if (loadedProject) {
                     appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
                     applyPromptSet(appState.activeProject.activePromptSet);
-                    render();
                 }
             }
 
-            function handleProjectDelete(target) {
-                const projectId = target.dataset.projectId;
+            function handleProjectDelete(target, e) {
+                e.stopPropagation();
+                const projectId = target.closest('li').dataset.projectId;
                 appState.savedProjects = appState.savedProjects.filter(p => p.currentProjectId !== projectId);
             }
 
@@ -671,7 +673,7 @@
 
             // Text Transformer Handlers
             function handleTextTransformerAction(target) {
-                appState.activeProject.textTransformer.activeAction = target.dataset.action;
+                appState.activeProject.textTransformer.activeAction = target.dataset.transformerAction;
             }
 
             function handleTextTransformExecute() {
@@ -906,69 +908,70 @@
 
             // --- EVENT LISTENERS & LOGIC ---
             function setupAppEventListeners() {
+                const actionMap = {
+                    click: {
+                        // Project & Library Management
+                        saveProject: handleProjectSave,
+                        saveAsProject: handleProjectSaveAs,
+                        loadProject: handleProjectLoad,
+                        deleteProject: handleProjectDelete,
+                        adminReset: handleAdminReset,
+                        // Content Blocks & Drafts
+                        draftSave: handleDraftSave,
+                        draftDelete: handleDraftDelete,
+                        insertOutline: handleInsertOutline,
+                        copyToClipboard: handleCopyToClipboard,
+                        clearContent: handleClearContent,
+                        // Text Transformer
+                        selectTextTransformerAction: handleTextTransformerAction,
+                        executeTextTransform: handleTextTransformExecute,
+                        copyUp: handleTextCopyUp,
+                        // Prompt Builder
+                        addComponent: handleAddComponent,
+                        removeComponent: handleRemoveComponent,
+                        assembleAll: handleAssembleAll,
+                        // To be refactored in later steps...
+                    },
+                    change: {
+                        draftSelect: handleDraftSelect,
+                        selectTextTransformerOption: handleTextTransformerOption,
+                        componentSelect: handleComponentSelect,
+                        // To be refactored in later steps...
+                    },
+                    input: {
+                        projectTitleInput: handleProjectTitleInput,
+                        contentBlockInput: handleContentBlockInput,
+                        componentInput: handleComponentInput,
+                        // To be refactored in later steps...
+                    }
+                };
+
                 const appContainer = document.querySelector('.app-container');
 
-                // Main Delegated Click Listener
+                // Main Delegated Click Listener - HYBRID MODEL
                 appContainer.addEventListener('click', e => {
                     const target = e.target;
-                    let shouldRender = true;
-                    
+
+                    // New declarative actions
+                    const actionTarget = target.closest('[data-action]');
+                    if (actionTarget) {
+                        const action = actionTarget.dataset.action;
+                        if (actionMap.click[action]) {
+                            actionMap.click[action](actionTarget, e);
+                            // Only trigger render for actions that require it
+                            if (['saveProject', 'saveAsProject', 'loadProject', 'deleteProject', 'adminReset', 'draftSave', 'draftDelete', 'insertOutline', 'clearContent', 'selectTextTransformerAction', 'executeTextTransform', 'copyUp', 'addComponent', 'removeComponent', 'assembleAll'].includes(action)) {
+                                render();
+                            }
+                            return; // Exit after handling declarative action
+                        }
+                    }
+
+                    // Legacy imperative actions (to be phased out)
                     if (target.closest('.collapsible-panel__icon')) {
                         handlePanelToggle(target);
-                        shouldRender = false;
                     }
                     else if (target.closest('.prompt-set-selector')) {
                         handlePromptSetChange(target);
-                        shouldRender = false;
-                    }
-                    else if (target.id === 'save-project-button') {
-                        handleProjectSave();
-                    }
-                    else if (target.id === 'save-as-project-button') {
-                        handleProjectSaveAs();
-                    }
-                    else if (target.closest('#library-list li') && !target.closest('.sidebar__project-delete-button')) {
-                        handleProjectLoad(target);
-                    }
-                    else if (target.closest('.sidebar__project-delete-button')) {
-                         e.stopPropagation();
-                         handleProjectDelete(target);
-                    }
-                    else if (target.id === 'admin-reset-button') {
-                        handleAdminReset();
-                    }
-                    else if (target.classList.contains('draft-controls__button--save')) {
-                        handleDraftSave(target);
-                    }
-                    else if (target.classList.contains('draft-controls__button--delete')) {
-                        handleDraftDelete(target);
-                    }
-                     else if (target.closest('.text-transformer__action-selector')) {
-                        handleTextTransformerAction(target);
-                    }
-                    else if (target.id === 'transform-execute-button') {
-                        handleTextTransformExecute();
-                    }
-                     else if (target.closest('[data-action="copy-up"]')) {
-                        handleTextCopyUp();
-                    }
-                    else if (target.id === 'copy-button') {
-                        handleCopyToClipboard(target);
-                    }
-                    else if (target.id === 'clear-button') {
-                        handleClearContent();
-                    }
-                    else if (target.id === 'insert-button') {
-                        handleInsertOutline();
-                    }
-                    else if (target.id === 'assemble-all-button') {
-                        handleAssembleAll();
-                    }
-                    else if (target.id === 'add-component-button') {
-                        handleAddComponent();
-                    }
-                    else if (target.closest('.component__remove-button')) {
-                        handleRemoveComponent(target);
                     }
                     else if (target.closest('.component-group__prompt-set-checkbox')) {
                         handleComponentGroupCheckbox(target);
@@ -979,53 +982,50 @@
                     else if (target.closest('.group-title__editable-text')) {
                         handleComponentRename(target);
                     }
-                    else {
-                        shouldRender = false;
-                    }
-
-                    if (shouldRender) render();
                 });
 
-                // Main Delegated Change Listener
+                // Main Delegated Change Listener - HYBRID MODEL
                 appContainer.addEventListener('change', e => {
                     const target = e.target;
-                    let shouldRender = false;
 
-                    if (target.closest('.draft-controls__select')) {
-                        handleDraftSelect(target);
-                        shouldRender = true;
+                    // New declarative actions
+                    const actionTarget = target.closest('[data-action]');
+                    if (actionTarget) {
+                        const action = actionTarget.dataset.action;
+                        if (actionMap.change[action]) {
+                            actionMap.change[action](target, e);
+                            if (['draftSelect', 'selectTextTransformerOption', 'componentSelect'].includes(action)) {
+                                setTimeout(render, 0);
+                            }
+                            return;
+                        }
                     }
-                    else if (target.closest('#text-transformer-options-container') && target.type === 'radio') {
-                        handleTextTransformerOption(target);
-                    }
-                    else if (target.closest('.prompt-builder__component') && target.tagName === 'SELECT') {
-                         handleComponentSelect(target);
-                         shouldRender = true;
-                    }
-                    else if (target.closest('.component-group__prompt-set-checkbox')) {
+
+                    // Legacy imperative actions
+                    if (target.closest('.component-group__prompt-set-checkbox')) {
                         handleComponentGroupCheckbox(target);
                     }
                     else if (target.closest('.group-title__editable-text')) {
                         handleComponentRename(target);
                     }
-
-                    if(shouldRender) render();
                 });
 
-                // Main Delegated Input Listener
+                // Main Delegated Input Listener - HYBRID MODEL
                 appContainer.addEventListener('input', e => {
                     const target = e.target;
-                    const activeProject = appState.activeProject;
-
-                    if (target.id === 'project-title-input') {
-                        handleProjectTitleInput(target);
+                    
+                    // New declarative actions
+                    const actionTarget = target.closest('[data-action]');
+                    if (actionTarget) {
+                        const action = actionTarget.dataset.action;
+                        if (actionMap.input[action]) {
+                            actionMap.input[action](target, e);
+                            // Renders are not typically needed for input events
+                            return; // Exit after handling declarative action
+                        }
                     }
-                    else if (target.id.endsWith('-textarea') && target.closest('.refinement-area, .article-workspace-panel, .text-transformer__area')) {
-                        handleContentBlockInput(target);
-                    }
-                    else if (target.tagName === 'TEXTAREA' && target.closest('.prompt-builder__component')) {
-                        handleComponentInput(target);
-                    }
+                    
+                    // Legacy imperative actions (none remain)
                 });
             }
 

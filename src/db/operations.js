@@ -8,42 +8,75 @@ function runInTransaction(operations) {
     return transaction;
 }
 
+// =================================================================================
+// Component Type Operations
+// =================================================================================
+
+function getAllComponentTypes() {
+    const stmt = db.prepare('SELECT id, type_key, display_name FROM component_types ORDER BY id');
+    return stmt.all();
+}
+
+function renameComponentType(typeKey, newDisplayName) {
+    const stmt = db.prepare('UPDATE component_types SET display_name = ?, modified_at = CURRENT_TIMESTAMP WHERE type_key = ?');
+    const result = stmt.run(newDisplayName, typeKey);
+    return result.changes > 0;
+}
+
+
+// =================================================================================
+// User Component (Prompt) Operations
+// =================================================================================
+
 // Create a new user component
 function createUserComponent(component) {
-    try {
-        console.log('Creating user component with data:', component);
-        
-        return runInTransaction(() => {
+    return runInTransaction(() => {
+        try {
+            console.log('Creating user component with data:', component);
             const stmt = db.prepare(`
                 INSERT INTO user_components (
-                    component_type,
+                    component_type_id,
                     is_active,
                     selection,
                     prompt_value,
                     user_value
                 ) VALUES (?, ?, ?, ?, ?)
             `);
-
             const result = stmt.run(
-                component.component_type,
+                component.component_type_id,
                 component.is_active ? 1 : 0,
                 component.selection,
                 component.prompt_value,
                 component.user_value
             );
-
             console.log('Database operation result:', result);
             return result.lastInsertRowid;
-        });
-    } catch (error) {
-        console.error('Database error in createUserComponent:', error);
-        throw error;
-    }
+        } catch (error) {
+            console.error('Database error in createUserComponent:', error);
+            throw error;
+        }
+    });
 }
 
-// Get all user components
+// Get all user components, joined with their type information
 function getAllUserComponents() {
-    const stmt = db.prepare('SELECT * FROM user_components ORDER BY created_at DESC');
+    const stmt = db.prepare(`
+        SELECT
+            uc.id,
+            uc.component_type_id,
+            ct.type_key,
+            ct.display_name,
+            uc.is_active,
+            uc.is_starter,
+            uc.selection,
+            uc.prompt_value,
+            uc.user_value,
+            uc.created_at,
+            uc.modified_at
+        FROM user_components uc
+        JOIN component_types ct ON uc.component_type_id = ct.id
+        ORDER BY uc.created_at DESC
+    `);
     return stmt.all();
 }
 
@@ -57,18 +90,17 @@ function getUserComponent(id) {
 function updateUserComponent(id, component) {
     return runInTransaction(() => {
         const stmt = db.prepare(`
-            UPDATE user_components 
-            SET 
-                component_type = ?,
+            UPDATE user_components
+            SET
                 is_active = ?,
                 selection = ?,
                 prompt_value = ?,
-                user_value = ?
+                user_value = ?,
+                modified_at = CURRENT_TIMESTAMP
             WHERE id = ?
         `);
 
         const result = stmt.run(
-            component.component_type,
             component.is_active ? 1 : 0,
             component.selection,
             component.prompt_value,
@@ -89,37 +121,13 @@ function deleteUserComponent(id) {
     });
 }
 
-// Save application state
-function saveAppState(state) {
-    return runInTransaction(() => {
-        const stmt = db.prepare(`
-            INSERT INTO app_state (id, state_data) 
-            VALUES (1, ?) 
-            ON CONFLICT(id) 
-            DO UPDATE SET 
-                state_data = excluded.state_data,
-                last_modified = CURRENT_TIMESTAMP
-        `);
-
-        const result = stmt.run(JSON.stringify(state));
-        return result.changes > 0;
-    });
-}
-
-// Load application state
-function loadAppState() {
-    const stmt = db.prepare('SELECT state_data FROM app_state WHERE id = 1');
-    const result = stmt.get();
-    return result ? JSON.parse(result.state_data) : null;
-}
-
 module.exports = {
+    runInTransaction,
+    getAllComponentTypes,
+    renameComponentType,
     createUserComponent,
     getAllUserComponents,
     getUserComponent,
     updateUserComponent,
-    deleteUserComponent,
-    saveAppState,
-    loadAppState,
-    runInTransaction
+    deleteUserComponent
 }; 

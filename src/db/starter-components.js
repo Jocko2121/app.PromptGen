@@ -1,7 +1,7 @@
 // Default components for initialization, moved from builderComponentData in public/index.html
 
 const starterComponents = {
-    Role: {
+    role: {
         title: 'Role',
         prompts: {
             'Assistant': 'Act as a helpful, expert-level assistant. Your goal is to provide responses that are not only accurate and relevant but also clear, well-structured, and easy to understand. Anticipate user needs and provide comprehensive information where appropriate.',
@@ -11,7 +11,7 @@ const starterComponents = {
             'Academic Researcher': 'Act as an academic researcher and university professor publishing in a peer-reviewed journal. Your response must be rigorous, analytical, and evidence-based. Cite sources, define key terms, and present arguments with logical coherence and intellectual nuance.'
         }
     },
-    Task: {
+    task: {
         title: 'Task',
         prompts: {
             'Write': "Your primary task is to create original written content based on the user's request. Pay close attention to the specified format, tone, and length. The final output must be well-organized, coherent, and free of grammatical errors.",
@@ -21,7 +21,7 @@ const starterComponents = {
             'Brainstorm': 'Your primary task is to generate a diverse and creative list of ideas related to the given topic. The list should include a range of concepts, from conventional and practical to innovative and "outside-the-box". Organize the ideas into logical categories if applicable.'
         }
     },
-    Job: {
+    job: {
         title: 'Job',
         prompts: {
             'Writing Assistant': 'Act as a helpful general-purpose writing assistant.',
@@ -30,25 +30,25 @@ const starterComponents = {
             'Press Release': 'Specify the output must follow the format of a standard press release. It requires a headline, dateline, introduction (the 5 Ws), body, boilerplate, and contact information. The tone must be formal and objective.'
         }
     },
-    AudiencePro: {
+    audiencePro: {
         title: 'Audience - Professional',
         prompts: {
-            'Executive': 'Adapt the tone for a C-suite executive. Focus on strategic implications, business outcomes, and ROI. Use concise, confident, data-driven language. Omit granular technical details.',
-            'Technical Experts': 'Write for a highly technical audience (e.g., engineers, developers). Use precise, domain-specific terminology. Do not oversimplify complex concepts. Provide detailed explanations.',
-            'General Public': 'Simplify the language for a general, non-expert audience. Use analogies and relatable examples. Avoid or clearly explain jargon and acronyms. The tone should be accessible and engaging.'
+            'executive': 'Adapt the tone for a C-suite executive. Focus on strategic implications, business outcomes, and ROI. Use concise, confident, data-driven language. Omit granular technical details.',
+            'technicalExperts': 'Write for a highly technical audience (e.g., engineers, developers). Use precise, domain-specific terminology. Do not oversimplify complex concepts. Provide detailed explanations.',
+            'generalPublic': 'Simplify the language for a general, non-expert audience. Use analogies and relatable examples. Avoid or clearly explain jargon and acronyms. The tone should be accessible and engaging.'
         }
     },
-    AudienceSilly: {
+    audienceSilly: {
         title: 'Audience - Silly',
         prompts: {
-            'Shakespeare': 'Instruct the AI to adopt the persona of William Shakespeare. The response must be written in a grandiloquent style, employing iambic rhythm where possible, with antiquated flourishes.',
-            'A 6-Year-Old': 'Instruct the AI to explain the concept as if speaking to a six-year-old child. It must use extremely simple words, short sentences, and friendly, relatable analogies (e.g., cookies, puppies).',
-            'Gen Z Slang': 'Instruct the AI to adopt the persona of a Gen Z TikToker. The response must use popular, current slang (e.g., "no cap," "the vibe," "bet," "low-key"). The tone should be informal and extremely online.',
-            'Noir Detective': 'Instruct the AI to write in the style of a hardboiled noir detective. The response should be a cynical, world-weary internal monologue with short sentences and gritty metaphors.',
-            'Terrible Poetry': 'Instruct the AI to act as a poet who is trying very hard but has no talent. The response must be a poem that uses excessive, flowery language, forced rhymes, broken meter, and overly dramatic, cliché metaphors.'
+            'shakespeare': 'Instruct the AI to adopt the persona of William Shakespeare. The response must be written in a grandiloquent style, employing iambic rhythm where possible, with antiquated flourishes.',
+            'a6YearOld': 'Instruct the AI to explain the concept as if speaking to a six-year-old child. It must use extremely simple words, short sentences, and friendly, relatable analogies (e.g., cookies, puppies).',
+            'genZSlang': 'Instruct the AI to adopt the persona of a Gen Z TikToker. The response must use popular, current slang (e.g., "no cap," "the vibe," "bet," "low-key"). The tone should be informal and extremely online.',
+            'noirDetective': 'Instruct the AI to write in the style of a hardboiled noir detective. The response should be a cynical, world-weary internal monologue with short sentences and gritty metaphors.',
+            'terriblePoetry': 'Instruct the AI to act as a poet who is trying very hard but has no talent. The response must be a poem that uses excessive, flowery language, forced rhymes, broken meter, and overly dramatic, cliché metaphors.'
         }
     },
-    Format: {
+    format: {
         title: 'Format',
         prompts: {
             'Paragraphs': 'Instruct the AI to structure the entire response in well-formed paragraphs. Each paragraph should focus on a single, coherent idea.',
@@ -58,7 +58,7 @@ const starterComponents = {
             'Markdown Table': 'Structure the entire response as a single, properly formatted Markdown table. The first row must be the table header, followed by a separator line. Each subsequent row should represent a data entry with columns aligned.'
         }
     },
-    Tone: {
+    tone: {
        title: 'Tone',
        prompts: {
            'Persuasive': 'Instruct the AI to adopt a persuasive tone with the primary goal of convincing the reader. It should use rhetorical techniques, strong verbs, compelling evidence, and end with a clear call to action.',
@@ -68,7 +68,7 @@ const starterComponents = {
            'Professional': 'Adopt a professional and objective tone suitable for a corporate or business setting. The language should be formal, respectful, and clear. Avoid slang, contractions, and overly casual phrasing.'
        }
    },
-   Length: {
+   length: {
         title: 'Length',
         prompts: {
             'Concise Summary': 'Constrain the final output to a concise summary of approximately 150-200 words. Instruct the AI to focus only on the most critical points and high-level takeaways.',
@@ -76,7 +76,7 @@ const starterComponents = {
             'In-Depth Paper': 'Specify the desired length is a comprehensive, in-depth document of 1500 words or more. Instruct the AI to explore the topic thoroughly, including nuances, multiple perspectives, and detailed evidence.'
         }
     },
-    POV: {
+    pov: {
         title: 'Point of View',
         prompts: {
             'First Person (I/We)': 'Instruct the AI to write the entire response from a first-person point of view ("I" or "we"). This is useful for personal narratives, opinion pieces, or company statements.',
@@ -84,8 +84,8 @@ const starterComponents = {
             'Third Person (He/She/It)': 'Instruct the AI to use a third-person objective point of view ("he," "she," "it," or "they"), maintaining a narrative or descriptive distance from the subject matter.'
         }
     },
-    Context: { title: 'Context' },
-    Constraints: { title: 'Constraints' }
+    context: { title: 'Context' },
+    constraints: { title: 'Constraints' }
 };
 
 module.exports = starterComponents; 

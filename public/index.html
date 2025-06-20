@@ -240,6 +240,7 @@
                     projectName: 'Untitled Project',
                     activePromptSet: 'custom_build',
                     promptSets: {
+                        custom_build: {}, // Ensures the default active set exists
                         blog_post: {
                             role: { active: true, selection: 'custom', promptValue: 'Act as an expert blogger and SEO specialist.', userValue: 'Act as an expert blogger and SEO specialist.' },
                             task: { active: true, selection: 'write', promptValue: 'a comprehensive and engaging blog post about [topic].', userValue: '' },
@@ -324,6 +325,19 @@
                 renderContentBlocks(project.contentBlocks);
                 renderLibrary();
                 renderTextTransformer(project.textTransformer);
+            }
+
+            function renderPromptSetSelectors() {
+                const promptSetsContainer = document.getElementById('prompt-sets-list');
+                const promptSetKeys = Object.keys(appState.activeProject.promptSets);
+                promptSetsContainer.innerHTML = '';
+                promptSetKeys.forEach(key => {
+                    const div = document.createElement('div');
+                    div.className = 'prompt-set-selector';
+                    div.dataset.promptSetKey = key;
+                    div.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    promptSetsContainer.appendChild(div);
+                });
             }
 
             function renderPromptSets(activePromptSetKey) {
@@ -891,7 +905,7 @@
             }
 
             // --- EVENT LISTENERS & LOGIC ---
-            function initializeApp() {
+            function setupAppEventListeners() {
                 const appContainer = document.querySelector('.app-container');
 
                 // Main Delegated Click Listener
@@ -1013,22 +1027,53 @@
                         handleComponentInput(target);
                     }
                 });
+            }
 
-                // Initial Prompt Set setup
-                const promptSetsContainer = document.getElementById('prompt-sets-list');
-                const promptSetKeys = Object.keys(appState.activeProject.promptSets);
-                promptSetsContainer.innerHTML = '';
-                promptSetKeys.forEach(key => {
-                    const div = document.createElement('div');
-                    div.className = 'prompt-set-selector';
-                    div.dataset.promptSetKey = key;
-                    div.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    promptSetsContainer.appendChild(div);
-                });
+            // --- DATA INITIALIZATION ---
+            async function fetchAndInitializeData() {
+                try {
+                    const response = await fetch('/api/components');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+            
+                    // Store flat list of components in appState
+                    appState.activeProject.components = data.components;
+            
+                    // Dynamically build the builderComponentData from the API response
+                    builderComponentData = {};
+                    data.types.forEach(type => {
+                        builderComponentData[type.type_key] = {
+                            title: type.display_name,
+                            prompts: {}
+                        };
+                    });
+                    data.components.forEach(component => {
+                        if (builderComponentData[component.type_key]) {
+                            builderComponentData[component.type_key].prompts[component.selection] = component.prompt_value;
+                        }
+                    });
+            
+                    console.log('Successfully fetched and initialized data:', {
+                        appStateComponents: appState.activeProject.components.length,
+                        builderComponentData: builderComponentData
+                    });
+            
+                    // Now that data is loaded, initialize the components admin panel and render UI
+                    await initializeComponentsAdmin();
+                    renderPromptSetSelectors(); // Create the prompt set UI elements
+                    applyPromptSet(appState.activeProject.activePromptSet); // Apply default prompt set
+                    render(); // Final render after all data is ready
 
-                // Apply the default prompt set on initial load
-                applyPromptSet(appState.activeProject.activePromptSet);
-                render();
+                } catch (error) {
+                    console.error('Failed to fetch initial component data:', error);
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = 'Failed to load application data. Please try refreshing the page.';
+                        errorMessage.style.display = 'block';
+                    }
+                }
             }
 
             function updateComponentState(key, newState) {
@@ -1052,57 +1097,38 @@
 
             // Generic checkbox handler for all checkbox interactions
             function handleCheckboxChange(checkboxPath, value) {
-                console.log('=== CHECKBOX CHANGE DEBUG ===');
-                console.log('Path:', checkboxPath);
-                console.log('Value:', value);
-                console.log('Current active prompt set:', appState.activeProject.activePromptSet);
-                console.log('Available prompt sets:', Object.keys(appState.activeProject.promptSets));
-                console.log('Blog post components:', appState.activeProject.promptSets.blog_post);
-                console.log('Custom build components:', appState.activeProject.promptSets.custom_build);
-                
-                // Navigate to the target object in appState
+                // This robustly navigates the path, creating nested objects if they don't exist.
                 let target = appState;
                 for (let i = 0; i < checkboxPath.length - 1; i++) {
-                    target = target[checkboxPath[i]];
-                    if (!target) {
-                        console.error(`Path not found: ${checkboxPath.join('.')}`);
-                        return;
+                    const segment = checkboxPath[i];
+                    if (target[segment] === undefined) {
+                        // Create the missing object if it doesn't exist.
+                        target[segment] = {};
                     }
+                    target = target[segment];
                 }
-                
+
                 // Set the final property
                 const finalKey = checkboxPath[checkboxPath.length - 1];
                 target[finalKey] = value;
-                console.log(`Updated ${checkboxPath.join('.')} to ${value}`);
                 
                 // Check if this change affects the current prompt set
                 if (checkboxPath[0] === 'activeProject' && checkboxPath[1] === 'promptSets') {
                     const promptSetKey = checkboxPath[2];
                     const componentType = checkboxPath[3];
                     
-                    console.log('Prompt set key:', promptSetKey);
-                    console.log('Component type:', componentType);
-                    console.log('Is current prompt set?', promptSetKey === appState.activeProject.activePromptSet);
-                    
                     // If this is the current active prompt set, update the builder
                     if (promptSetKey === appState.activeProject.activePromptSet) {
-                        console.log('Updating builder for current prompt set');
                         // For Custom Build, ensure the component exists in the builder
                         if (!appState.activeProject.builder[componentType]) {
-                            console.log('Creating missing builder component');
                             appState.activeProject.builder[componentType] = { active: true, selection: 'custom', promptValue: '', userValue: '' };
                         }
                         appState.activeProject.builder[componentType].active = value;
-                        console.log(`Builder ${componentType}.active set to ${value}`);
-                    } else {
-                        console.log('Not current prompt set, skipping builder update');
                     }
                 }
                 
                 // Trigger UI update
-                console.log('Triggering render...');
                 render();
-                console.log('=== END DEBUG ===');
             }
 
             // Function to update component type references in appState when renaming
@@ -1185,13 +1211,13 @@
                 });
 
                 try {
-                    // Use appState components instead of fetching from database
+                    // Use appState components which are now populated by fetchAndInitializeData
                     const components = appState.activeProject.components;
 
-                    // Group components by component_type
+                    // Group components by type_key
                     const grouped = {};
                     components.forEach(component => {
-                        const type = component.component_type;
+                        const type = component.type_key;
                         if (!grouped[type]) grouped[type] = [];
                         grouped[type].push(component);
                     });
@@ -1245,7 +1271,7 @@
                             // Main row (Tier 1)
                             const row = document.createElement('tr');
                             row.innerHTML = `
-                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.component_type}" data-selection="${component.selection}"></td>
+                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.type_key}" data-selection="${component.selection}"></td>
                                 <td class="table__cell--selection"><input type="text" value="${component.selection || ''}" class="input--selection"></td>
                                 <td class="table__cell--prompt"><textarea class="textarea--prompt">${component.prompt_value || ''}</textarea></td>
                             `;
@@ -1340,80 +1366,10 @@
 
             // --- INITIALIZATION ---
             setupUIEventListeners();
+            setupAppEventListeners(); // Attach main app event listeners
             
-            // Initialize components admin functionality
-            initializeComponentsAdmin();
-            
-            // Function to populate prompt active states from database
-            async function populatePromptActiveStates() {
-                try {
-                    // Use appState components instead of fetching from database
-                    const components = appState.activeProject.components;
-                    
-                    // Group components by component_type and populate active states
-                    components.forEach(component => {
-                        const type = component.component_type;
-                        const selection = component.selection;
-                        
-                        if (!appState.activeProject.promptActiveStates[type]) {
-                            appState.activeProject.promptActiveStates[type] = {};
-                        }
-                        
-                        // Set the active state based on the database is_active field
-                        appState.activeProject.promptActiveStates[type][selection] = component.is_active === 1;
-                    });
-                    
-                    console.log('Prompt active states populated:', appState.activeProject.promptActiveStates);
-                } catch (error) {
-                    console.error('Error populating prompt active states:', error);
-                }
-            }
-            
-            // Function to load components into appState
-            async function loadComponentsIntoAppState() {
-                try {
-                    const response = await fetch('/api/user-components');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const components = await response.json();
-                    appState.activeProject.components = components;
-                    console.log('Components loaded into appState:', components.length, 'components');
-                    
-                    // Build builderComponentData from actual components
-                    builderComponentData = {};
-                    components.forEach(component => {
-                        const type = component.component_type;
-                        if (!builderComponentData[type]) {
-                            builderComponentData[type] = {
-                                title: type,
-                                prompts: {}
-                            };
-                        }
-                        // Only add to prompts if selection and prompt_value exist
-                        if (component.selection && component.prompt_value) {
-                            builderComponentData[type].prompts[component.selection] = component.prompt_value;
-                        }
-                    });
-                    console.log('builderComponentData built from components:', builderComponentData);
-                } catch (error) {
-                    console.error('Error loading components into appState:', error);
-                }
-            }
-            
-            // Fetch components from backend before initializing app
-            loadComponentsIntoAppState()
-                .then(() => {
-                    return populatePromptActiveStates();
-                })
-                .then(() => {
-                    // Initialize components admin functionality AFTER components are loaded
-                    initializeComponentsAdmin();
-                    initializeApp();
-                })
-                .catch(err => {
-                    alert('Error loading components: ' + err.message);
-                });
+            // Fetch data and then initialize the rest of the app
+            fetchAndInitializeData();
         });
     </script>
 </body>

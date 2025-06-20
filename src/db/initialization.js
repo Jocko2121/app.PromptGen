@@ -2,20 +2,23 @@ const db = require('./database');
 const starterComponents = require('./starter-components');
 
 /**
- * Insert starter components into the user_components table if it is empty.
+ * Seeds the database with starter components.
+ * This function will only run if the user_components table is empty.
+ * It assumes the component_types table has already been populated by migrations.
  */
 async function initializeDatabaseIfNeeded() {
-    // Check if user_components table is empty
+    // Check if the user_components table is already populated.
     const row = db.prepare('SELECT COUNT(*) as count FROM user_components').get();
     if (row.count > 0) {
         console.log('[Initialization] user_components table already populated. No action needed.');
         return;
     }
-    console.log('[Initialization] user_components table is empty. Inserting starter components...');
+    console.log('[Initialization] user_components table is empty. Seeding database...');
 
-    const insertStmt = db.prepare(`
+    const getTypeStmt = db.prepare('SELECT id FROM component_types WHERE type_key = ?');
+    const insertComponentStmt = db.prepare(`
         INSERT INTO user_components (
-            component_type,
+            component_type_id,
             is_active,
             selection,
             prompt_value,
@@ -24,36 +27,43 @@ async function initializeDatabaseIfNeeded() {
         ) VALUES (?, ?, ?, ?, ?, ?)
     `);
 
-    const insertMany = db.transaction((components) => {
-        for (const [componentType, componentData] of Object.entries(components)) {
-            // If the component has prompts, insert each as a separate row
+    const seedDatabase = db.transaction(() => {
+        console.log('[Initialization] Starting database seeding transaction.');
+        for (const [typeKey, componentData] of Object.entries(starterComponents)) {
+            // Step 1: Get the ID for the component type (must exist from migrations)
+            const typeRow = getTypeStmt.get(typeKey);
+
+            if (!typeRow) {
+                // This indicates a severe problem, as migrations should have created this.
+                console.error(`[Initialization] CRITICAL: Component type '${typeKey}' not found in database. Halting seed.`);
+                throw new Error(`Component type '${typeKey}' not found. Migrations may have failed.`);
+            }
+            const componentTypeId = typeRow.id;
+
+            // Step 2: Insert the associated components (prompts)
             if (componentData.prompts) {
                 for (const [selection, promptValue] of Object.entries(componentData.prompts)) {
-                    insertStmt.run(
-                        componentType,
+                    insertComponentStmt.run(
+                        componentTypeId,
                         1, // is_active
                         selection,
                         promptValue,
                         '', // user_value (empty by default)
-                        1  // is_starter (true)
+                        1   // is_starter (true)
                     );
                 }
-            } else {
-                // For context/constraints or other non-prompt components
-                insertStmt.run(
-                    componentType,
-                    1,
-                    'default',
-                    '',
-                    '',
-                    1 // is_starter (true)
-                );
             }
         }
+        console.log('[Initialization] Database seeding transaction completed.');
     });
 
-    insertMany(starterComponents);
-    console.log('[Initialization] Starter components inserted into user_components table.');
+    try {
+        seedDatabase();
+        console.log('[Initialization] Starter components inserted successfully.');
+    } catch (error) {
+        console.error('[Initialization] Failed to seed database:', error);
+        throw error;
+    }
 }
 
 module.exports = { initializeDatabaseIfNeeded }; 

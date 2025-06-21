@@ -52,6 +52,16 @@ async function initializeDatabaseIfNeeded() {
                         1   // is_starter (true)
                     );
                 }
+            } else {
+                // Handle components that don't have predefined prompts (e.g., context, constraints)
+                insertComponentStmt.run(
+                    componentTypeId,
+                    1, // is_active
+                    'default', // selection
+                    '', // prompt_value
+                    '', // user_value
+                    1 // is_starter
+                );
             }
         }
         console.log('[Initialization] Database seeding transaction completed.');

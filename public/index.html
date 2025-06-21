@@ -45,7 +45,7 @@
                     <div class="panel__header">
                         <h3>Database Components</h3>
                         <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
-                            <button id="toggle-details-btn" class="button--utility">Show Details</button>
+                            <button id="toggle-details-btn" class="button--utility" data-action="toggleAdminDetails">Show Details</button>
                             <button id="save-all-btn" disabled class="button--utility">Save All</button>
                         </div>
                         <span class="collapsible-panel__icon">&#9660;</span>
@@ -277,6 +277,7 @@
                         context: {},
                         constraints: {}
                     },
+                    visibility: [], // NEW: To store visibility from the DB
                     // New: Store all components in appState
                     components: [],
                     contentBlocks: {
@@ -325,17 +326,18 @@
                 renderContentBlocks(project.contentBlocks);
                 renderLibrary();
                 renderTextTransformer(project.textTransformer);
+                renderComponentsAdmin();
             }
 
             function renderPromptSetSelectors() {
                 const promptSetsContainer = document.getElementById('prompt-sets-list');
-                const promptSetKeys = Object.keys(appState.activeProject.promptSets);
+                const promptSets = appState.activeProject.promptSets || [];
                 promptSetsContainer.innerHTML = '';
-                promptSetKeys.forEach(key => {
+                promptSets.forEach(set => {
                     const div = document.createElement('div');
                     div.className = 'prompt-set-selector';
-                    div.dataset.promptSetKey = key;
-                    div.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    div.dataset.promptSetKey = set.set_key;
+                    div.textContent = set.display_name;
                     promptSetsContainer.appendChild(div);
                 });
             }
@@ -344,6 +346,28 @@
                 const promptSetSelectors = document.querySelectorAll('.prompt-set-selector');
                 promptSetSelectors.forEach(selector => {
                     selector.classList.toggle('active', selector.dataset.promptSetKey === activePromptSetKey);
+                });
+
+                let template;
+
+                // NEW: Logic updated for the new data structure
+                const selectedPromptSet = appState.activeProject.promptSets.find(ps => ps.set_key === activePromptSetKey);
+                if (!selectedPromptSet) {
+                    console.error(`Prompt set with key "${activePromptSetKey}" not found.`);
+                    return;
+                }
+
+                const visibilityForSet = appState.activeProject.visibility.filter(v => v.prompt_set_id === selectedPromptSet.id);
+                
+                Object.keys(appState.activeProject.builder).forEach(key => {
+                    const componentType = appState.activeProject.components.find(c => c.type_key === key);
+                    if (componentType) {
+                        const visibilityRecord = visibilityForSet.find(v => v.component_type_id === componentType.component_type_id);
+                        // A component is active in the builder if a visibility record exists and is set to visible.
+                        appState.activeProject.builder[key].active = visibilityRecord ? !!visibilityRecord.is_visible : false;
+                    } else {
+                        appState.activeProject.builder[key].active = false;
+                    }
                 });
             }
 
@@ -439,30 +463,21 @@
             }
 
             function renderBuilderPallet(builderState) {
-                console.log('=== RENDER BUILDER PALLET DEBUG ===');
-                console.log('Builder state:', builderState);
-                console.log('builderComponentData:', builderComponentData);
-                
                 const palletContainer = document.getElementById('prompt-builder-pallet');
                 if (!palletContainer) return;
                 palletContainer.innerHTML = '';
 
                 Object.keys(builderState).forEach(key => {
                     const componentState = builderState[key];
-                    console.log(`Component ${key}:`, componentState);
                     if (!componentState.active) {
-                        console.log(`Skipping ${key} - not active`);
                         return;
                     }
 
                     const componentData = builderComponentData[key];
-                    console.log(`Component data for ${key}:`, componentData);
                     if (!componentData) {
-                        console.log(`Skipping ${key} - no component data`);
                         return;
                     }
 
-                    console.log(`Rendering component ${key} with title:`, componentData.title);
                     const componentDiv = document.createElement('div');
                     componentDiv.className = 'prompt-builder__component';
                     componentDiv.dataset.componentKey = key;
@@ -496,23 +511,19 @@
                         const select = document.createElement('select');
                         select.setAttribute('data-action', 'componentSelect');
                         
-                        // Get active states for this component type
-                        const activeStates = appState.activeProject.promptActiveStates[key] || {};
-                        
-                        // Only show prompts that are active
-                        Object.keys(componentData.prompts).forEach(promptKey => {
-                            // Check if this prompt is active (default to true if not in activeStates)
-                            const isActive = activeStates[promptKey] !== false; // Default to true if not explicitly set
-                            
-                            if (isActive) {
-                                const option = document.createElement('option');
-                                option.value = promptKey;
-                                // For keys that are already well-formatted, don't transform them.
-                                // A simple check: if it contains a space or is short, use it as is.
-                                option.textContent = (promptKey.includes(' ') || promptKey.length < 5) ? promptKey : promptKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                option.selected = componentState.selection === promptKey;
-                                select.appendChild(option);
-                            }
+                        // Filter the master list of components to get only the active ones for this type.
+                        const activePromptsForType = appState.activeProject.components.filter(
+                            c => c.type_key === key && c.is_active
+                        );
+
+                        activePromptsForType.forEach(prompt => {
+                            const option = document.createElement('option');
+                            option.value = prompt.selection;
+                            // For keys that are already well-formatted, don't transform them.
+                            // A simple check: if it contains a space or is short, use it as is.
+                            option.textContent = (prompt.selection.includes(' ') || prompt.selection.length < 5) ? prompt.selection : prompt.selection.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            option.selected = componentState.selection === prompt.selection;
+                            select.appendChild(option);
                         });
                         
                         const customOption = document.createElement('option');
@@ -535,7 +546,6 @@
                     componentDiv.appendChild(controls);
                     palletContainer.appendChild(componentDiv);
                 });
-                console.log('=== END RENDER DEBUG ===');
             }
 
             function renderTextTransformer(transformerState) {
@@ -593,13 +603,21 @@
             }
 
             // --- EVENT HANDLER FUNCTIONS ---
-            
+            let showAdminDetails = false; // Moved to a higher scope
+
             // UI Handlers
             function handlePanelToggle(target) {
                 const panel = target.closest('.collapsible-panel');
                 if (panel) {
                     panel.classList.toggle('collapsible-panel--collapsed');
                 }
+            }
+
+            function handleAdminToggleDetails(target) {
+                showAdminDetails = !showAdminDetails;
+                target.textContent = showAdminDetails ? 'Hide Details' : 'Show Details';
+                // This is simpler as the rows will be shown/hidden on next render
+                render();
             }
 
             function handlePromptSetChange(target) {
@@ -808,33 +826,35 @@
 
             function handleComponentActiveToggle(target) {
                 const checkbox = target;
-                const componentType = checkbox.dataset.componentType;
-                const selection = checkbox.dataset.selection;
                 const componentId = checkbox.dataset.componentId;
-                
-                if (componentType && selection) {
-                    // Update the prompt active state in appState
-                    if (!appState.activeProject.promptActiveStates[componentType]) {
-                        appState.activeProject.promptActiveStates[componentType] = {};
+                const isChecked = checkbox.checked;
+
+                if (!componentId) return;
+
+                // Update the database
+                fetch(`/api/user-components/${componentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: isChecked })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update component state on the server.');
                     }
-                    appState.activeProject.promptActiveStates[componentType][selection] = checkbox.checked;
+                    // Update local state to match
+                    const component = appState.activeProject.components.find(c => c.id == componentId);
+                    if (component) {
+                        component.is_active = isChecked;
+                    }
                     
-                    // Update the database
-                    fetch(`/api/user-components/${componentId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            is_active: checkbox.checked ? 1 : 0
-                        })
-                    }).catch(error => {
-                        console.error('Error updating component active state:', error);
-                    });
-                    
-                    // Trigger UI update
+                    // The main render() call will handle UI updates
                     render();
-                }
+                })
+                .catch(error => {
+                    console.error('Error updating component active state:', error);
+                    // Optional: revert the checkbox state on failure
+                    checkbox.checked = !isChecked;
+                });
             }
 
             function handleComponentRename(target) {
@@ -869,12 +889,58 @@
             }
 
             function handleComponentGroupCheckbox(target) {
-                const checkbox = target;
-                const path = checkbox.dataset.path;
-                if (path) {
-                    const pathArray = path.split('.');
-                    handleCheckboxChange(pathArray, checkbox.checked);
+                const isChecked = target.checked;
+                const promptSetId = parseInt(target.dataset.promptSetId, 10);
+                const componentTypeId = parseInt(target.dataset.componentTypeId, 10);
+
+                if (isNaN(promptSetId) || isNaN(componentTypeId)) return;
+
+                // Optimistically update local state for instant UI feedback
+                const visibilityRecord = appState.activeProject.visibility.find(
+                    v => v.prompt_set_id === promptSetId && v.component_type_id === componentTypeId
+                );
+
+                if (visibilityRecord) {
+                    visibilityRecord.is_visible = isChecked ? 1 : 0;
+                } else {
+                    appState.activeProject.visibility.push({
+                        prompt_set_id: promptSetId,
+                        component_type_id: componentTypeId,
+                        is_visible: isChecked ? 1 : 0
+                    });
                 }
+
+                const activeSet = appState.activeProject.promptSets.find(ps => ps.id === promptSetId);
+                if (activeSet && activeSet.set_key === appState.activeProject.activePromptSet) {
+                    const componentType = appState.activeProject.components.find(c => c.component_type_id === componentTypeId)?.type_key;
+                    if(componentType && appState.activeProject.builder[componentType]) {
+                        appState.activeProject.builder[componentType].active = isChecked;
+                    }
+                }
+                
+                render(); // Re-render the UI immediately
+
+                fetch('/api/prompt-set-visibility', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        promptSetId: promptSetId,
+                        componentTypeId: componentTypeId,
+                        isVisible: isChecked
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Failed to update visibility on the server. Reverting UI.');
+                        if (visibilityRecord) visibilityRecord.is_visible = !isChecked ? 1 : 0;
+                        render();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating prompt set visibility:', error);
+                    if (visibilityRecord) visibilityRecord.is_visible = !isChecked ? 1 : 0;
+                    render();
+                });
             }
 
             // Input Event Handlers
@@ -932,6 +998,7 @@
                         assembleAll: handleAssembleAll,
                         // Database Admin
                         componentActiveToggle: handleComponentActiveToggle,
+                        toggleAdminDetails: handleAdminToggleDetails,
                     },
                     change: {
                         draftSelect: handleDraftSelect,
@@ -1025,8 +1092,10 @@
                     }
                     const data = await response.json();
             
-                    // Store flat list of components in appState
+                    // Store all data in appState
                     appState.activeProject.components = data.components;
+                    appState.activeProject.promptSets = data.promptSets;
+                    appState.activeProject.visibility = data.visibility;
             
                     // Dynamically build the builderComponentData from the API response
                     builderComponentData = {};
@@ -1042,14 +1111,33 @@
                         }
                     });
             
+                    // New logic: Initialize builder state based on persisted data
+                    const builderState = {};
+                    data.types.forEach(type => {
+                        const hasActiveComponent = data.components.some(c => c.type_key === type.type_key && c.is_active);
+                        builderState[type.type_key] = {
+                            active: hasActiveComponent,
+                            selection: 'custom',
+                            promptValue: '',
+                            userValue: ''
+                        };
+                         // For context and constraints, which don't have selections/prompts
+                        if (type.type_key === 'context' || type.type_key === 'constraints') {
+                           builderState[type.type_key].value = '';
+                        }
+                    });
+                    appState.activeProject.builder = builderState;
+
                     console.log('Successfully fetched and initialized data:', {
                         appStateComponents: appState.activeProject.components.length,
+                        promptSets: appState.activeProject.promptSets.length,
+                        visibilityRecords: appState.activeProject.visibility.length,
                         builderComponentData: builderComponentData
                     });
             
                     // Now that data is loaded, initialize the components admin panel and render UI
-                    await initializeComponentsAdmin();
-                    renderPromptSetSelectors(); // Create the prompt set UI elements
+                    await renderComponentsAdmin();
+                    renderPromptSetSelectors(); // This function should be updated to use the new promptSets data
                     applyPromptSet(appState.activeProject.activePromptSet); // Apply default prompt set
                     render(); // Final render after all data is ready
 
@@ -1182,83 +1270,72 @@
             }
 
             // --- COMPONENTS ADMIN FUNCTIONALITY ---
-            async function initializeComponentsAdmin() {
-                let showTier2 = false;
-                const toggleBtn = document.getElementById('toggle-details-btn');
+            async function renderComponentsAdmin() {
                 const groupedView = document.getElementById('components-grouped-view');
+                if (!groupedView) return;
 
-                if (!toggleBtn || !groupedView) return; // Only initialize if elements exist
+                // Use appState components which are now populated by fetchAndInitializeData
+                const components = appState.activeProject.components;
 
-                toggleBtn.addEventListener('click', () => {
-                    showTier2 = !showTier2;
-                    toggleBtn.textContent = showTier2 ? 'Hide Details' : 'Show Details';
-                    document.querySelectorAll('.tier2-details-row').forEach(row => {
-                        row.style.display = showTier2 ? '' : 'none';
-                    });
+                // Group components by type_key
+                const grouped = {};
+                components.forEach(component => {
+                    const type = component.type_key;
+                    if (!grouped[type]) grouped[type] = [];
+                    grouped[type].push(component);
                 });
 
-                try {
-                    // Use appState components which are now populated by fetchAndInitializeData
-                    const components = appState.activeProject.components;
+                // Get all component types from the builderComponentData to ensure all are rendered
+                const allTypeKeys = Object.keys(builderComponentData).sort();
 
-                    // Group components by type_key
-                    const grouped = {};
-                    components.forEach(component => {
-                        const type = component.type_key;
-                        if (!grouped[type]) grouped[type] = [];
-                        grouped[type].push(component);
-                    });
+                groupedView.innerHTML = '';
 
-                    // Sort group keys alphabetically
-                    const groupKeys = Object.keys(grouped).sort();
-
-                    groupedView.innerHTML = '';
-
-                    groupKeys.forEach(type => {
-                        const groupSection = document.createElement('div');
-                        groupSection.className = 'component-group';
-                        
-                        // Group title with checkbox
-                        const groupTitle = document.createElement('div');
-                        groupTitle.className = 'group-title';
-                        groupTitle.innerHTML = `
-                            <div class="group-title__row">
-                                <div class="group-title__label">
-                                    <input type="text" class="group-title__editable-text" value="${type}" data-original-type="${type}" data-action="componentRename">
-                                </div>
+                allTypeKeys.forEach(type => {
+                    const groupSection = document.createElement('div');
+                    groupSection.className = 'component-group';
+                    
+                    // Group title with checkbox
+                    const groupTitle = document.createElement('div');
+                    groupTitle.className = 'group-title';
+                    groupTitle.innerHTML = `
+                        <div class="group-title__row">
+                            <div class="group-title__label">
+                                <input type="text" class="group-title__editable-text" value="${type}" data-original-type="${type}" data-action="componentRename">
                             </div>
-                        `;
-                        groupSection.appendChild(groupTitle);
+                        </div>
+                    `;
+                    groupSection.appendChild(groupTitle);
 
-                        // Create flex container for side-by-side layout
-                        const flexContainer = document.createElement('div');
-                        flexContainer.className = 'component-group__layout';
+                    // Create flex container for side-by-side layout
+                    const flexContainer = document.createElement('div');
+                    flexContainer.className = 'component-group__layout';
 
-                        // Left side - Table
-                        const tableContainer = document.createElement('div');
-                        tableContainer.className = 'component-group__table-container';
+                    // Left side - Table
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'component-group__table-container';
 
-                        // Table for subcomponents
-                        const table = document.createElement('table');
-                        table.id = `component-table--${type}`;
-                        const thead = document.createElement('thead');
-                        thead.innerHTML = `
-                            <tr>
-                                <th class="table__header--active">Active</th>
-                                <th class="table__header--selection">Selection</th>
-                                <th class="table__header--prompt">Prompt Value</th>
-                            </tr>
-                        `;
-                        table.appendChild(thead);
+                    // Table for subcomponents
+                    const table = document.createElement('table');
+                    table.id = `component-table--${type}`;
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = `
+                        <tr>
+                            <th class="table__header--active">Active</th>
+                            <th class="table__header--selection">Selection</th>
+                            <th class="table__header--prompt">Prompt Value</th>
+                        </tr>
+                    `;
+                    table.appendChild(thead);
 
-                        const tbody = document.createElement('tbody');
-                        // Sort by created_at descending
+                    const tbody = document.createElement('tbody');
+                    // Sort by created_at descending
+                    if (grouped[type]) {
                         grouped[type].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                         grouped[type].forEach(component => {
                             // Main row (Tier 1)
                             const row = document.createElement('tr');
                             row.innerHTML = `
-                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-component-type="${component.type_key}" data-selection="${component.selection}" data-action="componentActiveToggle"></td>
+                                <td class="table__cell--active"><input type="checkbox" ${component.is_active ? 'checked' : ''} class="component-active-checkbox" data-component-id="${component.id}" data-action="componentActiveToggle"></td>
                                 <td class="table__cell--selection"><input type="text" value="${component.selection || ''}" class="input--selection"></td>
                                 <td class="table__cell--prompt"><textarea class="textarea--prompt">${component.prompt_value || ''}</textarea></td>
                             `;
@@ -1267,7 +1344,7 @@
                             // Details row for Tier 2
                             const detailsRow = document.createElement('tr');
                             detailsRow.className = 'tier2-details-row';
-                            detailsRow.style.display = 'none';
+                            detailsRow.style.display = showAdminDetails ? '' : 'none';
                             const detailsCell = document.createElement('td');
                             detailsCell.colSpan = 3;
                             detailsCell.innerHTML = `
@@ -1282,73 +1359,59 @@
                             detailsRow.appendChild(detailsCell);
                             tbody.appendChild(detailsRow);
                         });
+                    }
 
-                        table.appendChild(tbody);
-                        tableContainer.appendChild(table);
+                    table.appendChild(tbody);
+                    tableContainer.appendChild(table);
 
-                        // Right side - Content Box
-                        const contentBox = document.createElement('div');
-                        contentBox.className = 'component-group__content-box';
-                        
-                        // Get prompt sets from appState
-                        const promptSetKeys = ['custom_build', 'blog_post'];
-                        const promptSetNames = {
-                            'custom_build': 'Custom Build',
-                            'blog_post': 'Blog Post'
-                        };
-                        
-                        let contentHTML = `<h4>Prompt Set Status</h4>`;
-                        contentHTML += `<p>Select which prompt set should include ${type} components:</p>`;
-                        
-                        promptSetKeys.forEach(promptSetKey => {
-                            const promptSetName = promptSetNames[promptSetKey];
-                            let isActive = false;
-                            
-                            // Check if this component type is active in this prompt set
-                            if (promptSetKey === 'custom_build') {
-                                // Check if custom_build exists in promptSets, if not create it with default active state
-                                if (!appState.activeProject.promptSets[promptSetKey]) {
-                                    appState.activeProject.promptSets[promptSetKey] = {};
-                                }
-                                if (!appState.activeProject.promptSets[promptSetKey][type]) {
-                                    appState.activeProject.promptSets[promptSetKey][type] = { active: true };
-                                }
-                                isActive = appState.activeProject.promptSets[promptSetKey][type].active;
-                            } else if (appState.activeProject.promptSets[promptSetKey] && appState.activeProject.promptSets[promptSetKey][type]) {
-                                // Check the specific prompt set configuration
-                                isActive = appState.activeProject.promptSets[promptSetKey][type].active;
+                    // Right side - Content Box
+                    const contentBox = document.createElement('div');
+                    contentBox.className = 'component-group__content-box';
+                    
+                    // Find the component_type_id for the current group
+                    const componentType = appState.activeProject.components.find(c => c.type_key === type);
+                    const componentTypeId = componentType?.component_type_id;
+
+                    let contentHTML = `<h4>Prompt Set Status</h4>`;
+                    contentHTML += `<p>Select which prompt set should include this component group:</p>`;
+
+                    if (componentTypeId) {
+                        appState.activeProject.promptSets.forEach(promptSet => {
+                            let isVisible = false;
+                            // Find the visibility record for this specific combination
+                            const visibilityRecord = appState.activeProject.visibility.find(
+                                v => v.prompt_set_id === promptSet.id && v.component_type_id === componentTypeId
+                            );
+                            if (visibilityRecord) {
+                                isVisible = !!visibilityRecord.is_visible;
                             }
-                            
-                            const statusText = isActive ? 'Active' : 'Inactive';
-                            const itemClass = isActive ? 'component-group__prompt-set-item component-group__prompt-set-item--active' : 'component-group__prompt-set-item component-group__prompt-set-item--inactive';
-                            const statusClass = isActive ? 'component-group__status-text component-group__status-text--active' : 'component-group__status-text component-group__status-text--inactive';
-                            
+
+                            const statusText = isVisible ? 'Active' : 'Inactive';
+                            const itemClass = isVisible ? 'component-group__prompt-set-item component-group__prompt-set-item--active' : 'component-group__prompt-set-item component-group__prompt-set-item--inactive';
+                            const statusClass = isVisible ? 'component-group__status-text component-group__status-text--active' : 'component-group__status-text component-group__status-text--inactive';
+
                             contentHTML += `
-                                <div class="${itemClass}" data-component-type="${type}" data-prompt-set="${promptSetKey}">
-                                    <input type="checkbox" ${isActive ? 'checked' : ''} class="component-group__prompt-set-checkbox" data-path="activeProject.promptSets.${promptSetKey}.${type}.active" data-action="componentGroupCheckbox">
-                                    <span class="component-group__prompt-set-name">${promptSetName}</span>
+                                <div class="${itemClass}">
+                                    <input type="checkbox" ${isVisible ? 'checked' : ''} class="component-group__prompt-set-checkbox" 
+                                           data-component-type-id="${componentTypeId}" 
+                                           data-prompt-set-id="${promptSet.id}"
+                                           data-action="componentGroupCheckbox">
+                                    <span class="component-group__prompt-set-name">${promptSet.display_name}</span>
                                     <span class="${statusClass}">${statusText}</span>
                                 </div>
                             `;
                         });
-                        
-                        contentBox.innerHTML = contentHTML;
-
-                        // Add both to flex container
-                        flexContainer.appendChild(tableContainer);
-                        flexContainer.appendChild(contentBox);
-                        
-                        groupSection.appendChild(flexContainer);
-                        groupedView.appendChild(groupSection);
-                    });
-                } catch (error) {
-                    console.error('Error fetching components:', error);
-                    const errorMessage = document.getElementById('error-message');
-                    if (errorMessage) {
-                        errorMessage.textContent = 'An error occurred while fetching components. Please try again later.';
-                        errorMessage.style.display = 'block';
                     }
-                }
+                    
+                    contentBox.innerHTML = contentHTML;
+
+                    // Add both to flex container
+                    flexContainer.appendChild(tableContainer);
+                    flexContainer.appendChild(contentBox);
+                    
+                    groupSection.appendChild(flexContainer);
+                    groupedView.appendChild(groupSection);
+                });
             }
 
             // --- INITIALIZATION ---

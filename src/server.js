@@ -3,7 +3,6 @@ const path = require('path');
 const db = require('./db/database');
 const { runMigrations } = require('./db/migrations');
 const apiRoutes = require('./routes/api');
-const statePersistence = require('./services/state-persistence');
 const { initializeDatabaseIfNeeded } = require('./db/initialization');
 
 const app = express();
@@ -53,15 +52,6 @@ app.get('*', (req, res) => {
         // Start the server only after DB is ready
         app.listen(PORT, async () => {
             console.log(`Server is running at http://localhost:${PORT}`);
-            try {
-                // Initialize state persistence
-                await statePersistence.loadState();
-                // Start auto-save
-                statePersistence.startAutoSave();
-                console.log('State persistence initialized');
-            } catch (error) {
-                console.error('Failed to initialize state persistence:', error);
-            }
         });
     } catch (error) {
         console.error('Fatal error during startup:', error);

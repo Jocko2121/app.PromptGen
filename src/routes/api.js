@@ -9,18 +9,19 @@ const cleanup = require('../db/cleanup');
 // Components API
 // =================================================================================
 
-// GET all component data (types and prompts)
+// GET all component data (types, prompts, sets, and visibility)
 router.get('/components', (req, res) => {
     try {
-        // This is a more robust approach. We fetch the raw data and let the
-        // frontend handle any grouping or processing. This simplifies the API
-        // and removes a potential point of failure.
         const types = dbOps.getAllComponentTypes();
         const components = dbOps.getAllUserComponents();
+        const promptSets = dbOps.getAllPromptSets();
+        const visibility = dbOps.getPromptSetVisibility();
 
         res.json({
-            types: types,
-            components: components // Return the flat array of components
+            types,
+            components,
+            promptSets,
+            visibility
         });
     } catch (error) {
         console.error('Error fetching all component data:', error);
@@ -51,6 +52,26 @@ router.put('/component-types/:typeKey', (req, res) => {
     }
 });
 
+// PUT to update prompt set visibility
+router.put('/prompt-set-visibility', (req, res) => {
+    try {
+        const { promptSetId, componentTypeId, isVisible } = req.body;
+
+        if (promptSetId == null || componentTypeId == null || typeof isVisible !== 'boolean') {
+            return res.status(400).json({ error: 'promptSetId, componentTypeId, and isVisible (boolean) are required' });
+        }
+
+        const success = dbOps.updatePromptSetVisibility(promptSetId, componentTypeId, isVisible);
+
+        // The UPSERT operation in the DB means this will always reflect the desired state.
+        // We can confidently return success.
+        res.json({ message: 'Visibility updated successfully' });
+
+    } catch (error) {
+        console.error(`Error updating prompt set visibility:`, error);
+        res.status(500).json({ error: 'Failed to update visibility', details: error.message });
+    }
+});
 
 // POST to create a new user component (prompt)
 router.post('/user-components', (req, res) => {

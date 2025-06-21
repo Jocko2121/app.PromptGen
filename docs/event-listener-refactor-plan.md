@@ -222,7 +222,7 @@ We will refactor the code in the following order, testing after each step.
 *   **Why fourth:** This is the core interactive part of the application. It has many interconnected parts.
 *   **Actions to refactor:** `addComponent`, `removeComponent`, `componentSelect`, `componentInput`, `assembleAll`.
 
-**Step 5: Refactor the Database Components Admin Panel** (`PENDING`)
+**Step 5: Refactor the Database Components Admin Panel** (`COMPLETE`)
 *   **Why last:** This is the most complex area, with network side effects and the "lazy state" issue. Our new system, proven by the previous steps, will be ready to handle it.
 *   **Actions to refactor:** `componentRename`, `componentActiveToggle`, `componentGroupCheckbox`.
 
@@ -242,6 +242,13 @@ A log of major challenges, failures, and key learnings from this refactoring pro
 
 *   **Dropdown Bug & Render Inefficiency (Step 4):** During the refactor of the Prompt Builder, we discovered a bug where dropdown menus would close instantly. The initial fix (`setTimeout`) failed, revealing a deeper issue: the global `render()` function is too "brute-force," rebuilding entire sections of the DOM for minor state changes.
     *   **Decision:** The immediate fix is to make the specific event handler (`handleComponentSelect`) more "surgical" by updating the DOM directly. The larger, strategic decision is to formally plan a new phase of work to audit all `render()` calls and refactor them to be more targeted and efficient, improving both performance and stability.
+
+*   **Complex Persistence Bugs (Step 5):** The refactor of the Database Components Admin Panel revealed a cascade of complex, interrelated bugs that were initially misdiagnosed. The core problem of state not persisting was not due to a single error, but a combination of several deep issues:
+    *   **An Obsolete Caching Service:** A legacy `state-persistence.js` service with an auto-save feature was silently overwriting database changes, causing initial confusion. The service was completely removed.
+    *   **Silent Transaction Failures:** A custom test script revealed that the `better-sqlite3` library's transaction wrappers were being used incorrectly in `src/db/operations.js`, causing database writes to fail silently. This was a latent bug affecting multiple operations. The fix was to remove the wrappers and execute SQL commands directly.
+    *   **State Initialization Flaws:** The `fetchAndInitializeData` and `renderBuilderPallet` functions were not correctly using the persisted data from the database to build the client-side `appState`, leading to the UI being rendered from incorrect default values.
+    *   **The True Root Cause (Architectural Mismatch):** The final, most fundamental issue was that the UI provided controls for state (e.g., the visibility of a component group within a specific prompt set) that had no corresponding field or table in the database schema.
+    *   **Decision:** The architecture was corrected by adding a `prompt_sets` table and a `prompt_set_component_visibility` linking table to the database. This created a scalable and robust system for managing UI state, finally resolving the persistence bug. This lengthy process underscored the principle: if state needs to persist, it must have a place to be persisted.
 
 ---
 ## Phase 4: Render Optimization (Future Work)

@@ -477,7 +477,6 @@ body.light-mode .button--primary {
     line-height: 1;
 }
 
-#save-project-button, #save-as-project-button { background-color: var(--success-color); color: white; border-color: var(--success-color); }
 #delete-project-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
 #edit-project-button { background-color: var(--warning-color); color: #212529; border-color: var(--warning-color); }
 
@@ -886,8 +885,17 @@ body.light-mode .button--primary {
 
 /* Contextual override for buttons in the tab bar */
 .tab-bar__project-controls .button--primary {
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem;
     font-size: 0.9rem;
+    line-height: 1;
+}
+
+/* Styling for SVG icons inside tab bar buttons */
+.tab-bar__project-controls .button--primary svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    vertical-align: middle;
 }
 
 .tab-button {
@@ -917,5 +925,22 @@ body.light-mode .button--primary {
 
 .tab-content.active {
     display: block; /* Show active tab content */
+}
+
+/* Reusable style for icon-only buttons */
+.btn--icon {
+    background: transparent;
+    border: 1px solid transparent; /* Set transparent border */
+    color: var(--text-color-secondary);
+    padding: 0.5rem;
+    line-height: 1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn--icon:hover {
+    background-color: var(--hover-color);
+    color: var(--text-color);
 }
 

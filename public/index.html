@@ -22,17 +22,6 @@
                 <h4 class="sidebar__sub-heading">Prompt Sets</h4>
                 <div id="prompt-sets-list" class="sidebar__list">
                 </div>
-
-                <h4 class="sidebar__sub-heading">Settings</h4>
-                <div class="sidebar__settings-container">
-                    <span class="sidebar__sub-heading">Theme</span>
-                    <button id="theme-light-button" class="button--utility button--theme">☀️</button>
-                    <button id="theme-dark-button" class="button--utility button--theme hidden">🌙</button>
-                    <div class="sidebar__database-controls">
-                        <span class="sidebar__sub-heading">Database Tools</span>
-                        <button id="toggle-database-section" class="button--utility">Database</button>
-                    </div>
-                </div>
             </div>
             <div class="sidebar__footer">
                 <button id="admin-reset-button" data-action="adminReset">Admin: Hard Reset</button>
@@ -40,25 +29,37 @@
         </aside>
 
         <div class="main-content-wrapper">
-            <main class="main-content">
-                <section class="panel collapsible-panel" id="database-components-panel" style="display: none;">
-                    <div class="panel__header">
-                        <h3>Database Components</h3>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
-                            <button id="toggle-details-btn" class="button--utility" data-action="toggleAdminDetails">Show Details</button>
-                            <button id="save-all-btn" disabled class="button--utility">Save All</button>
-                        </div>
-                        <span class="collapsible-panel__icon">&#9660;</span>
+            <div class="tab-bar" id="main-tab-bar">
+                <div class="tab-bar__project-controls">
+                    <label for="project-name-input" class="project-hub__label">Project Name:</label>
+                    <input type="text" id="project-name-input" class="panel__title-input project-hub__input" data-action="projectTitleInput" placeholder="Enter project name...">
+                    <div class="panel__header-buttons">
+                        <button id="save-project-button" class="button--primary" data-action="saveProject">Save</button>
+                        <button id="save-as-project-button" class="button--primary" data-action="saveAsProject">Save New</button>
                     </div>
-                    <div class="collapsible-panel__content">
-                        <div class="collapsible-panel__inner-wrapper components-admin">
-                            <div id="error-message" class="error error__message"></div>
-                            <div id="components-grouped-view"></div>
+                </div>
+                <div class="tab-bar__tabs">
+                    <button class="tab-button active" data-tab-target="#prompt-builder-panel">Prompt Builder</button>
+                    <button class="tab-button" data-tab-target="#database-components-panel">Database Components</button>
+                    <button class="tab-button" data-tab-target="#refinement-panel">Refinement</button>
+                    <button class="tab-button" data-tab-target="#text-transformer-panel">Text Transformer</button>
+                    <button class="tab-button" data-tab-target="#article-workspace-panel">Article Workspace</button>
+                    <button class="tab-button" data-tab-target="#settings-panel">Settings</button>
+                </div>
+            </div>
+            <main class="main-content">
+                <section class="panel tab-content" id="project-hub-panel">
+                    <div class="panel__header project-hub__header">
+                        <label for="project-name-input" class="project-hub__label">Project Name:</label>
+                        <input type="text" id="project-name-input" class="panel__title-input project-hub__input" data-action="projectTitleInput" placeholder="Enter project name...">
+                        <div class="panel__header-buttons">
+                            <button id="save-project-button" class="button--primary" data-action="saveProject">Save</button>
+                            <button id="save-as-project-button" class="button--primary" data-action="saveAsProject">Save New</button>
                         </div>
                     </div>
                 </section>
-
-                <section class="panel collapsible-panel" id="prompt-builder-panel">
+                
+                <section class="panel collapsible-panel tab-content active" id="prompt-builder-panel">
                     <div class="panel__header">
                         <h3>Prompt Builder</h3>
                         <div class="panel__header-buttons">
@@ -79,20 +80,24 @@
                     </div>
                 </section>
 
-
-                <section class="panel" id="project-hub-panel">
+                <section class="panel collapsible-panel tab-content" id="database-components-panel">
                     <div class="panel__header">
-                       <h3>Project Hub</h3>
-                       <div class="panel__header-buttons">
-                           <button id="save-project-button" class="button--utility" data-action="saveProject">Save</button>
-                           <button id="save-as-project-button" class="button--utility" data-action="saveAsProject">Save As...</button>
-                       </div>
-                   </div>
-                   <input type="text" id="project-title-input" class="panel__title-input" data-action="projectTitleInput" placeholder="Enter Project Title...">
-               </section>
+                        <h3>Database Components</h3>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
+                            <button id="toggle-details-btn" class="button--utility" data-action="toggleAdminDetails">Show Details</button>
+                            <button id="save-all-btn" disabled class="button--utility">Save All</button>
+                        </div>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper components-admin">
+                            <div id="error-message" class="error error__message"></div>
+                            <div id="components-grouped-view"></div>
+                        </div>
+                    </div>
+                </section>
 
-
-                <section class="panel collapsible-panel" id="refinement-panel">
+                <section class="panel collapsible-panel tab-content" id="refinement-panel">
                      <div class="panel__header">
                         <h3>Refinement</h3>
                          <span class="collapsible-panel__icon">&#9660;</span>
@@ -124,7 +129,7 @@
                      </div>
                 </section>
 
-                <section class="panel collapsible-panel" id="text-transformer-panel">
+                <section class="panel collapsible-panel tab-content" id="text-transformer-panel">
                     <div class="panel__header">
                         <h3>Text Transformer</h3>
                         <span class="collapsible-panel__icon">&#9660;</span>
@@ -160,7 +165,7 @@
                     </div>
                 </section>
 
-                <section class="panel collapsible-panel" id="article-workspace-panel">
+                <section class="panel collapsible-panel tab-content" id="article-workspace-panel">
                     <div class="panel__header">
                         <h3>Article Workspace</h3>
                         <span class="collapsible-panel__icon">&#9660;</span>
@@ -169,6 +174,21 @@
                         <div class="collapsible-panel__inner-wrapper">
                             <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..." data-action="contentBlockInput"></textarea>
                             <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                        </div>
+                    </div>
+                </section>
+                
+                <section class="panel tab-content" id="settings-panel">
+                    <div class="panel__header">
+                        <h3>Settings</h3>
+                    </div>
+                    <div class="settings-panel__content">
+                        <div class="settings-group">
+                            <h4>Theme</h4>
+                            <div class="settings-group__control">
+                                <button id="theme-light-button" class="button--utility button--theme">☀️</button>
+                                <button id="theme-dark-button" class="button--utility button--theme hidden">🌙</button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -416,7 +436,7 @@
             }
 
             function renderProjectHub(project) {
-                const projectTitleInput = document.getElementById('project-title-input');
+                const projectTitleInput = document.getElementById('project-name-input');
                 if (projectTitleInput.value !== project.projectName) {
                     projectTitleInput.value = project.projectName;
                 }
@@ -613,6 +633,40 @@
                 }
             }
 
+            function switchToTab(targetContentId) {
+                const mainContent = document.querySelector('.main-content');
+                if (!mainContent) return;
+
+                const tabContents = mainContent.querySelectorAll('.tab-content');
+                const tabBar = document.getElementById('main-tab-bar');
+                if (!tabBar) return;
+
+                const tabButtons = tabBar.querySelectorAll('.tab-button');
+
+                // Deactivate all buttons and content
+                tabButtons.forEach(button => button.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Activate the target content
+                const targetContent = mainContent.querySelector(targetContentId);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+
+                // Activate the corresponding button
+                const targetButton = tabBar.querySelector(`[data-tab-target="${targetContentId}"]`);
+                if (targetButton) {
+                    targetButton.classList.add('active');
+                }
+            }
+
+            function handleTabSwitch(target) {
+                const targetButton = target.closest('.tab-button');
+                if (!targetButton || targetButton.classList.contains('active')) return;
+                const targetContentId = targetButton.dataset.tabTarget;
+                switchToTab(targetContentId);
+            }
+
             function handleAdminToggleDetails(target) {
                 showAdminDetails = !showAdminDetails;
                 target.textContent = showAdminDetails ? 'Hide Details' : 'Show Details';
@@ -801,6 +855,7 @@
                 const finalPrompt = appState.activeProject.contentBlocks.finalPrompt;
                 const activeDraft = finalPrompt.drafts.find(d => d.id === finalPrompt.activeDraftId);
                 if (activeDraft) activeDraft.content = allOutputs.join('\n\n');
+                switchToTab('#refinement-panel');
             }
 
             // Component Handlers
@@ -1041,6 +1096,9 @@
                     }
                     else if (target.closest('.prompt-set-selector')) {
                         handlePromptSetChange(target);
+                    }
+                    else if (target.closest('.tab-button')) {
+                        handleTabSwitch(target);
                     }
                 });
 

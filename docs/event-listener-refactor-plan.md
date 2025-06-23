@@ -265,3 +265,13 @@ This phase addresses the architectural inefficiency discovered during the event 
 4.  **Balance:** The goal is not to eliminate the global `render()` function entirely—it is still useful for large, sweeping changes like loading a new project. The goal is to strike the right balance between a purely state-driven top-level render and more efficient, targeted updates for frequent, simple interactions.
 
 *   *(...to be populated as we proceed...)* 
+
+
+Dual Project Controls:
+Duplication Issue: Project controls appear twice - once in the tab bar (lines 32-43) and again in the project-hub-panel (lines 54-65)
+Both have identical functionality but different positioning
+
+Event Handling:
+Tab switching uses legacy imperative event handling (line 1107-1108)
+Not yet converted to the declarative data-action pattern used elsewhere
+Handled in the main click event listener with target.closest('.tab-button')

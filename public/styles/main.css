@@ -2,7 +2,7 @@
 :root {
     /* DARK MODE (Default) */
     --sidebar-width: 250px;
-    --sidebar-collapsed-width: 68px;
+    --sidebar-collapsed-width: 0px;
     --bg-color: #1a1a1a;
     --panel-bg-color: #2a2a2a;
     --border-color: #444;
@@ -69,6 +69,11 @@ h4 {
     gap: 1rem;
     width: 100%;
     height: 100%;
+    transition: gap 0.3s ease-in-out;
+}
+
+.app-container:has(.sidebar--collapsed) {
+    gap: 0;
 }
 
 /* --- 1. Left Sidebar: Prompt Library --- */
@@ -83,11 +88,14 @@ h4 {
     width: var(--sidebar-width);
     height: 100%;
     box-sizing: border-box;
-    transition: width 0.3s ease-in-out, background-color 0.3s, border-color 0.3s;
+    transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, border-width 0.3s ease-in-out, background-color 0.3s, border-color 0.3s;
+    overflow: hidden;
 }
 
 .sidebar--collapsed {
     width: var(--sidebar-collapsed-width);
+    padding: 0;
+    border-width: 0;
 }
 
 .sidebar__header {
@@ -210,20 +218,7 @@ h4 {
     gap: 0.4rem;
 }
 
-.app-bar__project .button--primary {
-    padding: 0.4rem 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    border-radius: 4px;
-}
 
-.app-bar__project .button--primary svg {
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
 
 .app-bar__tools {
     flex: 1;
@@ -505,48 +500,16 @@ textarea::placeholder {
     flex-wrap: wrap;
 }
 
-.draft-controls__button--save {
-    background-color: var(--success-color);
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+
+
+.hidden {
+    display: none !important;
 }
 
-.draft-controls__button--delete {
-    background-color: var(--danger-color);
-}
+/* ===== NEW BTN SYSTEM (DUPLICATED FOR SAFE MIGRATION) ===== */
 
-.draft-controls__button--delete:disabled {
-    background-color: var(--disabled-bg-color);
-    cursor: not-allowed;
-    color: var(--text-color-secondary);
-}
-
-body.light-mode .draft-controls__button--save,
-body.light-mode .draft-controls__button--delete {
-    color: white;
-}
-
-.button--primary {
-    background-color: var(--primary-color);
-    color: white;
-    border: 1px solid var(--primary-color);
-    padding: 0.6rem 0.75rem;
-    font-size: 0.9rem;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.button--primary:hover {
-    background-color: var(--primary-color-hover);
-}
-
-body.light-mode .button--primary {
-    color: white;
-}
-
-.button--utility, .button--edit-mode {
+/* Base button style - defaults to utility styling */
+.btn, button {
     background-color: var(--input-bg-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
@@ -555,30 +518,215 @@ body.light-mode .button--primary {
     font-weight: normal;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-family: inherit;
 }
 
-.button--utility:hover, .button--edit-mode:hover {
+.btn:hover, button:hover {
     background-color: var(--border-color);
 }
 
-.button--utility.copied {
+/* Semantic variants */
+.btn--primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.btn--primary:hover {
+    background-color: var(--primary-color-hover);
+}
+
+body.light-mode .btn--primary {
+    color: white;
+}
+
+.btn--danger {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+.btn--danger:hover {
+    background-color: #c82333;
+}
+
+.btn--warning {
+    background-color: var(--warning-color);
+    color: #212529;
+    border-color: var(--warning-color);
+}
+
+.btn--warning:hover {
+    background-color: #e0a800;
+}
+
+.btn--success {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.btn--success:hover {
+    background-color: #218838;
+}
+
+/* Size variants */
+.btn--small {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.btn--large {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* State variants */
+.btn--active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn--copied {
     background-color: var(--success-color);
     border-color: var(--success-color);
     color: white;
 }
 
-.button--theme {
+/* Special purpose variants */
+.btn--icon {
     padding: 0.25rem 0.5rem;
     font-size: 1.1rem;
     line-height: 1;
 }
 
-#delete-project-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
-#edit-project-button { background-color: var(--warning-color); color: #212529; border-color: var(--warning-color); }
-
-.hidden {
-    display: none !important;
+.btn--ghost {
+    background-color: transparent;
+    border-color: var(--border-color);
 }
+
+.btn--ghost:hover {
+    background-color: var(--hover-color);
+}
+
+/* Draft control specific buttons */
+.btn--draft-save {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 3px;
+}
+
+.btn--draft-delete {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 3px;
+}
+
+.btn--draft-delete:disabled {
+    background-color: var(--input-bg-color);
+    color: var(--text-color-secondary);
+    border-color: var(--border-color);
+    cursor: not-allowed;
+}
+
+body.light-mode .btn--draft-save,
+body.light-mode .btn--draft-delete {
+    color: white;
+}
+
+/* Text transformer specific */
+.btn--transformer-action {
+    background-color: var(--input-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    width: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    text-align: center;
+}
+
+.btn--transformer-action:hover {
+    border-color: var(--primary-color);
+}
+
+.btn--transformer-action.btn--active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Tab button styling */
+.btn--tab {
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem 1rem;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    border-bottom: none;
+    margin-right: 0.25rem;
+}
+
+.btn--tab:hover {
+    background-color: var(--hover-color);
+}
+
+.btn--tab.btn--active {
+    background-color: var(--panel-bg-color);
+    border-color: var(--border-color);
+    border-bottom: 1px solid var(--panel-bg-color);
+    color: var(--text-color);
+}
+
+/* App bar specific button overrides */
+.app-bar__project .btn--primary {
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+.app-bar__project .btn--primary svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+/* Tab bar specific button overrides */
+.tab-bar__project-controls .btn--primary {
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+.tab-bar__project-controls .btn--primary svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+/* ===== END NEW BTN SYSTEM ===== */
 
 .text-transformer__area {
     display: flex;
@@ -984,20 +1132,7 @@ body.light-mode .button--primary {
     margin: 0;
 }
 
-/* Contextual override for buttons in the tab bar */
-.tab-bar__project-controls .button--primary {
-    padding: 0.5rem;
-    font-size: 0.9rem;
-    line-height: 1;
-}
 
-/* Styling for SVG icons inside tab bar buttons */
-.tab-bar__project-controls .button--primary svg {
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
-    vertical-align: middle;
-}
 
 .tab-button {
     background-color: transparent;

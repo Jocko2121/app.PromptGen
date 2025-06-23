@@ -33,16 +33,16 @@
                 <label for="project-name-input" class="project-hub__label">Project Name:</label>
                 <input type="text" id="project-name-input" class="panel__title-input project-hub__input" data-action="projectTitleInput" placeholder="Enter project name...">
                 <div class="panel__header-buttons">
-                    <button id="save-project-button" class="button--primary" data-action="saveProject" title="Save Project" aria-label="Save Project">
+                    <button id="save-project-button" class="btn btn--primary" data-action="saveProject" title="Save Project" aria-label="Save Project">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 21a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2H5zm7-14a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM6 5v4h10V5H6z"/></svg>
                     </button>
-                    <button id="save-as-project-button" class="button--primary" data-action="saveAsProject" title="Save as New Project" aria-label="Save as New Project">
+                    <button id="save-as-project-button" class="btn btn--primary" data-action="saveAsProject" title="Save as New Project" aria-label="Save as New Project">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 9h-3v3H8v-3H5v-2h3V6h2v3h3v2z"/></svg>
                     </button>
                 </div>
             </div>
-            <div class="app-bar__section app-bar__tools">Tools Section</div>
-            <div class="app-bar__section app-bar__settings">Settings Section</div>
+            <div class="app-bar__section app-bar__tools"></div>
+            <div class="app-bar__section app-bar__settings"></div>
         </div>
 
         <div class="main-content-wrapper">
@@ -72,7 +72,7 @@
                     <div class="panel__header">
                         <h3>Prompt Builder</h3>
                         <div class="panel__header-buttons">
-                             <button id="add-component-button" class="button--utility" data-action="addComponent">Add Component</button>
+                             <button id="add-component-button" class="btn" data-action="addComponent">Add Component</button>
                         </div>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
@@ -81,9 +81,9 @@
                             <div class="prompt-builder__pallet" id="prompt-builder-pallet">
                                 </div>
                             <div class="prompt-assembler__output">
-                                <div class="generate-button-container">
-                                    <button id="assemble-all-button" class="button--primary" data-action="assembleAll">Add All to Final Prompt</button>
-                                </div>
+                                                            <div class="generate-button-container">
+                                <button id="assemble-all-button" class="btn btn--primary" data-action="assembleAll">Add All to Final Prompt</button>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -93,8 +93,8 @@
                     <div class="panel__header">
                         <h3>Database Components</h3>
                         <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
-                            <button id="toggle-details-btn" class="button--utility" data-action="toggleAdminDetails">Show Details</button>
-                            <button id="save-all-btn" disabled class="button--utility">Save All</button>
+                            <button id="toggle-details-btn" class="btn" data-action="toggleAdminDetails">Show Details</button>
+                            <button id="save-all-btn" disabled class="btn">Save All</button>
                         </div>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
@@ -117,21 +117,21 @@
                                 <div class="panel user-outline-panel">
                                     <div class="panel__header"><h3>User Outline</h3></div>
                                     <textarea id="userOutline-textarea" autocomplete="off" placeholder="Write your outline or dump your thoughts here..." data-action="contentBlockInput"></textarea>
-                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                                 <div class="insert-button-container">
-                                    <button id="insert-button" class="button--primary" title="Insert Outline into Final Prompt" data-action="insertOutline">&rarr;</button>
+                                    <button id="insert-button" class="btn btn--primary" title="Insert Outline into Final Prompt" data-action="insertOutline">&rarr;</button>
                                 </div>
                                 <div class="panel final-prompt-panel">
                                     <div class="panel__header">
                                         <h3>Final Prompt</h3>
                                         <div class="panel__header-buttons">
-                                            <button id="copy-button" class="button--utility" data-action="copyToClipboard">Copy</button>
-                                            <button id="clear-button" class="button--utility" data-action="clearContent">Clear</button>
+                                                                        <button id="copy-button" class="btn" data-action="copyToClipboard">Copy</button>
+                            <button id="clear-button" class="btn" data-action="clearContent">Clear</button>
                                         </div>
                                     </div>
                                     <textarea id="finalPrompt-textarea" autocomplete="off" placeholder="The final, combined prompt will appear here..." data-action="contentBlockInput"></textarea>
-                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                             </div>
                         </div>
@@ -150,23 +150,23 @@
                                     <div class="panel">
                                         <div class="panel__header"><h3>Input</h3></div>
                                         <textarea id="textTransformerInput-textarea" autocomplete="off" placeholder="Paste text here to transform it..." data-action="contentBlockInput"></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                     <div class="text-transformer__actions-container">
-                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="summarize">Summarize</button>
-                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="rewrite">Rewrite</button>
-                                        <button class="text-transformer__action-selector" data-action="selectTextTransformerAction" data-transformer-action="analyze">Analyze</button>
+                                                                <button class="btn btn--transformer-action" data-action="selectTextTransformerAction" data-transformer-action="summarize">Summarize</button>
+                        <button class="btn btn--transformer-action" data-action="selectTextTransformerAction" data-transformer-action="rewrite">Rewrite</button>
+                        <button class="btn btn--transformer-action" data-action="selectTextTransformerAction" data-transformer-action="analyze">Analyze</button>
 
                                         <div id="text-transformer-options-container"></div>
 
-                                        <button id="transform-execute-button" class="button--primary" data-action="executeTextTransform">Transform</button>
+                                        <button id="transform-execute-button" class="btn btn--primary" data-action="executeTextTransform">Transform</button>
                                         <hr class="text-transformer__divider">
-                                        <button class="button--utility text-transformer__action-button" data-action="copyUp" title="Copy Output to Input">↑</button>
+                                        <button class="btn text-transformer__action-button" data-action="copyUp" title="Copy Output to Input">↑</button>
                                     </div>
                                     <div class="panel">
                                         <div class="panel__header"><h3>Output</h3></div>
                                         <textarea id="textTransformerOutput-textarea" autocomplete="off" placeholder="Transformed text will appear here..." data-action="contentBlockInput"></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                 </div>
                             </div>
@@ -182,7 +182,7 @@
                     <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper">
                             <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..." data-action="contentBlockInput"></textarea>
-                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select" data-action="draftSelect"></select><button class="draft-controls__button--save" data-action="draftSave">Save</button><button class="draft-controls__button--delete" data-action="draftDelete">🗑️</button></div>
+                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                         </div>
                     </div>
                 </section>
@@ -195,8 +195,8 @@
                         <div class="settings-group">
                             <h4>Theme</h4>
                             <div class="settings-group__control">
-                                                            <button id="theme-light-button" class="button--utility button--theme hidden">☀️</button>
-                            <button id="theme-dark-button" class="button--utility button--theme">🌙</button>
+                                                            <button id="theme-light-button" class="btn btn--icon hidden">☀️</button>
+                            <button id="theme-dark-button" class="btn btn--icon">🌙</button>
                             </div>
                         </div>
                     </div>
@@ -250,8 +250,9 @@
                     dbToggleButton.addEventListener('click', () => {
                         const isVisible = dbPanel.style.display !== 'none';
                         dbPanel.style.display = isVisible ? 'none' : '';
-                        dbToggleButton.classList.toggle('button--primary', !isVisible);
-                        dbToggleButton.classList.toggle('button--utility', isVisible);
+                        // Using new btn system
+                        dbToggleButton.classList.toggle('btn--primary', !isVisible);
+                        dbToggleButton.classList.toggle('btn', isVisible);
                     });
                 }
             }
@@ -419,7 +420,7 @@
                     textSpan.setAttribute('data-action', 'loadProject');
 
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'sidebar__project-delete-button';
+                    deleteBtn.className = 'btn btn--danger sidebar__project-delete-button';
                     deleteBtn.innerHTML = '&times;';
                     deleteBtn.dataset.projectId = project.currentProjectId;
                     deleteBtn.setAttribute('data-action', 'deleteProject');
@@ -471,7 +472,8 @@
                     }
 
                     const select = draftControls.querySelector('.draft-controls__select');
-                    const deleteBtn = draftControls.querySelector('.draft-controls__button--delete');
+                    // Using new btn system
+                    const deleteBtn = draftControls.querySelector('.btn--draft-delete');
 
                     if (select) {
                         select.innerHTML = '';
@@ -516,7 +518,7 @@
                     const title = document.createElement('h4');
                     title.textContent = componentData.title;
                     const removeBtn = document.createElement('button');
-                    removeBtn.className = 'component__remove-button';
+                    removeBtn.className = 'btn btn--danger component__remove-button';
                     removeBtn.innerHTML = '&times;';
                     removeBtn.setAttribute('data-action', 'removeComponent');
                     header.appendChild(title);
@@ -578,10 +580,11 @@
             }
 
             function renderTextTransformer(transformerState) {
-                // 1. Render the active action button
-                const actionButtons = document.querySelectorAll('.text-transformer__action-selector');
+                // 1. Render the active action button - updated for new btn system
+                const actionButtons = document.querySelectorAll('.text-transformer__action-selector, .btn--transformer-action');
                 actionButtons.forEach(button => {
                     button.classList.toggle('active', button.dataset.transformerAction === transformerState.activeAction);
+                    button.classList.toggle('btn--active', button.dataset.transformerAction === transformerState.activeAction);
                 });
 
                 // 2. Render the sub-options dynamically
@@ -794,10 +797,13 @@
                 if (finalPromptTextarea && finalPromptTextarea.value) {
                     navigator.clipboard.writeText(finalPromptTextarea.value).then(() => {
                         target.textContent = 'Copied!';
+                        // Updated for new btn system - support both old and new classes
                         target.classList.add('copied');
+                        target.classList.add('btn--copied');
                         setTimeout(() => {
                             target.textContent = 'Copy';
                             target.classList.remove('copied');
+                            target.classList.remove('btn--copied');
                         }, 2000);
                     }).catch(err => {
                         console.error('Failed to copy text: ', err);

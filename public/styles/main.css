@@ -963,6 +963,11 @@ body.light-mode .button--primary {
     display: flex;
 }
 
+.tab-bar__icons {
+    display: flex;
+    gap: 0.5rem;
+}
+
 /* We reuse .project-hub__label but scope it to the new parent */
 .tab-bar__project-controls .project-hub__label {
     font-size: 0.9rem;
@@ -1038,5 +1043,28 @@ body.light-mode .button--primary {
 .btn--icon:hover {
     background-color: var(--hover-color);
     color: var(--text-color);
+}
+
+
+
+/* Icon tab button overrides */
+.tab-button.tab-button--icon {
+    border-radius: 4px;
+    min-width: auto;
+}
+
+.tab-button.tab-button--icon svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--text-color-secondary);
+    transition: fill 0.2s;
+}
+
+.tab-button.tab-button--icon:hover svg {
+    fill: var(--text-color);
+}
+
+.tab-button.tab-button--icon.active svg {
+    fill: var(--primary-color);
 }
 

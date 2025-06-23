@@ -106,6 +106,18 @@
                     </div>
                 </section>
 
+                <section class="panel collapsible-panel collapsible-panel--collapsed tab-content" id="database-viewer-panel">
+                    <div class="panel__header">
+                        <h3>Database Viewer</h3>
+                        <span class="collapsible-panel__icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-panel__content">
+                        <div class="collapsible-panel__inner-wrapper">
+                            <p>Database viewer tab removed - use the "Open Database Viewer" button in Settings instead.</p>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="panel collapsible-panel tab-content" id="refinement-panel">
                      <div class="panel__header">
                         <h3>Refinement</h3>
@@ -197,6 +209,12 @@
                             <div class="settings-group__control">
                                                             <button id="theme-light-button" class="btn btn--icon hidden">☀️</button>
                             <button id="theme-dark-button" class="btn btn--icon">🌙</button>
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <h4>Database</h4>
+                            <div class="settings-group__control">
+                                <a href="/db-viewer/" target="_blank" class="btn">Open Database Viewer</a>
                             </div>
                         </div>
                     </div>
@@ -356,7 +374,7 @@
                 renderContentBlocks(project.contentBlocks);
                 renderLibrary();
                 renderTextTransformer(project.textTransformer);
-                renderComponentsAdmin();
+                // renderComponentsAdmin(); // REMOVED: Was causing infinite loop when render() called frequently. Now called explicitly when admin data changes.
             }
 
             function renderPromptSetSelectors() {
@@ -682,14 +700,16 @@
             function handleAdminToggleDetails(target) {
                 showAdminDetails = !showAdminDetails;
                 target.textContent = showAdminDetails ? 'Hide Details' : 'Show Details';
-                // This is simpler as the rows will be shown/hidden on next render
-                render();
+                // Update admin panel to show/hide details rows
+                renderComponentsAdmin();
             }
 
             function handlePromptSetChange(target) {
                 const promptSetKey = target.dataset.promptSetKey;
                 if (promptSetKey && promptSetKey !== appState.activeProject.activePromptSet) {
                     applyPromptSet(promptSetKey);
+                    // Update admin panel to reflect new prompt set visibility
+                    renderComponentsAdmin();
                     render();
                 }
             }
@@ -720,6 +740,8 @@
                 if (loadedProject) {
                     appState.activeProject = JSON.parse(JSON.stringify(loadedProject));
                     applyPromptSet(appState.activeProject.activePromptSet);
+                    // Update admin panel with new project data
+                    renderComponentsAdmin();
                 }
             }
 
@@ -732,6 +754,8 @@
             function handleAdminReset() {
                 appState = { savedProjects: [], activeProject: getDefaultAppState() };
                 applyPromptSet(appState.activeProject.activePromptSet);
+                // Update admin panel with reset data
+                renderComponentsAdmin();
             }
 
             // Draft Handlers
@@ -917,7 +941,8 @@
                         component.is_active = isChecked;
                     }
                     
-                    // The main render() call will handle UI updates
+                    // Update admin panel and other UI
+                    renderComponentsAdmin();
                     render();
                 })
                 .catch(error => {
@@ -988,7 +1013,9 @@
                     }
                 }
                 
-                render(); // Re-render the UI immediately
+                // Update admin panel and other UI immediately
+                renderComponentsAdmin();
+                render();
 
                 fetch('/api/prompt-set-visibility', {
                     method: 'PUT',
@@ -1003,12 +1030,14 @@
                     if (!response.ok) {
                         console.error('Failed to update visibility on the server. Reverting UI.');
                         if (visibilityRecord) visibilityRecord.is_visible = !isChecked ? 1 : 0;
+                        renderComponentsAdmin();
                         render();
                     }
                 })
                 .catch(error => {
                     console.error('Error updating prompt set visibility:', error);
                     if (visibilityRecord) visibilityRecord.is_visible = !isChecked ? 1 : 0;
+                    renderComponentsAdmin();
                     render();
                 });
             }
@@ -1040,6 +1069,63 @@
                         }
                     }
                 }
+            }
+
+            // Admin panel input handlers
+            function handleAdminSelectionInput(target) {
+                const componentId = target.closest('tr').querySelector('[data-component-id]')?.dataset.componentId;
+                if (!componentId) return;
+
+                const newSelection = target.value.trim();
+                
+                // Update local state
+                const component = appState.activeProject.components.find(c => c.id == componentId);
+                if (component) {
+                    component.selection = newSelection;
+                }
+
+                // Update database
+                fetch(`/api/user-components/${componentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selection: newSelection })
+                })
+                .catch(error => {
+                    console.error('Error updating component selection:', error);
+                    // Revert on error
+                    if (component) {
+                        component.selection = target.defaultValue;
+                        target.value = target.defaultValue;
+                    }
+                });
+            }
+
+            function handleAdminPromptInput(target) {
+                const componentId = target.closest('tr').querySelector('[data-component-id]')?.dataset.componentId;
+                if (!componentId) return;
+
+                const newPromptValue = target.value;
+                
+                // Update local state
+                const component = appState.activeProject.components.find(c => c.id == componentId);
+                if (component) {
+                    component.prompt_value = newPromptValue;
+                }
+
+                // Update database
+                fetch(`/api/user-components/${componentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt_value: newPromptValue })
+                })
+                .catch(error => {
+                    console.error('Error updating component prompt value:', error);
+                    // Revert on error
+                    if (component) {
+                        component.prompt_value = target.defaultValue;
+                        target.value = target.defaultValue;
+                    }
+                });
             }
 
             // --- EVENT LISTENERS & LOGIC ---
@@ -1133,6 +1219,15 @@
                             return;
                         }
                     }
+
+                    // Admin panel input handlers - TEMPORARILY DISABLED to fix infinite loop
+                    // if (target.matches('.input--selection')) {
+                    //     handleAdminSelectionInput(target);
+                    //     return;
+                    // } else if (target.matches('.textarea--prompt')) {
+                    //     handleAdminPromptInput(target);
+                    //     return;
+                    // }
 
                     // Legacy imperative actions (none remain)
                 });
@@ -1280,7 +1375,7 @@
             }
 
             // Function to update component type references in appState when renaming
-            async function handleComponentTypeRename(oldType, newType) {
+            async             function handleComponentTypeRename(oldType, newType) {
                 console.log('=== RENAME DEBUG ===');
                 console.log('Renaming from:', oldType, 'to:', newType);
                 console.log('Before update - builderComponentData:', builderComponentData);
@@ -1294,8 +1389,9 @@
                         input.dataset.originalType = newType;
                     }
                     
-                    // ADD: Re-render to update Prompt Builder
-                    console.log('Calling render() to update UI...');
+                    // Update admin panel and other UI
+                    console.log('Calling renderComponentsAdmin() and render() to update UI...');
+                    renderComponentsAdmin();
                     render();
                     console.log('=== END RENAME DEBUG ===');
                     

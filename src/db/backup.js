@@ -149,8 +149,9 @@ async function restoreFromBackup(backupName) {
         fs.copyFileSync(backupPath, db.name);
         console.log(`Database restored from backup: ${backupName}`);
         
-        // Reopen database connection
-        const newDb = new (require('better-sqlite3'))(db.name, { verbose: console.log });
+        // Reopen database connection (with human-readable logging)
+        const { logSQL } = require('./database');
+        const newDb = new (require('better-sqlite3'))(db.name, { verbose: logSQL });
         
         return {
             success: true,

@@ -41,6 +41,7 @@
         </div>
 
         <div class="col-auto d-flex flex-column align-items-end gap-2">
+            <button id="reload-database" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;">Reload Database</button>
             <label class="form-check-label d-flex align-items-center gap-1" style="font-size: 0.875rem;">
                 <input type="checkbox" id="enable-editing" class="form-check-input" style="margin: 0;">
                 Enable Editing
@@ -152,6 +153,30 @@ $(document).ready(function() {
             console.error('Error loading main database:', error);
             $('#loading-indicator').html('<div class="alert alert-warning">Could not load main database. Please use "Load Other DB" to select a database file.</div>');
         });
+    
+    // Setup reload database button
+    $('#reload-database').on('click', function() {
+        const button = $(this);
+        const originalText = button.text();
+        
+        // Show loading state
+        button.text('Reloading...').prop('disabled', true);
+        
+        // Fetch fresh database
+        fetch('/data/promptgen.db')
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => {
+                loadDB(arrayBuffer);
+                button.text(originalText).prop('disabled', false);
+            })
+            .catch(error => {
+                console.error('Error reloading database:', error);
+                button.text('Reload Failed').prop('disabled', false);
+                setTimeout(() => {
+                    button.text(originalText);
+                }, 2000);
+            });
+    });
     
     // Setup unobtrusive file picker
     $('#load-other-db').on('click', function() {

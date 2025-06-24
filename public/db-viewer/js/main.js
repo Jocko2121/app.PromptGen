@@ -93,6 +93,18 @@ function initialize() {
         };
         xhr.send();
     }
+
+    // Add event listener for editing toggle
+    const editingCheckbox = document.getElementById('enable-editing');
+    if (editingCheckbox) {
+        editingCheckbox.addEventListener('change', function() {
+            // Re-render current query to apply new editing state
+            const currentQuery = editor.getValue();
+            if (currentQuery) {
+                renderQuery(currentQuery);
+            }
+        });
+    }
 }
 
 function loadDB(arrayBuffer) {
@@ -434,7 +446,10 @@ function renderQuery(query) {
     document.querySelectorAll('[data-bs-toggle="tooltip"]')
         .forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-    dataBox.editableTableWidget();
+    // Only enable editing if checkbox is checked
+    if (document.getElementById('enable-editing').checked) {
+        dataBox.editableTableWidget();
+    }
 }
 
 function renderBlobItem(tr, bytes) {

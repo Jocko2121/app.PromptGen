@@ -9,6 +9,8 @@ body {
 #header {
     background: #A0CFFF;
     color: #3474A8;
+    margin-bottom: 20px;
+    padding: 10px !important;
 }
 
 #dropzone {
@@ -17,7 +19,15 @@ body {
 }
 
 #output-box {
-    display: none;
+    display: block;
+}
+
+#bottom-bar {
+    margin-top: 20px;
+}
+
+#footer {
+    opacity: 0.6;
 }
 
 .ace_hidden-cursors {

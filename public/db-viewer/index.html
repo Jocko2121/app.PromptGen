@@ -31,7 +31,7 @@
 
 <img src="img/icon.png" style="display: none;"/>
 
-<div id="main-container" class="container shadow bg-white">
+<div id="main-container" class="container-fluid shadow bg-white">
     <header id="header" class="row align-items-center p-4">
         <img src="img/logo.svg" width="54" height="54" class="col-auto p-0" alt="Database logo"/>
 
@@ -40,37 +40,26 @@
             <p class="mb-0">view sqlite file online</p>
         </div>
 
-        <a href="#" id="resizer" aria-label="Expand/Collapse" class="col-auto text-decoration-none" style="color: #3474A8">
-            <svg id="resizer-expand" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707"/>
-            </svg>
-            <svg id="resizer-collapse" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-arrows-angle-contract collapse" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M.172 15.828a.5.5 0 0 0 .707 0l4.096-4.096V14.5a.5.5 0 1 0 1 0v-3.975a.5.5 0 0 0-.5-.5H1.5a.5.5 0 0 0 0 1h2.768L.172 15.121a.5.5 0 0 0 0 .707M15.828.172a.5.5 0 0 0-.707 0l-4.096 4.096V1.5a.5.5 0 1 0-1 0v3.975a.5.5 0 0 0 .5.5H14.5a.5.5 0 0 0 0-1h-2.768L15.828.879a.5.5 0 0 0 0-.707"/>
-            </svg>
-        </a>
+        <div class="col-auto d-flex flex-column align-items-end gap-2">
+            <label class="form-check-label d-flex align-items-center gap-1" style="font-size: 0.875rem;">
+                <input type="checkbox" id="enable-editing" class="form-check-input" style="margin: 0;">
+                Enable Editing
+            </label>
+            <input type="file" id="file-picker" accept=".db,.sqlite,.sqlite3" style="display: none;">
+            <button id="load-other-db" class="btn btn-sm btn-outline-secondary opacity-50" style="font-size: 0.75rem;">Load Other DB</button>
+        </div>
     </header>
 
     <div id="compat-error" class="alert alert-danger row rounded-0 d-none" role="alert">
         Sorry but your browser does not support some of new HTML5 features! Try using latest version of Google Chrome or Firefox.
     </div>
 
-    <div class="row text-center p-3 align-items-stretch" id="dropzone" onclick="dropzoneClick(this)">
-        <div class="d-flex border border-info-subtle rounded-1 align-items-center justify-content-center">
-            <div id="drop-text">
-                <b>Drop file here</b> to load content or click on this box to open file dialog.<br/>
-
-                <div class="nouploadinfo small mb-3">No file will be uploaded - uses only JavaScript HTML5 FileReader.
-                </div>
-
-                <a id="sample-db-link" class="no-propagate small text-decoration-none"
-                   href="examples/Chinook_Sqlite.sqlite">&hellip; or download &amp; try this sample file</a>
+    <div id="loading-indicator" class="row text-center p-3">
+        <div class="d-flex align-items-center justify-content-center">
+            <div class="spinner-border me-2" role="status">
+                <span class="visually-hidden">Loading database...</span>
             </div>
-            <div id="drop-loading" class="d-flex align-items-center d-none">
-                <div class="spinner-border me-2" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <b>Processing file...</b>
-            </div>
+            <span>Loading database...</span>
         </div>
     </div>
 
@@ -134,7 +123,7 @@
     <small>| <a href="https://github.com/inloop/sqlite-viewer" class="text-decoration-none link-opacity-75">Fork me on GitHub</a> |</small>
 </footer>
 
-<input type="file" id="dropzone-dialog" style="opacity: 0;display:none">
+
 
 <script src="js/jquery-3.7.1.min.js"></script>
 <script src="js/filereader.js"></script>
@@ -146,6 +135,41 @@
 <script src="js/jszip.min.js"></script>
 <script src="js/FileSaver.min.js"></script>
 <script src="js/main.js?v=18"></script>
+
+<script>
+// Auto-load the main application database and setup file picker
+$(document).ready(function() {
+    // Auto-load the main database
+    fetch('/data/promptgen.db')
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+            $('#loading-indicator').hide();
+            loadDB(arrayBuffer);
+            // Show the output box immediately (expanded view)
+            $("#output-box").show();
+        })
+        .catch(error => {
+            console.error('Error loading main database:', error);
+            $('#loading-indicator').html('<div class="alert alert-warning">Could not load main database. Please use "Load Other DB" to select a database file.</div>');
+        });
+    
+    // Setup unobtrusive file picker
+    $('#load-other-db').on('click', function() {
+        $('#file-picker').click();
+    });
+    
+    $('#file-picker').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                loadDB(e.target.result);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+});
+</script>
 
 </body>
 </html>

@@ -15,6 +15,22 @@ app.use(express.static(path.join(__dirname, '../public')));
 // API routes
 app.use('/api', apiRoutes);
 
+// Serve database file for SQLite viewer
+app.get('/data/promptgen.db', (req, res) => {
+    try {
+        const dbPath = path.join(__dirname, '../data/promptgen.db');
+        res.download(dbPath, 'promptgen.db', (err) => {
+            if (err) {
+                console.error('Error serving database file:', err);
+                res.status(404).json({ error: 'Database file not found' });
+            }
+        });
+    } catch (error) {
+        console.error('Error accessing database file:', error);
+        res.status(500).json({ error: 'Failed to access database file' });
+    }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     try {

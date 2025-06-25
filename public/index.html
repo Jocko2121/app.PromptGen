@@ -27,13 +27,13 @@
                 <h2>Prompt Gen</h2>
             </div>
             <div class="sidebar__content">
-                <h4 class="sidebar__sub-heading">Projects</h4>
-                <ul id="library-list" class="sidebar__list">
-                </ul>
-
-                <h4 class="sidebar__sub-heading">Prompt Sets</h4>
+                <h4 class="sidebar__sub-heading">Prompt Sets ⏳</h4>
                 <div id="prompt-sets-list" class="sidebar__list">
                 </div>
+                
+                <h4 class="sidebar__sub-heading">Projects <i>(Coming Soon)</i></h4>
+                <ul id="library-list" class="sidebar__list">
+                </ul>
             </div>
             <div class="sidebar__footer">
                 <button id="admin-reset-button" data-action="adminReset">Admin: Hard Reset</button>
@@ -43,8 +43,8 @@
         <div class="app-bar">
             <div class="app-bar__section app-bar__project">
                 <span class="sidebar__hamburger" id="hamburger-button">&#9776;</span>
-                <label for="project-name-input" class="project-hub__label">Project Name:</label>
-                <input type="text" id="project-name-input" class="panel__title-input project-hub__input" data-action="projectTitleInput" placeholder="Enter project name...">
+                <label for="project-name-input" class="project-hub__label">Project:</label>
+                <input type="text" id="project-name-input" class="panel__title-input project-hub__input" data-action="projectTitleInput" placeholder="Enter project name..."> ⏳ ☹
                 <div class="panel__header-buttons">
                     <button id="save-project-button" class="btn btn--primary" data-action="saveProject" title="Save Project" aria-label="Save Project">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 21a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2H5zm7-14a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM6 5v4h10V5H6z"/></svg>
@@ -88,7 +88,7 @@
             <main class="main-content">
                 <section class="panel collapsible-panel tab-content active" id="prompt-builder-panel">
                     <div class="panel__header">
-                        <h3>Prompt Builder</h3>
+                        <h3>[set_name] ⏳</h3>
                         <div class="panel__header-buttons">
                              <button id="add-component-button" class="btn" data-action="addComponent">Add Component</button>
                         </div>
@@ -109,7 +109,7 @@
 
                 <section class="panel collapsible-panel tab-content" id="database-components-panel">
                     <div class="panel__header">
-                        <h3>Database Components</h3>
+                        <h3>Database Components 🌐 ☹</h3>
                         <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
                             <button id="toggle-details-btn" class="btn" data-action="toggleAdminDetails">Show Details</button>
                             <button id="save-all-btn" disabled class="btn">Save All</button>
@@ -126,7 +126,7 @@
 
                 <section class="panel collapsible-panel tab-content" id="database-viewer-panel">
                     <div class="panel__header">
-                        <h3>Database Viewer</h3>
+                        <h3>Database Viewer ⏳</h3>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
                     <div class="collapsible-panel__content">
@@ -138,30 +138,30 @@
 
                 <section class="panel collapsible-panel tab-content" id="refinement-panel">
                      <div class="panel__header">
-                        <h3>Refinement</h3>
+                        <h3>Refinement ⏳</h3>
                          <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
                      <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper">
                             <div class="refinement-area">
                                 <div class="panel user-outline-panel">
-                                    <div class="panel__header"><h3>User Outline</h3></div>
+                                    <div class="panel__header"><h3>User Outline ⏳</h3></div>
                                     <textarea id="userOutline-textarea" autocomplete="off" placeholder="Write your outline or dump your thoughts here..." data-action="contentBlockInput"></textarea>
-                                    <div class="draft-controls" data-content-block="userOutline"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
+                                    <div class="draft-controls" data-content-block="userOutline"> ⏳<select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                                 <div class="insert-button-container">
                                     <button id="insert-button" class="btn btn--primary" title="Insert Outline into Final Prompt" data-action="insertOutline">&rarr;</button>
                                 </div>
                                 <div class="panel final-prompt-panel">
                                     <div class="panel__header">
-                                        <h3>Final Prompt</h3>
+                                        <h3>Final Prompt ⏳</h3>
                                         <div class="panel__header-buttons">
                                                                         <button id="copy-button" class="btn" data-action="copyToClipboard">Copy</button>
                             <button id="clear-button" class="btn" data-action="clearContent">Clear</button>
                                         </div>
                                     </div>
                                     <textarea id="finalPrompt-textarea" autocomplete="off" placeholder="The final, combined prompt will appear here..." data-action="contentBlockInput"></textarea>
-                                    <div class="draft-controls" data-content-block="finalPrompt"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
+                                    <div class="draft-controls" data-content-block="finalPrompt"> ⏳<select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                 </div>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
 
                 <section class="panel collapsible-panel tab-content" id="text-transformer-panel">
                     <div class="panel__header">
-                        <h3>Text Transformer</h3>
+                        <h3>Text Transformer ⏳</h3>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
                     <div class="collapsible-panel__content">
@@ -178,9 +178,9 @@
                             <div id="action-engine-panel-content">
                                 <div class="text-transformer__area">
                                     <div class="panel">
-                                        <div class="panel__header"><h3>Input</h3></div>
+                                        <div class="panel__header"><h3>Input ⏳</h3></div>
                                         <textarea id="textTransformerInput-textarea" autocomplete="off" placeholder="Paste text here to transform it..." data-action="contentBlockInput"></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerInput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
+                                        <div class="draft-controls" data-content-block="textTransformerInput"> ⏳<select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                     <div class="text-transformer__actions-container">
                                                                 <button class="btn btn--transformer-action" data-action="selectTextTransformerAction" data-transformer-action="summarize">Summarize</button>
@@ -194,9 +194,9 @@
                                         <button class="btn text-transformer__action-button" data-action="copyUp" title="Copy Output to Input">↑</button>
                                     </div>
                                     <div class="panel">
-                                        <div class="panel__header"><h3>Output</h3></div>
+                                        <div class="panel__header"><h3>Output ⏳</h3></div>
                                         <textarea id="textTransformerOutput-textarea" autocomplete="off" placeholder="Transformed text will appear here..." data-action="contentBlockInput"></textarea>
-                                        <div class="draft-controls" data-content-block="textTransformerOutput"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
+                                        <div class="draft-controls" data-content-block="textTransformerOutput"> ⏳<select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                                     </div>
                                 </div>
                             </div>
@@ -206,24 +206,24 @@
 
                 <section class="panel collapsible-panel tab-content" id="article-workspace-panel">
                     <div class="panel__header">
-                        <h3>Article Workspace</h3>
+                        <h3>Article Workspace ⏳</h3>
                         <span class="collapsible-panel__icon">&#9660;</span>
                     </div>
                     <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper">
                             <textarea id="articleWorkspace-textarea" autocomplete="off" placeholder="Paste the final draft created by the LLM here..." data-action="contentBlockInput"></textarea>
-                            <div class="draft-controls" data-content-block="articleWorkspace"><select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
+                            <div class="draft-controls" data-content-block="articleWorkspace"> ⏳<select class="draft-controls__select" data-action="draftSelect"></select><button class="btn btn--draft-save" data-action="draftSave">Save</button><button class="btn btn--draft-delete" data-action="draftDelete">🗑️</button></div>
                         </div>
                     </div>
                 </section>
                 
                 <section class="panel tab-content" id="settings-panel">
                     <div class="panel__header">
-                        <h3>Settings</h3>
+                        <h3>Settings 🌐</h3>
                     </div>
                     <div class="settings-panel__content">
                         <div class="settings-group">
-                            <h4>Theme</h4>
+                            <h4>Theme 🌐</h4>
                             <div class="settings-group__control">
                                                             <button id="theme-light-button" class="btn btn--icon hidden">☀️</button>
                             <button id="theme-dark-button" class="btn btn--icon">🌙</button>

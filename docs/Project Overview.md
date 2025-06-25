@@ -1,14 +1,36 @@
-# Project Plan: AI Prompt Generator
+# Project: AI Prompt Generator
 
-## *1. Project Overview*
+
+## New Session Prompt
+I need you to do a full analysis of the app to enable you to deeply understand how the site works as a whole. It is especially important that you understand how the database is used, the various components, prompt sets, appState, event listeners, tabs and the Database Components page functions. After your analysis is complete, read the md files in the /docs directory to understand the history, targeted user (single person local app) and what our options are for next steps. The additional notes below will aid you in understanding the context we will be working in.
+
+## Purpose and Use Case for App
 - **Purpose:**
-  - A local-first, Node.js-based AI Prompt Generator web app.
+  - A local-first, single user, Node.js-based AI Prompt Generator app that runs on a Users localhost server.
   - Allows users to create, manage, and save prompt projects for LLMs (Large Language Models).
   - Designed for personal/local use, but code will be open for others to self-host.
 - **Frontend:**
   - Modern, single-page app (SPA) with a sidebar, project library, and prompt builder.
   - All UI logic and state management handled in the browser (index.html, CSS, JS).
   - No images or binary data—text only.
+
+## Working Agreement
+- **Approval:** 
+  - Critical - The AI assistant will not write or modify any code without explicit user approval.
+- **Clarification:** 
+  - If the user asks a question or makes a comment after a proposal has been made, the assistant will answer the question and then *must* ask for approval again before proceeding to code. Answering a question does not imply approval to code.
+- **Proposal:**
+  - Before seeking approval, the assistant will provide a concise summary of the proposed changes, including which files will be modified.
+- **Server**: 
+  - The user will start and stop the server. You will request they do that on any code change that requires a server restart.
+
+
+
+
+
+
+
+
 
 ## *2. Features & Architecture*
 
@@ -149,7 +171,7 @@
 - The builder and content block models are designed for flexibility and future expansion.
 - UI logic is separated from data/model logic, making it easier to refactor or port to a framework if desired.
 
----
+
 
 ## *3. Technical Decisions & Rationale*
 - **Node.js**: Chosen for backend due to familiarity, ecosystem, and ease of local hosting.
@@ -184,6 +206,7 @@
     3. Error Handling:
        - Basic error logging
        - Recovery procedures
+
 
 ## *4. Folder Structure (as of initial commit)*
 ```

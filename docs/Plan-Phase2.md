@@ -1,4 +1,4 @@
-# *Phase 2: Settings for components*
+# Project Plan: Phase 2 - Settings for components
 
 **[x] Epic 2.1 - Database Restructuring**
     - [x] Create starter-components.js file with default components

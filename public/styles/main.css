@@ -40,9 +40,9 @@ body {
     color: var(--text-color);
     margin: 0;
     padding: 1rem;
-    padding-top: calc(1rem + 60px); /* Account for fixed app-bar height */
+    padding-top: calc(0.5rem + 36px); /* Account for fixed app-bar height */
     display: flex;
-    height: calc(100vh - 2rem - 60px); /* Account for fixed app-bar height */
+    height: calc(100vh - 1.5rem - 36px); /* Account for fixed app-bar height */
     overflow: hidden;
     transition: background-color 0.3s, color 0.3s;
 }
@@ -148,19 +148,39 @@ h4 {
     flex-shrink: 0;
 }
 
+.sidebar__project-delete-button {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.sidebar__project-delete-button:hover {
+    color: #ffffff;
+    background-color: var(--danger-color);
+}
+
+.sidebar__project-delete-button svg {
+    pointer-events: none;
+}
+
 /* App Bar - Fixed at top */
 .app-bar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: 36px;
     background-color: var(--panel-bg-color);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1rem;
+    padding: 0 0.8rem;
     z-index: 1000;
     transition: background-color 0.3s, border-color 0.3s;
 }
@@ -168,7 +188,7 @@ h4 {
 .app-bar__section {
     display: flex;
     align-items: center;
-    min-height: 40px;
+    min-height: 30px;
 }
 
 .app-bar__project {
@@ -201,10 +221,10 @@ h4 {
 .app-bar__project .project-hub__input {
     min-width: 180px;
     max-width: 280px;
-    padding: 0.4rem 0.6rem;
+    padding: 0.2rem 0.5rem;
     font-size: 0.85rem;
-    height: auto;
-    border-radius: 4px;
+    height: 24px;
+    border-radius: 3px;
     align-self: center;
     line-height: 1;
     box-sizing: border-box;
@@ -412,15 +432,21 @@ h4 {
 .component__remove-button {
     background: none;
     border: none;
-    color: var(--text-color-secondary);
-    font-size: 1.5rem;
+    color: var(--danger-color);
     cursor: pointer;
-    padding: 0 0.5rem;
+    padding: 0.25rem;
     line-height: 1;
+    border-radius: 3px;
+    transition: color 0.2s, background-color 0.2s;
 }
 
 .component__remove-button:hover {
-    color: var(--danger-color);
+    color: #ffffff;
+    background-color: var(--danger-color);
+}
+
+.component__remove-button svg {
+    pointer-events: none;
 }
 
 .component__controls {
@@ -1193,6 +1219,7 @@ body.light-mode .btn--draft-delete {
     height: 18px;
     fill: var(--text-color-secondary);
     transition: fill 0.2s;
+    pointer-events: none;
 }
 
 .tab-button.tab-button--icon:hover svg {

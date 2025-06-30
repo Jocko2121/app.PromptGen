@@ -50,12 +50,36 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 21a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2H5zm7-14a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM6 5v4h10V5H6z"/></svg>
                     </button>
                     <button id="save-as-project-button" class="btn btn--primary" data-action="saveAsProject" title="Save as New Project" aria-label="Save as New Project">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 9h-3v3H8v-3H5v-2h3V6h2v3h3v2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 1 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 9h-3v3H8v-3H5v-2h3V6h2v3h3v2z"/></svg>
+                    </button>
+                    <button id="delete-project-button" class="btn btn--danger" data-action="deleteCurrentProject" title="Delete Current Project" aria-label="Delete Current Project">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                            <path fill="currentColor" d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7ZM9 8V17H11V8H9ZM13 8V17H15V8H13Z"/>
+                        </svg>
                     </button>
                 </div>
             </div>
             <div class="app-bar__section app-bar__tools"></div>
-            <div class="app-bar__section app-bar__settings"></div>
+            <div class="app-bar__section app-bar__settings">
+                <button class="btn btn--icon" title="Show Left Sidebar" aria-label="Show Left Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <line x1="9" x2="9" y1="3" y2="21"/>
+                    </svg>
+                </button>
+                <button class="btn btn--icon" title="Split View" aria-label="Split View">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <line x1="3" x2="21" y1="15" y2="15"/>
+                    </svg>
+                </button>
+                <button class="btn btn--icon" title="Show Right Sidebar" aria-label="Show Right Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <line x1="15" x2="15" y1="3" y2="21"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="main-content-wrapper">
@@ -496,16 +520,6 @@
                             textSpan.style.flexGrow = '1';
                             textSpan.setAttribute('data-action', 'loadProject');
 
-                            // Only show delete button for non-Default projects
-                            if (project.id !== 1) {
-                                const deleteBtn = document.createElement('button');
-                                deleteBtn.className = 'btn btn--danger sidebar__project-delete-button';
-                                deleteBtn.innerHTML = '&times;';
-                                deleteBtn.dataset.projectId = project.id;
-                                deleteBtn.setAttribute('data-action', 'deleteProject');
-                                li.appendChild(deleteBtn);
-                            }
-
                             li.appendChild(textSpan);
                             li.dataset.projectId = project.id;
                             libraryList.appendChild(li);
@@ -648,7 +662,11 @@
                 
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'component__remove-button';
-                removeBtn.innerHTML = '×';
+                removeBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7ZM9 8V17H11V8H9ZM13 8V17H15V8H13Z"/>
+                    </svg>
+                `;
                 removeBtn.setAttribute('data-action', 'removeComponent');
                 removeBtn.dataset.componentType = componentType.type_key;
                 removeBtn.title = `Remove ${componentType.display_name}`;
@@ -770,13 +788,12 @@
 
             async function initializeDatabaseComponentsFromDatabase() {
                 try {
+                    console.log('🔄 Loading Database Components admin panel...');
                     const response = await fetch('/api/components');
                     const data = await response.json();
                     
                     const groupedView = document.getElementById('components-grouped-view');
                     if (!groupedView) return;
-                    
-                    groupedView.innerHTML = '<p>Database Components panel initialized. Admin functionality will be implemented in next phase.</p>';
                     
                     // Store data for future use
                     appState.cache.components = data.components || [];
@@ -784,9 +801,167 @@
                     appState.cache.promptSets = data.promptSets || [];
                     appState.cache.visibility = data.visibility || [];
                     
+                    // Render the admin interface
+                    renderDatabaseComponentsAdmin(groupedView, data);
+                    
+                    console.log('✅ Database Components admin panel loaded successfully');
+                    
                 } catch (error) {
                     console.error('Error initializing database components:', error);
+                    const groupedView = document.getElementById('components-grouped-view');
+                    if (groupedView) {
+                        groupedView.innerHTML = '<div class="error">Failed to load database components. Please try refreshing the page.</div>';
+                    }
                 }
+            }
+
+            function renderDatabaseComponentsAdmin(container, data) {
+                const { types, components, promptSets, visibility } = data;
+                
+                // Group components by type for display
+                const componentsByType = {};
+                components.forEach(comp => {
+                    const type = types.find(t => t.id === comp.component_type_id);
+                    if (type) {
+                        if (!componentsByType[type.type_key]) {
+                            componentsByType[type.type_key] = {
+                                type: type,
+                                components: []
+                            };
+                        }
+                        componentsByType[type.type_key].components.push(comp);
+                    }
+                });
+
+                // Build the original admin interface structure
+                let html = '';
+
+                // Add each component type group
+                Object.values(componentsByType).forEach(({ type, components: typeComponents }) => {
+                    html += `
+                        <div class="component-group">
+                            <div class="group-title">
+                                <div class="group-title__row">
+                                    <div class="group-title__container">
+                                        <div class="group-title__label">
+                                            <input type="text" 
+                                                   class="group-title__editable-text" 
+                                                   value="${type.display_name}" 
+                                                   data-action="componentRename" 
+                                                   data-original-type="${type.type_key}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-group__layout">
+                                <div class="component-group__table-container">
+                                <table id="component-table--${type.type_key}">
+                                    <thead>
+                                        <tr>
+                                            <th class="table__header--active">Active</th>
+                                            <th class="table__header--selection">Selection</th>
+                                            <th class="table__header--prompt">Prompt Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+
+                    // Add each component row
+                    typeComponents.forEach(comp => {
+                        html += `
+                            <tr>
+                                <td class="table__cell--active">
+                                    <input type="checkbox" ${comp.is_active ? 'checked' : ''} 
+                                           data-action="componentActiveToggle" 
+                                           data-component-id="${comp.id}">
+                                </td>
+                                <td class="table__cell--selection">
+                                    <input type="text" 
+                                           class="input--selection" 
+                                           value="${comp.selection}" 
+                                           data-component-id="${comp.id}">
+                                </td>
+                                <td class="table__cell--prompt">
+                                    <textarea class="textarea--prompt" 
+                                              data-action="componentInput" 
+                                              data-component-id="${comp.id}">${comp.prompt_value || ''}</textarea>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="component-group__content-box">
+                                    <h4>Prompt Set Visibility</h4>
+                                    <p>Configure which prompt sets show this component type.</p>
+                    `;
+
+                    // Add prompt set checkboxes
+                    promptSets.forEach(ps => {
+                        const isVisible = visibility.some(v => 
+                            v.component_type_id === type.id && 
+                            v.prompt_set_id === ps.id && 
+                            v.is_visible
+                        );
+                        
+                        html += `
+                            <div class="component-group__prompt-set-item ${isVisible ? 'component-group__prompt-set-item--active' : ''}">
+                                <input type="checkbox" 
+                                       class="component-group__prompt-set-checkbox" 
+                                       ${isVisible ? 'checked' : ''}
+                                       data-action="componentGroupCheckbox"
+                                       data-prompt-set-id="${ps.id}"
+                                       data-component-type-id="${type.id}">
+                                <span class="component-group__prompt-set-name">${ps.display_name}</span>
+                                <span class="component-group__status-text ${isVisible ? 'component-group__status-text--active' : ''}">
+                                    ${isVisible ? 'Visible' : 'Hidden'}
+                                </span>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                                </div>
+                                                            </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            }
+
+            // Helper functions for admin actions
+            async function refreshDatabaseComponents() {
+                console.log('🔄 Refreshing database components...');
+                await initializeDatabaseComponentsFromDatabase();
+            }
+
+            function exportDatabaseData() {
+                const data = {
+                    components: appState.cache.components,
+                    types: appState.cache.componentTypes,
+                    promptSets: appState.cache.promptSets,
+                    visibility: appState.cache.visibility,
+                    exported_at: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `database-components-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('📁 Database data exported successfully');
             }
 
             // --- MASTER INITIALIZATION FUNCTION ---
@@ -947,30 +1122,27 @@
                 console.log('🎯 UI updated for project switch');
             }
 
-            function handleProjectDelete(target, event) {
-                event.stopPropagation(); // Prevent triggering project load
+            function handleDeleteCurrentProject(target, event) {
+                const currentProjectId = appState.currentProjectId;
+                const projectTitleInput = document.getElementById('project-name-input');
+                const currentProjectName = projectTitleInput?.value || `Project ${currentProjectId}`;
                 
-                const projectId = parseInt(target.dataset.projectId);
+                console.log('Delete current project requested:', currentProjectId, currentProjectName);
                 
-                if (!projectId) {
-                    console.error('No project ID found for delete operation');
+                // Prevent deletion of Default Project
+                if (currentProjectId === 1) {
+                    alert('Cannot delete the Default Project.');
                     return;
                 }
                 
-                // Find project name for confirmation
-                const projectElement = target.closest('[data-project-id]');
-                const projectName = projectElement?.querySelector('span[data-action="loadProject"]')?.textContent || `Project ${projectId}`;
-                
-                console.log('Delete requested for project:', projectId, projectName);
-                
                 // Confirm deletion
-                const confirmed = confirm(`Are you sure you want to delete "${projectName}"?\n\nThis action cannot be undone.`);
+                const confirmed = confirm(`Are you sure you want to delete "${currentProjectName}"?\n\nThis action cannot be undone.`);
                 
                 if (confirmed) {
-                    console.log('Deletion confirmed for project:', projectId);
-                    deleteProject(projectId, projectName);
+                    console.log('Current project deletion confirmed:', currentProjectId);
+                    deleteProject(currentProjectId, currentProjectName);
                 } else {
-                    console.log('Deletion cancelled for project:', projectId);
+                    console.log('Current project deletion cancelled:', currentProjectId);
                 }
             }
 
@@ -1272,7 +1444,50 @@
 
             function handleAdminToggleDetails(target, event) {
                 console.log('Admin toggle details requested');
-                // REMOVAL CANDIDATE: Admin details never implemented - simplified interface design
+                
+                // Toggle the visibility of tier2 details area
+                const componentsAdmin = document.querySelector('.collapsible-panel__inner-wrapper.components-admin');
+                if (componentsAdmin) {
+                    componentsAdmin.classList.toggle('show-tier2');
+                    
+                    // Update button text
+                    const button = document.getElementById('toggle-details-btn');
+                    if (button) {
+                        const isShowing = componentsAdmin.classList.contains('show-tier2');
+                        button.textContent = isShowing ? 'Hide Details' : 'Show Details';
+                    }
+                    
+                    // Add/remove tier2 content area if it doesn't exist
+                    let tier2Content = document.getElementById('admin-tier2-content');
+                    if (!tier2Content) {
+                        tier2Content = document.createElement('div');
+                        tier2Content.id = 'admin-tier2-content';
+                        tier2Content.className = 'tier2-col admin-tier2-content';
+                        tier2Content.innerHTML = `
+                            <div class="tier2-details-row">
+                                <div class="tier2-details-box">
+                                    <h4>Advanced Admin Settings</h4>
+                                    <p>This area will contain advanced database administration tools and settings.</p>
+                                    <p><em>Placeholder for future functionality:</em></p>
+                                    <ul>
+                                        <li>Bulk operations</li>
+                                        <li>Import/Export tools</li>
+                                        <li>Database optimization</li>
+                                        <li>Component analytics</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Insert at the end of the components admin area
+                        const groupedView = document.getElementById('components-grouped-view');
+                        if (groupedView) {
+                            groupedView.appendChild(tier2Content);
+                        }
+                    }
+                    
+                    console.log('Toggled admin details visibility');
+                }
             }
 
             function handleComponentGroupCheckbox(target, event) {
@@ -1415,7 +1630,7 @@
                 const action = target.dataset.action;
                 
                 // Only handle project-related actions
-                const projectActions = ['saveProject', 'saveAsProject', 'loadProject', 'deleteProject', 'createProject', 'adminReset'];
+                const projectActions = ['saveProject', 'saveAsProject', 'loadProject', 'deleteCurrentProject', 'createProject', 'adminReset'];
                 if (!projectActions.includes(action)) return;
                 
                 console.log(`🏗️ Project Event: ${action}`);
@@ -1424,7 +1639,7 @@
                     case 'saveProject': handleProjectSave(target, event); break;
                     case 'saveAsProject': handleProjectSaveAs(target, event); break;
                     case 'loadProject': handleProjectLoad(target, event); break;
-                    case 'deleteProject': handleProjectDelete(target, event); break;
+                    case 'deleteCurrentProject': handleDeleteCurrentProject(target, event); break;
                     case 'createProject': createNewProject(target, event); break;
                     case 'adminReset': handleAdminReset(target, event); break;
                 }

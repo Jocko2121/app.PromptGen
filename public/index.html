@@ -295,7 +295,7 @@
 
 
             // --- DATA MODELS (CONSTANTS) ---
-            // builderComponentData has been moved to the backend and is now seeded from starter-components.js into the database.
+            // ACTIVE: builderComponentData is populated from database and used for UI dropdowns & component renaming
             let builderComponentData = {};
 
             // --- APPLICATION STATE (UI & TEMPORARY STATE ONLY) ---
@@ -333,15 +333,16 @@
                         lastRefresh: null
                     },
                     
-                    // === LEGACY COMPATIBILITY ===
-                    // Keep these for existing UI code that expects them
+                    // === WORKSPACE STATE & COMPATIBILITY LAYER ===
+                    // Mixed usage: Some structures are core workspace state, others are legacy compatibility
                     activeProject: {
-                        builder: {},
-                        components: [],
-                        promptSets: [],
-                        visibility: [],
-                        contentBlocks: {},
-                        textTransformer: {
+                        builder: {},              // CORE WORKSPACE STATE - Primary data structure for prompt composition
+                                                 //    Used by: component selection, text editing, active/inactive states, renaming
+                        components: [],          // UNUSED - Legacy database cache structure  
+                        promptSets: [],          // MINIMAL USE - Only used during component type renaming operations
+                        visibility: [],          // UNUSED - Legacy visibility cache structure
+                        contentBlocks: {},       // UNUSED - Legacy content management (wireframe only)
+                        textTransformer: {       // UNUSED - Legacy text transformer state (wireframe only)
                             activeAction: 'analyze',
                             actions: {
                                 summarize: {},
@@ -368,42 +369,47 @@
             }
 
             let appState = {
-                // Database cache (single source of truth)
+                // === DATABASE CACHE LAYER ===
+                // Fresh data fetched from API endpoints, used to populate UI components
                 cache: {
-                    components: [],
-                    promptSets: [],
-                    visibility: [],
-                    contentBlocks: [],
-                    drafts: [],
-                    settings: {}
+                    components: [],      // Project components from /api/components
+                    promptSets: [],      // Available prompt sets from database
+                    visibility: [],      // Component visibility settings per prompt set
+                    contentBlocks: [],   // UNUSED - Content blocks handled differently
+                    drafts: [],          // UNUSED - Drafts handled differently  
+                    settings: {}         // UNUSED - Settings handled differently
                 },
                 
-                // Current project metadata
-                currentProjectId: 1, // Default Project ID
-                currentProjectName: '',
-                projects: [], // Renamed from availableProjects for consistency
+                // === PROJECT CONTEXT ===
+                // Tracks which project is currently active and loaded
+                currentProjectId: 1,     // Active project ID (1 = Default Project)
+                currentProjectName: '',  // Display name of active project
+                projects: [],            // Full project list from /api/projects
                 
-                // UI state
-                unsavedChanges: false,
-                tempInput: {
+                // === UI STATE TRACKING ===
+                // Temporary state for user interactions and unsaved changes
+                unsavedChanges: false,   // UNUSED - No save system implemented yet
+                tempInput: {             // UNUSED - Temporary input tracking not implemented
                     projectName: '',
                     componentContent: {},
                     contentBlocks: {}
                 },
                 
-                // Legacy compatibility (for existing UI code)
-                activeProject: getDefaultAppState(),
-                activePromptSet: 'basic',
-                builderComponentData: {},
+                // === FUNCTIONAL COMPATIBILITY LAYER ===
+                // Mix of active functionality and legacy structures (see detailed comments above)
+                activeProject: getDefaultAppState(),  // Contains core builder workspace state
+                activePromptSet: 'basic',             // ACTIVE - Current prompt set key, used by initialization & UI updates
+                builderComponentData: {},             // ACTIVE - UI lookup structure for dropdowns & component renaming
                 
-                // Deprecated (keeping for now to avoid breaking changes)
-                savedProjects: [],
-                availableProjects: [] // Alias for projects
+                // === DEPRECATED STRUCTURES ===
+                // Kept to prevent breaking changes, but not actively used
+                savedProjects: [],       // COMPLETELY UNUSED - No handlers implemented, docs reference legacy design
+                availableProjects: []    // MINIMAL USE - Backward compatibility alias, set but never read
             };
 
             // --- RENDER FUNCTIONS --- 
-            // ELIMINATED: All render functions removed for surgical render elimination
-            // Will be replaced with direct database-to-DOM initialization
+            // ELIMINATED: All render() functions and calls removed from main app 
+            // Replaced with direct database-to-DOM initialization pattern
 
             // --- DATABASE-TO-DOM INITIALIZATION ---
             async function initializePromptSetsFromDatabase() {
@@ -859,12 +865,12 @@
             // Project & Library Management Handlers
             function handleProjectSave(target, event) {
                 console.log('Project save requested');
-                // TODO: Implement project save functionality
+                // REMOVAL CANDIDATE: Manual save not needed - projects auto-save to database
             }
 
             function handleProjectSaveAs(target, event) {
                 console.log('Project save as requested');
-                // TODO: Implement project save as functionality
+                // REMOVAL CANDIDATE: Save-as not needed - use "Create New Project" instead
             }
 
             function handleProjectLoad(target, event) {
@@ -1061,70 +1067,70 @@
 
             function handleAdminReset(target, event) {
                 console.log('Admin reset requested');
-                // TODO: Implement admin reset functionality
+                // REMOVAL CANDIDATE: Admin reset never implemented - database operations handled differently
             }
 
-            // Content Blocks & Drafts Handlers
+            // Content Blocks & Drafts Handlers - REMOVAL CANDIDATES
             function handleDraftSave(target, event) {
                 console.log('Draft save requested');
-                // TODO: Implement draft save functionality
+                // REMOVAL CANDIDATE: Draft system never implemented - content handled directly in textareas
             }
 
             function handleDraftDelete(target, event) {
                 console.log('Draft delete requested');
-                // TODO: Implement draft delete functionality
+                // REMOVAL CANDIDATE: Draft system never implemented - content handled directly in textareas
             }
 
             function handleDraftSelect(target, event) {
                 console.log('Draft select requested:', target.value);
-                // TODO: Implement draft select functionality
+                // REMOVAL CANDIDATE: Draft system never implemented - content handled directly in textareas
             }
 
             function handleInsertOutline(target, event) {
                 console.log('Insert outline requested');
-                // TODO: Implement insert outline functionality
+                // REMOVAL CANDIDATE: Outline feature never implemented - users compose prompts manually
             }
 
             function handleCopyToClipboard(target, event) {
                 console.log('Copy to clipboard requested');
-                // TODO: Implement copy to clipboard functionality
+                // REMOVAL CANDIDATE: Auto-copy never implemented - users copy manually from textareas
             }
 
             function handleClearContent(target, event) {
                 console.log('Clear content requested');
-                // TODO: Implement clear content functionality
+                // REMOVAL CANDIDATE: Auto-clear never implemented - users clear textareas manually
             }
 
-            // Text Transformer Handlers
+            // Text Transformer Handlers - REMOVAL CANDIDATES
             function handleTextTransformerAction(target, event) {
                 console.log('Text transformer action selected:', target.dataset.transformerAction);
-                // TODO: Implement text transformer action selection
+                // REMOVAL CANDIDATE: Text transformer never implemented - was wireframe concept only
             }
 
             function handleTextTransformerOption(target, event) {
                 console.log('Text transformer option selected:', target.value);
-                // TODO: Implement text transformer option selection
+                // REMOVAL CANDIDATE: Text transformer never implemented - was wireframe concept only
             }
 
             function handleTextTransformExecute(target, event) {
                 console.log('Text transform execute requested');
-                // TODO: Implement text transform execution
+                // REMOVAL CANDIDATE: Text transformer never implemented - was wireframe concept only
             }
 
             function handleTextCopyUp(target, event) {
                 console.log('Text copy up requested');
-                // TODO: Implement text copy up functionality
+                // REMOVAL CANDIDATE: Text transformer never implemented - was wireframe concept only
             }
 
-            // Prompt Builder Handlers
+            // Prompt Builder Handlers - REMOVAL CANDIDATES
             function handleAddComponent(target, event) {
                 console.log('Add component requested');
-                // TODO: Implement add component functionality
+                // REMOVAL CANDIDATE: Dynamic components never implemented - uses fixed database component types
             }
 
             function handleRemoveComponent(target, event) {
                 console.log('Remove component requested');
-                // TODO: Implement remove component functionality
+                // REMOVAL CANDIDATE: Dynamic components never implemented - uses fixed database component types
             }
 
             function handleComponentSelect(target, event) {
@@ -1258,36 +1264,36 @@
                 console.log(`🎯 Successfully assembled ${componentCount} components into final prompt`);
             }
 
-            // Database Admin Handlers
+            // Database Admin Handlers - MIXED STATUS
             function handleComponentActiveToggle(target, event) {
                 console.log('Component active toggle requested');
-                // TODO: Implement component active toggle functionality
+                // REMOVAL CANDIDATE: Component visibility never implemented - simplified design approach
             }
 
             function handleAdminToggleDetails(target, event) {
                 console.log('Admin toggle details requested');
-                // TODO: Implement admin toggle details functionality
+                // REMOVAL CANDIDATE: Admin details never implemented - simplified interface design
             }
 
             function handleComponentGroupCheckbox(target, event) {
                 console.log('Component group checkbox changed:', target.checked);
-                // TODO: Implement component group checkbox functionality
+                // REMOVAL CANDIDATE: Bulk operations never implemented - individual management only
             }
 
             function handleComponentRename(target, event) {
                 console.log('Component rename requested:', target.value);
-                // TODO: Implement component rename functionality
+                // FUTURE FEATURE: Component type renaming planned but not yet implemented
             }
 
-            // UI Interaction Handlers
+            // UI Interaction Handlers - MIXED STATUS
             function handlePanelToggle(target, event) {
                 console.log('🔽 Panel toggle requested');
-                // TODO: Implement panel toggle functionality
+                // REMOVAL CANDIDATE: Panel collapsing never implemented - simplified to tab-only navigation
             }
 
             function handlePromptSetChange(target, event) {
                 console.log('🎯 Prompt set change requested:', target.dataset.promptSetKey);
-                // TODO: Implement prompt set change functionality
+                // FUTURE FEATURE: Prompt set switching planned but not yet implemented
             }
 
             function handleTabSwitch(target, event) {
@@ -1356,20 +1362,20 @@
                 switchToTab('refinement');
             }
 
-            // Input Handlers
+            // Input Handlers - FUTURE FEATURES
             function handleProjectTitleInput(target, event) {
                 console.log('Project title input changed:', target.value);
-                // TODO: Implement project title input functionality
+                // FUTURE FEATURE: Auto-save project title on input - currently manual save only
             }
 
             function handleContentBlockInput(target, event) {
                 console.log('Content block input changed');
-                // TODO: Implement content block input functionality
+                // REMOVAL CANDIDATE: Content blocks never implemented - functionality moved to components
             }
 
             function handleComponentInput(target, event) {
                 console.log('Component input changed:', target.value);
-                // TODO: Implement component input functionality
+                // FUTURE FEATURE: Auto-save component text - currently uses selection-based system
             }
 
             // --- INDEPENDENT EVENT DELEGATION SYSTEM ---

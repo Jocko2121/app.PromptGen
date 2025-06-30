@@ -2,7 +2,7 @@
 
 
 ## New Session Prompt
-I need you to do a full analysis of the app to enable you to deeply understand how the site works as a whole. It is especially important that you understand how the database is used, the various components, prompt sets, appState, event listeners, tabs and the Database Components page functions. After your analysis is complete, read the md files in the /docs directory to understand the history, targeted user (single person local app) and what our options are for next steps. The additional notes below will aid you in understanding the context we will be working in.
+We are starting a new Cursor Session. You are an experienced programmer in the stack specified in the .md files in the doc folder. I need you to do a full analysis of the entire app codebase to enable you to deeply understand how the site works as a whole. It is especially important that you understand how the database is used, the various components, prompt sets, appState, event listeners, tabs and the Database Components page functions. Do not make any assumptions - Read ALL of the code, do not skip anything. After your analysis is complete, read the md files in the /docs directory to understand the history, targeted user (single person local app) and what our options are for next steps. The additional notes below will aid you in understanding the context we will be working in. when you have completed these steps, respond with "ANALYSIS COMPLETE. What would you like to discuss". Do not return any plan of your own or alter any code (see working agreement below). We will then DISCUSS our next steps.
 
 ## Purpose and Use Case for App
 - **Purpose:**

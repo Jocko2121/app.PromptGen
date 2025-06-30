@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Independent Event System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .test-result { margin: 10px 0; padding: 10px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { margin: 5px; padding: 8px 12px; }
+        select { margin: 5px; padding: 5px; }
+        .component__select { background: #f0f0f0; }
+        .btn--tab { background: #007bff; color: white; }
+        .btn--tab--active { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Independent Event System Test</h1>
+    
+    <div class="test-section">
+        <h2>📑 Tab Navigation Test</h2>
+        <p>These should work independently without affecting dropdowns:</p>
+        <button class="btn--tab" data-tab="test-tab-1">Test Tab 1</button>
+        <button class="btn--tab" data-tab="test-tab-2">Test Tab 2</button>
+        <div id="tab-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧩 Dropdown Test</h2>
+        <p>These should work independently without triggering tab switches:</p>
+        <div class="component__controls">
+            <select class="component__select btn--tab" data-action="componentSelect">
+                <option value="">Select Option</option>
+                <option value="option1">Option 1</option>
+                <option value="option2">Option 2</option>
+            </select>
+        </div>
+        <div id="dropdown-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🏗️ Project Events Test</h2>
+        <p>These should work independently:</p>
+        <button data-action="loadProject">Load Project</button>
+        <button data-action="saveProject">Save Project</button>
+        <div id="project-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 Content Events Test</h2>
+        <p>These should work independently:</p>
+        <button data-action="copyToClipboard">Copy to Clipboard</button>
+        <button data-action="clearContent">Clear Content</button>
+        <div id="content-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔄 Mixed Events Test</h2>
+        <p>Rapid clicking should not cause interference:</p>
+        <button class="btn--tab" data-tab="mixed-tab">Tab Button</button>
+        <select class="component__select btn--tab" data-action="componentSelect">
+            <option value="">Mixed Select</option>
+            <option value="mixed1">Mixed 1</option>
+        </select>
+        <button data-action="assembleAll">Assemble All</button>
+        <div id="mixed-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 Event Log</h2>
+        <div id="event-log" style="height: 200px; overflow-y: scroll; border: 1px solid #ddd; padding: 10px; font-family: monospace; font-size: 12px;"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        // Event logging system
+        const eventLog = document.getElementById('event-log');
+        const originalConsoleLog = console.log;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const logEntry = args.join(' ') + '\n';
+            eventLog.textContent += new Date().toLocaleTimeString() + ': ' + logEntry;
+            eventLog.scrollTop = eventLog.scrollHeight;
+        };
+        
+        function clearLog() {
+            eventLog.textContent = '';
+        }
+        
+        // Test result helpers
+        function showResult(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `test-result ${type}`;
+        }
+        
+        // === INDEPENDENT EVENT SYSTEM (Copied from main app) ===
+        function setupAppEventListeners() {
+            const appContainer = document.body;
+            
+            // === PROJECT MANAGEMENT EVENTS (Independent) ===
+            appContainer.addEventListener('click', handleProjectEvents);
+            
+            // === PROMPT BUILDER EVENTS (Independent) ===
+            appContainer.addEventListener('change', handlePromptBuilderEvents);
+            appContainer.addEventListener('click', handlePromptBuilderClickEvents);
+            
+            // === TAB NAVIGATION EVENTS (Independent) ===
+            appContainer.addEventListener('click', handleTabNavigationEvents);
+            
+            // === CONTENT MANAGEMENT EVENTS (Independent) ===
+            appContainer.addEventListener('click', handleContentEvents);
+        }
+        
+        // === EVENT HANDLERS ===
+        function handleProjectEvents(event) {
+            const target = event.target;
+            const action = target.dataset.action;
+            
+            const projectActions = ['saveProject', 'loadProject', 'deleteProject'];
+            if (!projectActions.includes(action)) return;
+            
+            console.log(`🏗️ INDEPENDENT Project Event: ${action}`);
+            showResult('project-result', `✅ Project event handled: ${action}`);
+            event.stopPropagation();
+        }
+        
+        function handlePromptBuilderEvents(event) {
+            const target = event.target;
+            const action = target.dataset.action;
+            
+            if (action !== 'componentSelect') return;
+            
+            console.log(`🧩 INDEPENDENT Prompt Builder Change: ${action}`);
+            showResult('dropdown-result', `✅ Dropdown event handled: ${target.value}`);
+            event.stopPropagation();
+        }
+        
+        function handlePromptBuilderClickEvents(event) {
+            const target = event.target;
+            const action = target.dataset.action;
+            
+            const builderActions = ['assembleAll'];
+            if (!builderActions.includes(action)) return;
+            
+            console.log(`🧩 INDEPENDENT Prompt Builder Click: ${action}`);
+            showResult('mixed-result', `✅ Builder click handled: ${action}`);
+            event.stopPropagation();
+        }
+        
+        function handleTabNavigationEvents(event) {
+            const target = event.target;
+            
+            const isNavigationTab = (target.classList.contains('tab-button') || target.classList.contains('btn--tab')) &&
+                                   !target.classList.contains('component__select') &&
+                                   !target.closest('.component__controls') &&
+                                   !target.hasAttribute('data-action');
+            
+            if (!isNavigationTab) return;
+            
+            console.log(`📑 INDEPENDENT Tab Navigation Event`);
+            const tabName = target.dataset.tab || target.textContent;
+            showResult('tab-result', `✅ Tab switch handled: ${tabName}`);
+            showResult('mixed-result', `✅ Mixed tab handled: ${tabName}`);
+            event.stopPropagation();
+        }
+        
+        function handleContentEvents(event) {
+            const target = event.target;
+            const action = target.dataset.action;
+            
+            const contentActions = ['copyToClipboard', 'clearContent'];
+            if (!contentActions.includes(action)) return;
+            
+            console.log(`📝 INDEPENDENT Content Event: ${action}`);
+            showResult('content-result', `✅ Content event handled: ${action}`);
+            event.stopPropagation();
+        }
+        
+        // Initialize the independent event system
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAppEventListeners();
+            console.log('🚀 Independent Event System Test Initialized');
+            
+            // Show initial status
+            showResult('tab-result', 'Ready for tab testing', 'warning');
+            showResult('dropdown-result', 'Ready for dropdown testing', 'warning');
+            showResult('project-result', 'Ready for project testing', 'warning');
+            showResult('content-result', 'Ready for content testing', 'warning');
+            showResult('mixed-result', 'Ready for mixed testing', 'warning');
+        });
+    </script>
+</body>
+</html> 

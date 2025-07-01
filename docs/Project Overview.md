@@ -27,10 +27,28 @@ We are starting a new Cursor Session. You are an experienced programmer in the s
 
 
 
+# appState
+- **List of what is stored in appState:**
+  - xxx 
+
+
+
+# Render()
+- **List od what calls a render():**
+  - xxx 
+
+
+# Database write (focus on textfeild)
+- **List od when a database is written to:**
+  - xxx 
 
 
 
 
+
+
+
+## The Follow needs to be UPDATED
 
 ## *2. Features & Architecture*
 

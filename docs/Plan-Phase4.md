@@ -10,23 +10,23 @@
 
 **[ ] Epic 4.1 - Database Components Panel CRUD Operations**
 
-- [ ] **Task 1: Implement Text Field Database Updates**
-  - [ ] Change event listener from `input` to `blur` for textarea saves
-  - [ ] Fix `handleComponentInput()` → rename to `handleComponentBlur()` - save on field exit
-  - [ ] Add database API call: `PUT /api/components/:id` with `{ prompt_value: newValue }`
-  - [ ] Add simple user feedback: green border flash (200ms) for success, red border + tooltip for errors
-  - [ ] Update appState cache after successful database save
-  - [ ] Clear error states when user starts typing again
-  - [ ] Test prompt value editing and persistence across page reloads
+- [x] **Task 1: Implement Text Field Database Updates** ✅
+  - [x] Change event listener from `input` to `blur` for textarea saves
+  - [x] Fix `handleComponentInput()` → implemented onBlur auto-save functionality
+  - [x] Add database API call: `PUT /api/user-components/:id` with `{ prompt_value: newValue }`
+  - [x] Add simple user feedback: green border flash (200ms) for success, red border + tooltip for errors
+  - [x] Update appState cache after successful database save
+  - [x] Clear error states when user starts typing again
+  - [x] Test prompt value editing and persistence across page reloads
 
-- [ ] **Task 2: Implement Selection Field Database Updates**
-  - [ ] Create `handleAdminSelectionBlur()` handler for selection text inputs (onBlur event)
-  - [ ] Add to blur event routing with action `adminSelectionBlur`
-  - [ ] Save selection field changes: `PUT /api/components/:id` with `{ selection: newValue }`
-  - [ ] Add simple user feedback: green border flash for success, red border + tooltip for errors
-  - [ ] Update appState cache and re-populate Prompt Builder dropdowns
-  - [ ] Add `data-action="adminSelectionBlur"` to selection inputs in `renderDatabaseComponentsAdmin()`
-  - [ ] Test selection editing and dropdown synchronization
+- [x] **Task 2: Implement Selection Field Database Updates**
+  - [x] Create `handleAdminSelectionBlur()` handler for selection text inputs (onBlur event)
+  - [x] Add to blur event routing with action `adminSelectionBlur`
+  - [x] Save selection field changes: `PUT /api/user-components/:id` with `{ selection: newValue }`
+  - [x] Add simple user feedback: toast notifications for success/error messages
+  - [x] Update appState cache and re-populate Prompt Builder dropdowns
+  - [x] Add `data-action="adminSelectionBlur"` to selection inputs in `renderDatabaseComponentsAdmin()`
+  - [x] Test selection editing and dropdown synchronization
 
 - [ ] **Task 3: Implement Component Rename Functionality**
   - [ ] Fix `handleComponentRename()` → rename to `handleComponentRenameBlur()` (onBlur event)

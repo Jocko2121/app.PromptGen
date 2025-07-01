@@ -20,6 +20,8 @@
     </style>
 </head>
 <body class="light-mode">
+    <!-- Toast container - positioned at top level to survive DOM re-rendering -->
+    <div id="toast-container"></div>
 
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
@@ -880,6 +882,7 @@
                                     <input type="text" 
                                            class="input--selection" 
                                            value="${comp.selection}" 
+                                           data-action="adminSelectionBlur"
                                            data-component-id="${comp.id}">
                                 </td>
                                 <td class="table__cell--prompt">
@@ -1588,9 +1591,169 @@
                 // REMOVAL CANDIDATE: Content blocks never implemented - functionality moved to components
             }
 
-            function handleComponentInput(target, event) {
-                console.log('Component input changed:', target.value);
-                // FUTURE FEATURE: Auto-save component text - currently uses selection-based system
+            async function handleComponentInput(target, event) {
+                // Only handle blur events for auto-save
+                if (event.type !== 'blur') return;
+                
+                const componentId = target.dataset.componentId;
+                const newValue = target.value;
+                
+                if (!componentId) {
+                    console.error('No component ID found for textarea');
+                    return;
+                }
+                
+                console.log(`💾 Auto-saving component ${componentId}: "${newValue.substring(0, 50)}${newValue.length > 50 ? '...' : ''}"`);
+                
+                try {
+                    // Save to database
+                    const response = await fetch(`/api/user-components/${componentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt_value: newValue
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Show success feedback
+                    showSaveSuccess(target);
+                    
+                    // Update appState cache
+                    updateComponentCache(componentId, { prompt_value: newValue });
+                    
+                    // Trigger cross-tab re-rendering
+                    triggerCrossTabRerender('database-components');
+                    
+                    console.log(`✅ Component ${componentId} saved successfully`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error saving component ${componentId}:`, error);
+                    showSaveError(target, error.message);
+                }
+            }
+            
+            // === TOAST NOTIFICATION SYSTEM ===
+            function showToast(message, type = 'success', duration = 3000) {
+                const container = document.getElementById('toast-container');
+                
+                // Create toast element
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                
+                // Add to container
+                container.appendChild(toast);
+                
+                // Trigger animation
+                setTimeout(() => toast.classList.add('show'), 10);
+                
+                // Remove after duration
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (container.contains(toast)) {
+                            container.removeChild(toast);
+                        }
+                    }, 300);
+                }, duration);
+            }
+            
+            function showSaveSuccess(element) {
+                showToast('Saved successfully', 'success');
+            }
+            
+            function showSaveError(element, errorMessage) {
+                showToast(`Save failed: ${errorMessage}`, 'error');
+            }
+            
+            function updateComponentCache(componentId, updates) {
+                // Update the component in appState cache
+                if (appState.cache && appState.cache.components) {
+                    const component = appState.cache.components.find(c => c.id == componentId);
+                    if (component) {
+                        Object.assign(component, updates);
+                        console.log(`🔄 Updated component ${componentId} in cache`);
+                    }
+                }
+            }
+            
+            async function handleAdminSelectionBlur(target, event) {
+                // Only handle blur events for auto-save
+                if (event.type !== 'blur') return;
+                
+                const componentId = target.dataset.componentId;
+                const newValue = target.value.trim();
+                
+                if (!componentId) {
+                    console.error('No component ID found for selection input');
+                    return;
+                }
+                
+                console.log(`💾 Auto-saving selection ${componentId}: "${newValue}"`);
+                
+                try {
+                    // Save to database
+                    const response = await fetch(`/api/user-components/${componentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            selection: newValue
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Show success feedback
+                    showSaveSuccess(target);
+                    
+                    // Update appState cache
+                    updateComponentCache(componentId, { selection: newValue });
+                    
+                    // Refresh Prompt Builder dropdowns since selection names changed
+                    refreshPromptBuilderDropdowns();
+                    
+                    // Trigger cross-tab re-rendering
+                    triggerCrossTabRerender('database-components');
+                    
+                    console.log(`✅ Selection ${componentId} saved successfully`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error saving selection ${componentId}:`, error);
+                    showSaveError(target, error.message);
+                }
+            }
+            
+            function refreshPromptBuilderDropdowns() {
+                // Refresh all component dropdowns in Prompt Builder to show updated selection names
+                const promptBuilderPanel = document.getElementById('prompt-builder-panel');
+                if (promptBuilderPanel && promptBuilderPanel.style.display !== 'none') {
+                    console.log('🔄 Refreshing Prompt Builder dropdowns for selection name changes');
+                    // Re-initialize the Prompt Builder with fresh data
+                    initializePromptBuilderFromDatabase();
+                }
+            }
+            
+
+            
+            function triggerCrossTabRerender(panelType) {
+                // For Phase 4, we'll implement surgical DOM updates
+                // For now, we refresh the admin panel if it's visible
+                const adminPanel = document.getElementById('database-components-panel');
+                if (adminPanel && adminPanel.style.display !== 'none') {
+                    console.log(`🔄 Refreshing ${panelType} panel for cross-tab sync`);
+                    // Re-initialize the admin panel with fresh data
+                    initializeDatabaseComponentsFromDatabase();
+                }
             }
 
             // --- INDEPENDENT EVENT DELEGATION SYSTEM ---
@@ -1622,6 +1785,7 @@
                 
                 // === INPUT EVENTS (Independent) ===
                 appContainer.addEventListener('input', handleInputEvents);
+                appContainer.addEventListener('blur', handleInputEvents, true); // Use capture for blur events
             }
 
             // === PROJECT MANAGEMENT EVENT HANDLER ===
@@ -1783,18 +1947,20 @@
                 const target = event.target;
                 const action = target.dataset.action;
                 
-                // Only handle input events
-                const inputActions = ['projectTitleInput', 'contentBlockInput', 'componentInput'];
+                // Handle both input and blur events
+                const inputActions = ['projectTitleInput', 'contentBlockInput', 'componentInput', 'adminSelectionBlur'];
                 if (!inputActions.includes(action)) return;
                 
-                console.log(`⌨️ Input Event: ${action}`);
+                console.log(`⌨️ Input Event: ${action} (${event.type})`);
                 
                 switch (action) {
                     case 'projectTitleInput': handleProjectTitleInput(target, event); break;
                     case 'contentBlockInput': handleContentBlockInput(target, event); break;
                     case 'componentInput': handleComponentInput(target, event); break;
+                    case 'adminSelectionBlur': handleAdminSelectionBlur(target, event); break;
                 }
                 
+                // Only stop propagation for events we actually handled
                 event.stopPropagation();
             }
 

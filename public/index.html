@@ -138,7 +138,7 @@
                         <h3>Database Components 🌐 ☹</h3>
                         <div style="display: flex; gap: 10px; align-items: center; margin-right: 20px;">
                             <button id="toggle-details-btn" class="btn" data-action="toggleAdminDetails">Show Details</button>
-                            <button id="save-all-btn" disabled class="btn">Save All</button>
+                            <button id="refresh-all-btn" class="btn" data-action="refreshAll">Refresh All</button>
                         </div>
                         <span class="collapsible-panel__icon" data-action="togglePanel">&#9660;</span>
                     </div>
@@ -646,8 +646,8 @@
             }
 
             function createPromptBuilderComponent(container, componentType, components, index) {
-                // Find components of this type
-                const typeComponents = components.filter(c => c.type_key === componentType.type_key);
+                // Find active components of this type
+                const typeComponents = components.filter(c => c.type_key === componentType.type_key && c.is_active);
                 
                 // Create the component wrapper
                 const componentDiv = document.createElement('div');
@@ -692,7 +692,7 @@
                 defaultOption.textContent = 'Select a prompt...';
                 select.appendChild(defaultOption);
                 
-                // Add options from components
+                // Add options from active components only
                 const uniqueSelections = new Set();
                 typeComponents.forEach(component => {
                     if (component.selection && !uniqueSelections.has(component.selection)) {
@@ -1440,9 +1440,53 @@
             }
 
             // Database Admin Handlers - MIXED STATUS
-            function handleComponentActiveToggle(target, event) {
-                console.log('Component active toggle requested');
-                // REMOVAL CANDIDATE: Component visibility never implemented - simplified design approach
+            async function handleComponentActiveToggle(target, event) {
+                const componentId = target.dataset.componentId;
+                const isActive = target.checked;
+                
+                if (!componentId) {
+                    console.error('No component ID found for active toggle');
+                    return;
+                }
+                
+                console.log(`💾 Auto-saving component ${componentId} active state: ${isActive}`);
+                
+                try {
+                    // Save to database
+                    const response = await fetch(`/api/user-components/${componentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            is_active: isActive
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Show success feedback
+                    showSaveSuccess(target);
+                    
+                    // Update appState cache
+                    updateComponentCache(componentId, { is_active: isActive });
+                    
+                    // Trigger surgical cross-tab update
+                    triggerCrossTabRerender('database-components', 'active_state', {
+                        componentId: componentId,
+                        isActive: isActive
+                    });
+                    
+                    console.log(`✅ Component ${componentId} active state saved: ${isActive}`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error saving component ${componentId} active state:`, error);
+                    showSaveError(target, error.message);
+                    // Revert checkbox state on error
+                    target.checked = !isActive;
+                }
             }
 
             function handleAdminToggleDetails(target, event) {
@@ -1498,9 +1542,88 @@
                 // REMOVAL CANDIDATE: Bulk operations never implemented - individual management only
             }
 
-            function handleComponentRename(target, event) {
-                console.log('Component rename requested:', target.value);
-                // FUTURE FEATURE: Component type renaming planned but not yet implemented
+            async function handleRefreshAll(target, event) {
+                console.log('🔄 Refresh All requested - clearing cache and reloading data');
+                
+                // Clear appState cache to force fresh data load
+                if (appState.cache) {
+                    appState.cache.components = [];
+                    appState.cache.componentTypes = [];
+                    appState.cache.promptSets = [];
+                    appState.cache.visibility = [];
+                }
+                appState.builderComponentData = {};
+                
+                // Refresh Database Components panel
+                await initializeDatabaseComponentsFromDatabase();
+                
+                // Refresh Prompt Builder if visible
+                const promptBuilderPanel = document.getElementById('prompt-builder-panel');
+                if (promptBuilderPanel && promptBuilderPanel.style.display !== 'none') {
+                    await initializePromptBuilderFromDatabase();
+                }
+                
+                console.log('✅ Refresh All completed');
+                showToast('All data refreshed from database', 'success');
+            }
+
+            async function handleComponentRename(target, event) {
+                // Only handle blur events for auto-save
+                if (event.type !== 'blur') return;
+                
+                const typeKey = target.dataset.originalType;
+                const newDisplayName = target.value.trim();
+                
+                if (!typeKey) {
+                    console.error('No type key found for component rename');
+                    return;
+                }
+                
+                if (!newDisplayName) {
+                    console.error('Component type name cannot be empty');
+                    showSaveError(target, 'Name cannot be empty');
+                    return;
+                }
+                
+                console.log(`💾 Auto-saving component type rename ${typeKey}: "${newDisplayName}"`);
+                
+                try {
+                    // Save to database
+                    const response = await fetch(`/api/component-types/${typeKey}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            displayName: newDisplayName
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Show success feedback
+                    showSaveSuccess(target);
+                    
+                    // Update appState cache
+                    updateComponentTypeCache(typeKey, { display_name: newDisplayName });
+                    
+                    // Update builderComponentData
+                    updateBuilderComponentData(typeKey, newDisplayName);
+                    
+                    // Trigger surgical cross-tab update
+                    triggerCrossTabRerender('database-components', 'component_rename', {
+                        typeKey: typeKey,
+                        newDisplayName: newDisplayName
+                    });
+                    
+                    console.log(`✅ Component type ${typeKey} renamed to "${newDisplayName}" successfully`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error renaming component type ${typeKey}:`, error);
+                    showSaveError(target, error.message);
+                }
             }
 
             // UI Interaction Handlers - MIXED STATUS
@@ -1551,6 +1674,17 @@
                         targetContent.style.display = 'block';
                         targetContent.classList.add('active');
                         console.log(`✅ Activated panel: ${panelId}`);
+                        
+                        // Cross-tab sync check - refresh target panel if needed
+                        if (panelId === 'prompt-builder-panel') {
+                            console.log('🔄 Checking Prompt Builder for cross-tab sync');
+                            // Note: Surgical updates happen immediately, no need for full refresh on tab switch
+                            // Only refresh if cache is empty (first load)
+                            if (!appState.cache || !appState.cache.components || appState.cache.components.length === 0) {
+                                console.log('🔄 Cache empty, performing full refresh');
+                                initializePromptBuilderFromDatabase();
+                            }
+                        }
                     } else {
                         console.warn(`⚠️ Could not find panel: ${panelId}`);
                     }
@@ -1627,8 +1761,11 @@
                     // Update appState cache
                     updateComponentCache(componentId, { prompt_value: newValue });
                     
-                    // Trigger cross-tab re-rendering
-                    triggerCrossTabRerender('database-components');
+                    // Trigger surgical cross-tab update
+                    triggerCrossTabRerender('database-components', 'prompt_value', {
+                        componentId: componentId,
+                        newValue: newValue
+                    });
                     
                     console.log(`✅ Component ${componentId} saved successfully`);
                     
@@ -1683,6 +1820,120 @@
                 }
             }
             
+            function updateComponentTypeCache(typeKey, updates) {
+                // Update the component type in appState cache
+                if (appState.cache && appState.cache.componentTypes) {
+                    const componentType = appState.cache.componentTypes.find(ct => ct.type_key === typeKey);
+                    if (componentType) {
+                        Object.assign(componentType, updates);
+                        console.log(`🔄 Updated component type ${typeKey} in cache`);
+                    }
+                }
+            }
+            
+            function updateBuilderComponentData(typeKey, newDisplayName) {
+                // Update the builderComponentData structure
+                if (appState.builderComponentData && appState.builderComponentData[typeKey]) {
+                    appState.builderComponentData[typeKey].title = newDisplayName;
+                    console.log(`🔄 Updated builderComponentData for ${typeKey}: "${newDisplayName}"`);
+                }
+            }
+            
+            // === SURGICAL UPDATE FUNCTIONS ===
+            
+            function updatePromptBuilderTextarea(componentId, newValue) {
+                // Find the specific textarea and update its value
+                const component = appState.cache.components.find(c => c.id == componentId);
+                if (!component) return;
+                
+                const componentDiv = document.querySelector(`[data-component-type="${component.type_key}"]`);
+                if (!componentDiv) return;
+                
+                const textarea = componentDiv.querySelector('.component-textarea');
+                if (textarea && textarea.value !== newValue) {
+                    textarea.value = newValue;
+                    console.log(`🎯 Surgically updated textarea for component ${componentId}`);
+                }
+            }
+            
+            function updateComponentDropdownOptions(typeKey) {
+                // Find the component and update its dropdown options
+                const componentDiv = document.querySelector(`[data-component-type="${typeKey}"]`);
+                if (!componentDiv) return;
+                
+                const select = componentDiv.querySelector('.component-select');
+                if (!select) return;
+                
+                // Get current selection to preserve it
+                const currentValue = select.value;
+                
+                // Rebuild options from cache (active components only)
+                const typeComponents = appState.cache.components.filter(c => c.type_key === typeKey && c.is_active);
+                
+                // Clear existing options except default and custom
+                select.innerHTML = '';
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a prompt...';
+                select.appendChild(defaultOption);
+                
+                // Add options from components
+                const uniqueSelections = new Set();
+                typeComponents.forEach(component => {
+                    if (component.selection && !uniqueSelections.has(component.selection)) {
+                        uniqueSelections.add(component.selection);
+                        const option = document.createElement('option');
+                        option.value = component.selection;
+                        option.textContent = component.selection;
+                        select.appendChild(option);
+                    }
+                });
+                
+                // Add "Write My Own..." option
+                const customOption = document.createElement('option');
+                customOption.value = 'custom';
+                customOption.textContent = 'Write My Own...';
+                select.appendChild(customOption);
+                
+                // Restore previous selection if it still exists
+                if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                    select.value = currentValue;
+                }
+                
+                console.log(`🎯 Surgically updated dropdown options for ${typeKey}`);
+            }
+            
+            function updatePromptBuilderComponentTitle(typeKey, newDisplayName) {
+                // Find the component and update its title
+                const componentDiv = document.querySelector(`[data-component-type="${typeKey}"]`);
+                if (!componentDiv) return;
+                
+                const titleElement = componentDiv.querySelector('.component-title');
+                if (titleElement && titleElement.textContent !== newDisplayName) {
+                    titleElement.textContent = newDisplayName;
+                    console.log(`🎯 Surgically updated title for ${typeKey}: "${newDisplayName}"`);
+                }
+                
+                // Also update textarea placeholder
+                const textarea = componentDiv.querySelector('.component-textarea');
+                if (textarea) {
+                    textarea.placeholder = `Enter your ${newDisplayName.toLowerCase()} prompt...`;
+                }
+            }
+            
+            function updatePromptBuilderActiveState(componentId, isActive) {
+                // Find the component and its type
+                const component = appState.cache.components.find(c => c.id == componentId);
+                if (!component) return;
+                
+                // Update the dropdown options for this component type to reflect active state
+                updateComponentDropdownOptions(component.type_key);
+                
+                console.log(`🎯 Surgically updated active state for component ${componentId}: ${isActive}`);
+            }
+            
             async function handleAdminSelectionBlur(target, event) {
                 // Only handle blur events for auto-save
                 if (event.type !== 'blur') return;
@@ -1722,8 +1973,13 @@
                     // Refresh Prompt Builder dropdowns since selection names changed
                     refreshPromptBuilderDropdowns();
                     
-                    // Trigger cross-tab re-rendering
-                    triggerCrossTabRerender('database-components');
+                    // Trigger surgical cross-tab update
+                    const component = appState.cache.components.find(c => c.id == componentId);
+                    if (component) {
+                        triggerCrossTabRerender('database-components', 'selection', {
+                            typeKey: component.type_key
+                        });
+                    }
                     
                     console.log(`✅ Selection ${componentId} saved successfully`);
                     
@@ -1734,25 +1990,42 @@
             }
             
             function refreshPromptBuilderDropdowns() {
-                // Refresh all component dropdowns in Prompt Builder to show updated selection names
+                // Surgical update: refresh only the dropdowns without full rebuild
+                console.log('🔄 Surgically updating Prompt Builder dropdowns for selection name changes');
+                
                 const promptBuilderPanel = document.getElementById('prompt-builder-panel');
-                if (promptBuilderPanel && promptBuilderPanel.style.display !== 'none') {
-                    console.log('🔄 Refreshing Prompt Builder dropdowns for selection name changes');
-                    // Re-initialize the Prompt Builder with fresh data
-                    initializePromptBuilderFromDatabase();
+                if (!promptBuilderPanel) return;
+                
+                // Update each component type's dropdown options
+                if (appState.cache && appState.cache.componentTypes) {
+                    appState.cache.componentTypes.forEach(type => {
+                        updateComponentDropdownOptions(type.type_key);
+                    });
                 }
             }
             
 
             
-            function triggerCrossTabRerender(panelType) {
-                // For Phase 4, we'll implement surgical DOM updates
-                // For now, we refresh the admin panel if it's visible
-                const adminPanel = document.getElementById('database-components-panel');
-                if (adminPanel && adminPanel.style.display !== 'none') {
-                    console.log(`🔄 Refreshing ${panelType} panel for cross-tab sync`);
-                    // Re-initialize the admin panel with fresh data
-                    initializeDatabaseComponentsFromDatabase();
+            function triggerCrossTabRerender(panelType, updateType, data) {
+                // Surgical DOM updates for cross-tab synchronization
+                console.log(`🔄 Triggering surgical cross-tab update: ${updateType || 'general'}`);
+                
+                // Handle specific update types surgically
+                if (updateType === 'prompt_value' && data) {
+                    updatePromptBuilderTextarea(data.componentId, data.newValue);
+                } else if (updateType === 'selection' && data) {
+                    updateComponentDropdownOptions(data.typeKey);
+                } else if (updateType === 'component_rename' && data) {
+                    updatePromptBuilderComponentTitle(data.typeKey, data.newDisplayName);
+                } else if (updateType === 'active_state' && data) {
+                    updatePromptBuilderActiveState(data.componentId, data.isActive);
+                } else {
+                    // Fallback: refresh admin panel if visible (existing behavior)
+                    const adminPanel = document.getElementById('database-components-panel');
+                    if (adminPanel && adminPanel.style.display !== 'none') {
+                        console.log(`🔄 Refreshing ${panelType} panel for cross-tab sync`);
+                        initializeDatabaseComponentsFromDatabase();
+                    }
                 }
             }
 
@@ -1908,7 +2181,7 @@
                 const action = target.dataset.action;
                 
                 // Only handle admin click events
-                const adminClickActions = ['componentActiveToggle', 'toggleAdminDetails'];
+                const adminClickActions = ['componentActiveToggle', 'toggleAdminDetails', 'refreshAll'];
                 if (!adminClickActions.includes(action)) return;
                 
                 console.log(`⚙️ Admin Click Event: ${action}`);
@@ -1916,6 +2189,7 @@
                 switch (action) {
                     case 'componentActiveToggle': handleComponentActiveToggle(target, event); break;
                     case 'toggleAdminDetails': handleAdminToggleDetails(target, event); break;
+                    case 'refreshAll': handleRefreshAll(target, event); break;
                 }
                 
                 event.stopPropagation();
@@ -1948,7 +2222,7 @@
                 const action = target.dataset.action;
                 
                 // Handle both input and blur events
-                const inputActions = ['projectTitleInput', 'contentBlockInput', 'componentInput', 'adminSelectionBlur'];
+                const inputActions = ['projectTitleInput', 'contentBlockInput', 'componentInput', 'adminSelectionBlur', 'componentRename'];
                 if (!inputActions.includes(action)) return;
                 
                 console.log(`⌨️ Input Event: ${action} (${event.type})`);
@@ -1958,6 +2232,7 @@
                     case 'contentBlockInput': handleContentBlockInput(target, event); break;
                     case 'componentInput': handleComponentInput(target, event); break;
                     case 'adminSelectionBlur': handleAdminSelectionBlur(target, event); break;
+                    case 'componentRename': handleComponentRename(target, event); break;
                 }
                 
                 // Only stop propagation for events we actually handled

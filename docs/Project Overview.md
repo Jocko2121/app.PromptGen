@@ -14,15 +14,7 @@ We are starting a new Cursor Session. You are an experienced programmer in the s
   - All UI logic and state management handled in the browser (index.html, CSS, JS).
   - No images or binary data—text only.
 
-## Working Agreement
-- **Approval:** 
-  - Critical - The AI assistant will not write or modify any code without explicit user approval.
-- **Clarification:** 
-  - If the user asks a question or makes a comment after a proposal has been made, the assistant will answer the question and then *must* ask for approval again before proceeding to code. Answering a question does not imply approval to code.
-- **Proposal:**
-  - Before seeking approval, the assistant will provide a concise summary of the proposed changes, including which files will be modified.
-- **Server**: 
-  - The user will start and stop the server. You will request they do that on any code change that requires a server restart.
+
 
 
 

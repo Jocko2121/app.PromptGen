@@ -111,7 +111,11 @@
                     </button>
                 </div>
             </div>
+            
+
             <main class="main-content">
+
+                <!-- PROMPT BUILDER PANEL -->
                 <section class="panel collapsible-panel tab-content active" id="prompt-builder-panel">
                     <div class="panel__header">
                         <h3>[set_name] ⏳</h3>
@@ -122,17 +126,18 @@
                     </div>
                     <div class="collapsible-panel__content">
                         <div class="collapsible-panel__inner-wrapper">
-                            <div class="prompt-builder__pallet" id="prompt-builder-pallet">
-                                </div>
+                            <!-- <div id="components-grouped-view">I want to be able to edit a single component here. This div is activated (created?) via an edit button (that will replace the delete button) on a component, the delete component button will also be here instead of on the component There will also be a save button here that will save the changes to the database and remove (destroy?) the editor from view, Don't worry about the css not being perfect, we can fix it later</div> -->
+                            <div class="prompt-builder__pallet" id="prompt-builder-pallet"></div>
                             <div class="prompt-assembler__output">
-                                                            <div class="generate-button-container">
-                                <button id="assemble-all-button" class="btn btn--primary" data-action="assembleAll">Add All to Final Prompt</button>
-                            </div>
+                                <div class="generate-button-container">
+                                    <button id="assemble-all-button" class="btn btn--primary" data-action="assembleAll">Add All to Final Prompt</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
+                <!-- DATABASE COMPONENTS PANEL -->
                 <section class="panel collapsible-panel tab-content" id="database-components-panel">
                     <div class="panel__header">
                         <h3>Database Components 🌐 ☹</h3>
@@ -150,6 +155,7 @@
                     </div>
                 </section>
 
+                <!-- DATABASE VIEWER PANEL -->
                 <section class="panel collapsible-panel tab-content" id="database-viewer-panel">
                     <div class="panel__header">
                         <h3>Database Viewer ⏳</h3>
@@ -162,6 +168,7 @@
                     </div>
                 </section>
 
+                <!-- REFINEMENT PANEL -->
                 <section class="panel collapsible-panel tab-content" id="refinement-panel">
                      <div class="panel__header">
                         <h3>Refinement ⏳</h3>
@@ -194,6 +201,7 @@
                      </div>
                 </section>
 
+                <!-- TEXT TRANSFORMER PANEL -->
                 <section class="panel collapsible-panel tab-content" id="text-transformer-panel">
                     <div class="panel__header">
                         <h3>Text Transformer ⏳</h3>
@@ -230,6 +238,7 @@
                     </div>
                 </section>
 
+                <!-- ARTICLE WORKSPACE PANEL -->
                 <section class="panel collapsible-panel tab-content" id="article-workspace-panel">
                     <div class="panel__header">
                         <h3>Article Workspace ⏳</h3>
@@ -243,6 +252,7 @@
                     </div>
                 </section>
                 
+                <!-- SETTINGS PANEL -->
                 <section class="panel tab-content" id="settings-panel">
                     <div class="panel__header">
                         <h3>Settings 🌐</h3>

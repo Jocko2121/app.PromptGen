@@ -121,232 +121,131 @@
 
 
 
-
-
-
-**[ ] Epic 4.3 - Dynamic Component Add/Remove System**
-
-- [ ] **Task 1: Implement Add Component Type Functionality**
-  - [ ] Fix `handleAddComponent()` to create new component types
-  - [ ] Add UI for component type creation (name, default prompts, etc.)
-  - [ ] Store new component types in database: `POST /api/component-types`
-  - [ ] Update admin panel to show new component types
-  - [ ] Refresh Prompt Builder to include new types
-  - [ ] Test creating and using new component types
-
-- [ ] **Task 2: Implement Remove Component Type Functionality**
-  - [ ] Fix `handleRemoveComponent()` to delete component types
-  - [ ] Add confirmation dialog for component type deletion
-  - [ ] Remove from database: `DELETE /api/component-types/:id`
-  - [ ] Clean up related components and references
-  - [ ] Update both admin panel and Prompt Builder
-  - [ ] Test component type removal and cleanup
-
-- [ ] **Task 3: Dynamic Component UI Management**
-  - [ ] Add "Create New Component Type" button to admin panel
-  - [ ] Implement component type creation modal/form
-  - [ ] Add component type deletion buttons with confirmations
-  - [ ] Update component tables dynamically without full re-render
-  - [ ] Handle component type ordering and organization
-  - [ ] Test complete add/remove workflow
-
-**[ ] Epic 4.4 - Database API Enhancements**
-
-- [ ] **Task 1: Component CRUD API Endpoints**
-  - [ ] Implement `PUT /api/components/:id` for component updates
-  - [ ] Implement `PUT /api/component-types/:id` for type updates
-  - [ ] Implement `POST /api/component-types` for new type creation
-  - [ ] Implement `DELETE /api/component-types/:id` for type deletion
-  - [ ] Add proper error handling and validation
-  - [ ] Test all CRUD operations via API
-
-- [ ] **Task 2: Batch Operations API**
-  - [ ] Implement `PUT /api/components/batch` for bulk updates
-  - [ ] Add transaction support for batch operations
-  - [ ] Implement rollback mechanisms for failed batch operations
-  - [ ] Add progress tracking for large batch operations
-  - [ ] Test batch save functionality with multiple changes
-
-- [ ] **Task 3: Database Consistency and Validation**
-  - [ ] Add database constraints and validation rules
-  - [ ] Implement data integrity checks for component relationships
-  - [ ] Add duplicate prevention for component types and selections
-  - [ ] Implement proper foreign key handling for deletions
-  - [ ] Test data consistency across all operations
-
-**[ ] Epic 4.5 - User Experience Improvements**
-
-- [ ] **Task 1: Real-time Feedback and Error Handling**
-  - [ ] Add loading indicators for database operations
-  - [ ] Implement success/error notifications for all saves
-  - [ ] Add form validation and input sanitization
-  - [ ] Implement optimistic UI updates with rollback on failure
-  - [ ] Add keyboard shortcuts for common operations
-  - [ ] Test user feedback across all database operations
-
-- [ ] **Task 2: Performance Optimization**
-  - [ ] Add debouncing for text input auto-save
-  - [ ] Implement intelligent caching for database reads
-  - [ ] Optimize re-rendering to only update changed elements
-  - [ ] Add lazy loading for large component lists
-  - [ ] Implement efficient diff algorithms for UI updates
-  - [ ] Test performance with large numbers of components
-
-- [ ] **Task 3: Data Import/Export and Backup**
-  - [ ] Enhance existing export functionality for components
-  - [ ] Add import functionality for component data
-  - [ ] Implement component backup and restore features
-  - [ ] Add component versioning and history tracking
-  - [ ] Create component sharing and template features
-  - [ ] Test data portability and backup/restore workflows
-
-**[ ] Epic 4.6 - Secondary Feature Implementation (AppState-Based)**
+**[ ] Epic 4.3 - Content Workspace Implementation**
 
 - [ ] **Task 1: Draft System Implementation**
-  - [ ] Implement `handleDraftSave()` - save content to appState drafts
-  - [ ] Implement `handleDraftDelete()` - remove drafts from appState
-  - [ ] Implement `handleDraftSelect()` - load drafts into textareas
-  - [ ] Add draft data structures to appState for all content blocks
-  - [ ] Populate draft dropdowns from appState
-  - [ ] Test draft functionality across all content areas
+  - [ ] Implement `handleDraftSave()` - save content to appState drafts for User Outline, Final Prompt, and Article Workspace
+  - [ ] Implement `handleDraftDelete()` - remove drafts from appState with confirmation
+  - [ ] Implement `handleDraftSelect()` - load saved drafts into textareas with smooth transitions
+  - [ ] Add draft data structures to appState for all content blocks (userOutline, finalPrompt, articleWorkspace)
+  - [ ] Populate draft dropdowns from appState and update UI when drafts change
+  - [ ] Add draft naming and organization (auto-generated names with timestamps)
+  - [ ] Test draft functionality: save, load, delete, and persistence across page reloads
 
-- [ ] **Task 2: Text Transformer Implementation**
-  - [ ] Implement `handleTextTransformerAction()` - set transformation type
-  - [ ] Implement `handleTextTransformerOption()` - set transformation options
-  - [ ] Implement `handleTextTransformExecute()` - process text transformations
-  - [ ] Implement `handleTextCopyUp()` - copy results between areas
-  - [ ] Store transformer state in appState
-  - [ ] Test text transformation workflows
+- [ ] **Task 2: Content Management Features**
+  - [ ] Implement `handleInsertOutline()` - insert User Outline content into Final Prompt with formatting
+  - [ ] Implement `handleCopyToClipboard()` - copy Final Prompt or Article Workspace content with proper formatting
+  - [ ] Implement `handleClearContent()` - clear content areas with confirmation and automatic draft save
+  - [ ] Add content validation and character count displays for textareas
+  - [ ] Implement content auto-save to drafts (every 30 seconds when content exists)
+  - [ ] Test complete content workflow: outline → insert → prompt → refine → copy
 
-- [ ] **Task 3: Content Management Features**
-  - [ ] Implement `handleInsertOutline()` - insert outline into final prompt
-  - [ ] Implement `handleCopyToClipboard()` - copy with proper formatting
-  - [ ] Implement `handleClearContent()` - clear with confirmation and draft save
-  - [ ] Add content validation and formatting features
-  - [ ] Test content management workflow integration
+- [ ] **Task 3: Cross-Tab Content Synchronization**
+  - [ ] Implement content change detection and appState updates
+  - [ ] Add cross-tab synchronization for draft changes (when drafts are saved/deleted/selected)
+  - [ ] Ensure content areas maintain state when switching between tabs
+  - [ ] Add visual indicators for unsaved content changes
+  - [ ] Test cross-tab content synchronization and state persistence
 
-## **Implementation Strategy**
+**[ ] Epic 4.4 - Text Transformer Implementation**
 
+- [ ] **Task 1: Transformer Action System**
+  - [ ] Implement `handleTextTransformerAction()` - set transformation type (summarize, expand, rewrite, analyze)
+  - [ ] Implement `handleTextTransformerOption()` - set transformation options (length, tone, style)
+  - [ ] Store transformer state in appState and persist selections
+  - [ ] Add UI feedback for selected transformation actions and options
+  - [ ] Create transformation presets for common use cases
+  - [ ] Test action selection and option configuration
 
+- [ ] **Task 2: Text Processing Engine**
+  - [ ] Implement `handleTextTransformExecute()` - process text transformations using simple string manipulation
+  - [ ] Add text analysis functions: word count, reading time, complexity score
+  - [ ] Implement basic text transformations: summarize (extract key sentences), expand (add transition words), rewrite (synonym replacement)
+  - [ ] Add format transformations: bullet points, numbered lists, paragraph restructuring
+  - [ ] Create result preview and comparison with original text
+  - [ ] Test all transformation functions with various input types
 
-### **Phase 4C: Feature Completion (Epic 4.5)**
-- **Weeks 10-11**: Implement secondary features (drafts, text transformer, etc.)
-- **Goal**: Complete the full feature set for comprehensive prompt management
-- **Success Metric**: All planned features work seamlessly together
+- [ ] **Task 3: Transformer Workflow Integration**
+  - [ ] Implement `handleTextCopyUp()` - copy transformation results between content areas
+  - [ ] Add transformation history and undo/redo functionality
+  - [ ] Integrate transformer with draft system (save transformation results as drafts)
+  - [ ] Add batch processing for multiple content areas
+  - [ ] Implement transformation templates and saved configurations
+  - [ ] Test complete transformer workflow: select text → transform → preview → apply → save
 
-## **Success Criteria**
+**[ ] Epic 4.5 - Data Portability & Component Library**
 
-**Core Functionality Goals:**
-- [ ] Users can edit prompt values and selections in Database Components panel
-- [ ] All changes save to database immediately with proper error handling
-- [ ] Changes in Database Components instantly appear in Prompt Builder
-- [ ] Users can add and remove component types dynamically
-- [ ] Component renaming works across all tabs and interfaces
+- [ ] **Task 1: Component Export System**
+  - [ ] Enhance existing export functionality to include all component data (prompts, selections, visibility settings)
+  - [ ] Add export filtering: by component type, by prompt set, by active/inactive status
+  - [ ] Implement multiple export formats: JSON (for backup), CSV (for spreadsheets), human-readable text
+  - [ ] Add export validation and integrity checks
+  - [ ] Create export templates for different use cases (backup, sharing, migration)
+  - [ ] Test export functionality with various component configurations
 
-**Technical Goals:**
-- [ ] Zero data loss during editing operations
-- [ ] Sub-second response time for all database operations
-- [ ] Proper error handling and user feedback for all operations
-- [ ] Clean separation between database operations and UI updates
-- [ ] Surgical re-rendering without full page refreshes
+- [ ] **Task 2: Component Import System**
+  - [ ] Implement component import functionality from JSON and CSV files
+  - [ ] Add import validation: duplicate detection, data format verification, component type matching
+  - [ ] Implement import conflict resolution: merge, overwrite, or skip duplicates
+  - [ ] Add import preview showing what will be changed before applying
+  - [ ] Create import mapping for different component structures
+  - [ ] Test import functionality with various file formats and edge cases
 
-**User Experience Goals:**
-- [ ] Intuitive editing workflow in Database Components panel
-- [ ] Clear feedback for all save operations and errors
-- [ ] Seamless integration between Database Components and Prompt Builder
-- [ ] Efficient bulk editing and batch save capabilities
-- [ ] Reliable undo/redo and draft management
+- [ ] **Task 3: Component Library Management**
+  - [ ] Implement component backup and restore features using existing backup system
+  - [ ] Add component versioning: track changes to component types and prompt sets
+  - [ ] Create component sharing templates: export minimal sets for specific use cases
+  - [ ] Add component validation and cleanup tools (remove unused selections, fix broken references)
+  - [ ] Implement component library statistics and usage analytics
+  - [ ] Test complete data portability workflow: export → modify → import → verify
 
-## **Risk Mitigation**
+## **Phase 4 Status: Epics 4.1-4.2 Complete ✅**
 
-**High Risk Areas:**
-- Database write operations - Implement comprehensive error handling and validation
-- Cross-tab synchronization - Test thoroughly to prevent UI inconsistencies
-- Component deletion - Add proper cleanup and confirmation dialogs
-- Batch operations - Implement transaction support and rollback mechanisms
+**Completed:** Database Components CRUD & Prompt Set Management (5 weeks)
+**Remaining:** Content Workspace, Text Transformer, Data Portability (9 weeks estimated)
 
-**Mitigation Strategies:**
-- Incremental implementation with testing after each task
-- Database backup before implementing write operations
-- Comprehensive error logging and user feedback
-- Rollback mechanisms for failed operations
-- Extensive testing of edge cases and error conditions
+**Next Session:** Ready to start Epic 4.3 (Content Workspace Implementation) - all stub functions already exist in `public/index.html` marked as "REMOVAL CANDIDATE" but are actually planned for implementation.
 
-## **Dependencies**
+## **Critical Implementation Details & Architectural Decisions**
 
-**Prerequisites:**
-- Phase 3 completion (render system elimination)
-- Working database read operations
-- Stable project management system
-- Current Database Components panel UI structure
+### **Event Handling Strategy (Proven Patterns):**
+- **onBlur for database saves:** Text inputs, editable fields, rename operations - users understand "edit → move away → save" workflow
+- **onChange/onClick for immediate feedback:** Checkboxes, dropdowns, action buttons, navigation
+- **onSubmit for forms:** Modal forms, multi-field creation forms
 
-**External Dependencies:**
-- Database API endpoints (to be implemented)
-- No additional libraries required
-- Compatible with existing event system
-- Works with current appState structure
-
-## **Timeline Estimates**
-
-**Epic 4.1:** 3 weeks (Database Components CRUD)
-**Epic 4.2:** 2 weeks (Dynamic component add/remove)  
-**Epic 4.3:** 2 weeks (Database API enhancements)
-**Epic 4.4:** 2 weeks (User experience improvements)
-**Epic 4.5:** 2 weeks (Secondary features)
-
-**Total Phase 4:** 11 weeks
-
-**Note:** Refresh All functionality serves as valuable admin/development tool for resolving cache inconsistencies and testing database changes during development.
-
-## **Technical Implementation Notes**
-
-### **Event Handling Strategy by Input Type:**
-
-**Use onBlur for:**
-- ✅ **Text inputs** (single-line text, textareas) - user edits content, moves away, saves
-- ✅ **Editable content fields** - prompt values, selection names, component type names
-- ✅ **Rename operations** - any text field where user is editing existing content
-
-**Use onChange/onClick for:**
-- ✅ **Checkboxes and toggles** - prompt set visibility toggles, component group checkboxes
-- ✅ **Dropdowns that change UI state** - draft selection, transformer actions
-- ✅ **Radio buttons** - immediate selection feedback expected
-- ✅ **Action buttons** - Refresh All, Delete, Create, Copy, Clear, Transform
-- ✅ **Navigation controls** - tab switches, panel toggles
-
-**Use onSubmit for:**
-- ✅ **Modal forms** - component type creation, bulk operations
-- ✅ **Multi-field creation forms** - when multiple fields should be saved together
-
-### **Cross-Tab Re-rendering Requirements:**
-
+### **Cross-Tab Synchronization (Surgical Updates):**
 **Database changes that REQUIRE Prompt Builder re-rendering:**
-- ✅ **Text field updates (prompt_value)** - update textarea if that component is currently selected
-- ✅ **Selection field updates (selection names)** - refresh dropdowns with new options, update selected textarea if affected
-- ✅ **Component renames (display_name)** - update component headers and labels throughout Prompt Builder
-- ✅ **Prompt Set Visibility changes** - show/hide entire component types in Prompt Builder (existing system)
+- **Text field updates (prompt_value)** - update specific textarea if that component is currently selected
+- **Selection field updates (selection names)** - refresh dropdowns with new options, update selected textarea if affected  
+- **Component renames (display_name)** - update component headers and labels throughout Prompt Builder
+- **Prompt Set Visibility changes** - show/hide entire component types in Prompt Builder
 
-**Database changes that DON'T require immediate cross-tab re-rendering:**
-- ❌ **Add/remove component types** - admin operations, user expects to refresh manually
-- ❌ **Draft operations** - workspace-specific, no cross-tab impact
-- ❌ **Refresh All operations** - explicit user action to reload everything from database
+**AppState changes (workspace-specific, no cross-tab impact):**
+- **Draft operations** - save/load/delete drafts within content areas
+- **Text transformer state** - transformation selections and results
+- **Content management** - outline insertion, clipboard operations
 
-### **Key Implementation Principles:**
-- **Simple API calls** using existing `PUT /api/components/:id` endpoint pattern
-- **Instant feedback** appropriate for local Node.js environment (brief success flash, persistent error indication)
-- **appState cache updates** to maintain UI consistency after database saves
-- **Surgical cross-tab synchronization** - only re-render affected Prompt Builder elements, not full page refresh
-- **Error state management** with automatic clearing when user resumes editing
+**Implementation via `triggerCrossTabRerender()`:**
+- **Surgical updates only** - update specific DOM elements, not full page refresh
+- **Maintains user context** - preserves focus, scroll position, form state
+- **Type-specific handlers** - prompt_value, selection, component_rename, active_state, visibility_change
 
-## **Important Context & Lessons Learned**
+### **Database Integration Patterns:**
+- **API endpoints:** `PUT /api/user-components/:id`, `PUT /api/component-types/:typeKey`, `PUT /api/prompt-set-visibility`
+- **Hardcoded Project ID=1** for rapid development (multi-project UI exists but all projects share data)
+- **appState cache updates** after successful database saves to maintain UI consistency
+- **Error handling** with automatic clearing when user resumes editing
 
-- **Database Components panel is the core of the snippet organization tool** - everything else is secondary
-- **onBlur saves are simpler and more predictable** - users understand "edit → move away → save" workflow
-- **Local Node.js app = instant saves** - no need for loading spinners or complex progress indicators
-- **Cross-tab synchronization prevents user confusion** - changes must appear everywhere immediately
-- **Dynamic component management is a key differentiator** - enables true snippet organization
-- **Simple user feedback is sufficient** - brief green flash for success, red border + tooltip for errors
-- **Surgical re-rendering is more reliable than full refreshes** - maintains user context and focus
-- **AppState-based features can be implemented later** - focus on database functionality first
-- **Error handling and validation are non-negotiable** - data integrity is paramount
-- **Simplicity wins over complexity** - onBlur approach eliminates debouncing, race conditions, and performance overhead 
+### **Key Architectural Decisions:**
+- **onBlur saves eliminate debouncing** - simpler than complex input throttling
+- **Local Node.js = instant saves** - no loading spinners needed for database operations
+- **Simple user feedback sufficient** - brief green flash for success, red border + tooltip for errors
+- **Surgical re-rendering over full refreshes** - maintains user context and performance
+- **AppState-based features for content workspace** - drafts, transformer state don't need database persistence
+- **Database only for component data** - prompts, selections, visibility, active states that need persistence
+
+### **Proven Implementation Functions:**
+- `updateComponentCache()`, `updateComponentTypeCache()` - maintain appState consistency
+- `triggerCrossTabRerender()` - surgical DOM updates for cross-tab sync
+- `updatePromptBuilderTextarea()`, `updateComponentDropdownOptions()` - specific update functions
+- `showSaveSuccess()`, `showSaveError()` - consistent user feedback patterns 

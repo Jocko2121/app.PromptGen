@@ -448,6 +448,25 @@
                     
                     promptSetsContainer.innerHTML = '';
                     
+                    // Load project settings to get active prompt set
+                    let activePromptSet = 'custom_build'; // Default fallback
+                    try {
+                        const settingsResponse = await fetch(`/api/projects/${appState.currentProjectId}`);
+                        const settingsData = await settingsResponse.json();
+                        
+                        if (settingsData.project && settingsData.project.settings && settingsData.project.settings.ui_settings) {
+                            const uiSettings = JSON.parse(settingsData.project.settings.ui_settings);
+                            if (uiSettings.activePromptSet) {
+                                activePromptSet = uiSettings.activePromptSet;
+                            }
+                        }
+                        
+                        // Store settings in appState for later use
+                        appState.currentProjectSettings = settingsData.project?.settings || {};
+                    } catch (settingsError) {
+                        console.warn('Could not load project settings, using default prompt set:', settingsError);
+                    }
+                    
                     if (data.promptSets) {
                         data.promptSets.forEach(set => {
                             const div = document.createElement('div');
@@ -456,10 +475,13 @@
                             div.setAttribute('data-action', 'changePromptSet');
                             div.textContent = set.display_name;
                             
-                            // Mark first one as active by default
-                            if (set.is_active) {
+                            // Mark active prompt set
+                            if (set.set_key === activePromptSet) {
                                 div.classList.add('active');
                                 appState.activePromptSet = set.set_key;
+                                
+                                // Update Prompt Builder header immediately
+                                updatePromptBuilderHeader(set.set_key);
                             }
                             
                             promptSetsContainer.appendChild(div);
@@ -616,14 +638,27 @@
                     const activePromptSet = appState.activePromptSet || 'custom_build';
                     console.log(`🎯 Building components for active prompt set: ${activePromptSet}`);
                     
-                    // Create components based on available types
+                    // Create components based on available types, filtered by visibility
                     if (data.types && data.types.length > 0) {
-                        data.types.forEach((type, index) => {
-                            console.log(`🧩 Creating component: ${type.display_name} (${type.type_key})`);
-                            createPromptBuilderComponent(palletContainer, type, data.components, index);
-                        });
+                        const visibleTypes = getVisibleComponentTypes(data.types, data.promptSets, data.visibility, activePromptSet);
                         
-                        console.log(`✅ Created ${data.types.length} prompt builder components`);
+                        if (visibleTypes.length > 0) {
+                            visibleTypes.forEach((type, index) => {
+                                console.log(`🧩 Creating component: ${type.display_name} (${type.type_key})`);
+                                createPromptBuilderComponent(palletContainer, type, data.components, index);
+                            });
+                            
+                            console.log(`✅ Created ${visibleTypes.length} visible prompt builder components (${data.types.length - visibleTypes.length} hidden by visibility settings)`);
+                        } else {
+                            palletContainer.innerHTML = `
+                                <div class="prompt-builder__no-components">
+                                    <h4>No Components Available</h4>
+                                    <p>No components are visible for the "${getPromptSetDisplayName(activePromptSet)}" prompt set.</p>
+                                    <p>Go to the <strong>Database Components</strong> panel to enable component visibility.</p>
+                                </div>
+                            `;
+                            console.log(`⚠️ No components visible for active prompt set: ${activePromptSet}`);
+                        }
                     } else {
                         palletContainer.innerHTML = '<p>No component types found in database.</p>';
                         console.warn('⚠️ No component types found');
@@ -973,11 +1008,19 @@
                 console.log('📊 Current appState:', appState);
                 
                 try {
-                    // Initialize each tab independently from database
-                    console.log('🔄 Starting parallel initialization of all tabs...');
+                    // Initialize Prompt Sets FIRST to load active prompt set into appState
+                    console.log('🔄 Initializing Prompt Sets first (required for active prompt set)...');
+                    try {
+                        await initializePromptSetsFromDatabase();
+                        console.log('✅ Prompt Sets initialized successfully');
+                    } catch (error) {
+                        console.error('❌ Failed to initialize Prompt Sets:', error);
+                    }
+                    
+                    // Then initialize remaining tabs in parallel
+                    console.log('🔄 Starting parallel initialization of remaining tabs...');
                     
                     const initPromises = [
-                        { name: 'Prompt Sets', fn: initializePromptSetsFromDatabase },
                         { name: 'Project Library', fn: initializeProjectLibraryFromDatabase },
                         { name: 'Project Hub', fn: initializeProjectHubFromDatabase },
                         { name: 'Prompt Builder', fn: initializePromptBuilderFromDatabase },
@@ -986,7 +1029,7 @@
                         { name: 'Database Components', fn: initializeDatabaseComponentsFromDatabase }
                     ];
                     
-                    // Run all initialization functions with individual error handling
+                    // Run remaining initialization functions with individual error handling
                     const results = await Promise.allSettled(
                         initPromises.map(async ({ name, fn }) => {
                             console.log(`⏳ Initializing ${name}...`);
@@ -1001,11 +1044,11 @@
                         })
                     );
                     
-                    // Report results
-                    const successful = results.filter(r => r.value?.success).length;
+                    // Report results (add 1 for Prompt Sets that was initialized first)
+                    const successful = results.filter(r => r.value?.success).length + 1;
                     const failed = results.filter(r => !r.value?.success);
                     
-                    console.log(`📊 Initialization Summary: ${successful}/${results.length} successful`);
+                    console.log(`📊 Initialization Summary: ${successful}/${results.length + 1} successful`);
                     
                     if (failed.length > 0) {
                         console.warn('⚠️ Failed initializations:', failed.map(f => f.value?.name || 'Unknown'));
@@ -1037,6 +1080,98 @@
                     selector.classList.toggle('active', selector.dataset.promptSetKey === activeSetKey);
                 });
                 appState.activePromptSet = activeSetKey;
+            }
+            
+            function updatePromptBuilderHeader(promptSetKey) {
+                const promptBuilderHeader = document.querySelector('#prompt-builder-panel .panel__header h3');
+                if (promptBuilderHeader) {
+                    const displayName = getPromptSetDisplayName(promptSetKey);
+                    promptBuilderHeader.textContent = displayName;
+                    console.log(`🎯 Updated Prompt Builder header to: ${displayName}`);
+                }
+            }
+            
+            function getPromptSetDisplayName(promptSetKey) {
+                if (appState.cache && appState.cache.promptSets) {
+                    const promptSet = appState.cache.promptSets.find(ps => ps.set_key === promptSetKey);
+                    return promptSet ? promptSet.display_name : promptSetKey;
+                }
+                return promptSetKey;
+            }
+            
+            function updateVisibilityUIState(checkbox, isVisible) {
+                // Update the parent container's active state
+                const parentItem = checkbox.closest('.component-group__prompt-set-item');
+                if (parentItem) {
+                    parentItem.classList.toggle('component-group__prompt-set-item--active', isVisible);
+                }
+                
+                // Update the status text
+                const statusText = parentItem?.querySelector('.component-group__status-text');
+                if (statusText) {
+                    statusText.textContent = isVisible ? 'Visible' : 'Hidden';
+                    statusText.classList.toggle('component-group__status-text--active', isVisible);
+                }
+            }
+            
+            function updateVisibilityCache(promptSetId, componentTypeId, isVisible) {
+                if (!appState.cache || !appState.cache.visibility) {
+                    return;
+                }
+                
+                // Find existing visibility record
+                const existingIndex = appState.cache.visibility.findIndex(v => 
+                    v.prompt_set_id === promptSetId && v.component_type_id === componentTypeId
+                );
+                
+                if (existingIndex >= 0) {
+                    // Update existing record
+                    appState.cache.visibility[existingIndex].is_visible = isVisible;
+                } else {
+                    // Add new record
+                    appState.cache.visibility.push({
+                        prompt_set_id: promptSetId,
+                        component_type_id: componentTypeId,
+                        is_visible: isVisible
+                    });
+                }
+            }
+            
+            function getVisibleComponentTypes(types, promptSets, visibility, activePromptSetKey) {
+                if (!types || !promptSets || !visibility) {
+                    console.warn('⚠️ Missing data for visibility filtering, showing all components');
+                    return types;
+                }
+                
+                // Find the active prompt set
+                const activePromptSet = promptSets.find(ps => ps.set_key === activePromptSetKey);
+                if (!activePromptSet) {
+                    console.warn(`⚠️ Active prompt set "${activePromptSetKey}" not found, showing all components`);
+                    return types;
+                }
+                
+                // Filter types based on visibility settings
+                const visibleTypes = types.filter(type => {
+                    const visibilityRecord = visibility.find(v => 
+                        v.prompt_set_id === activePromptSet.id && 
+                        v.component_type_id === type.id
+                    );
+                    
+                    // If no visibility record exists, component is hidden by default
+                    // Only show components that have explicit visibility = true
+                    const isVisible = visibilityRecord ? visibilityRecord.is_visible : false;
+                    
+                    if (isVisible) {
+                        console.log(`👁️ Component "${type.display_name}" is visible for prompt set "${activePromptSetKey}"`);
+                    } else {
+                        console.log(`🚫 Component "${type.display_name}" is hidden for prompt set "${activePromptSetKey}"`);
+                    }
+                    
+                    return isVisible;
+                });
+                
+                console.log(`🔍 Visibility filtering: ${visibleTypes.length}/${types.length} components visible for "${activePromptSetKey}"`);
+                return visibleTypes;
             }
 
             // --- EVENT HANDLER FUNCTIONS ---
@@ -1537,9 +1672,62 @@
                 }
             }
 
-            function handleComponentGroupCheckbox(target, event) {
-                console.log('Component group checkbox changed:', target.checked);
-                // REMOVAL CANDIDATE: Bulk operations never implemented - individual management only
+            async function handleComponentGroupCheckbox(target, event) {
+                const promptSetId = parseInt(target.dataset.promptSetId);
+                const componentTypeId = parseInt(target.dataset.componentTypeId);
+                const isVisible = target.checked;
+                
+                if (!promptSetId || !componentTypeId) {
+                    console.error('Missing prompt set ID or component type ID for visibility toggle');
+                    return;
+                }
+                
+                console.log(`💾 Saving visibility: prompt set ${promptSetId}, component type ${componentTypeId}, visible: ${isVisible}`);
+                
+                try {
+                    // Save to database
+                    const response = await fetch('/api/prompt-set-visibility', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            promptSetId: promptSetId,
+                            componentTypeId: componentTypeId,
+                            isVisible: isVisible
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Update visual state immediately
+                    updateVisibilityUIState(target, isVisible);
+                    
+                    // Update appState cache
+                    updateVisibilityCache(promptSetId, componentTypeId, isVisible);
+                    
+                    // Show success feedback
+                    showToast(`Component visibility ${isVisible ? 'enabled' : 'disabled'}`, 'success', 2000);
+                    
+                    // Trigger cross-tab synchronization
+                    triggerCrossTabRerender('database-components', 'visibility_change', {
+                        promptSetId: promptSetId,
+                        componentTypeId: componentTypeId,
+                        isVisible: isVisible
+                    });
+                    
+                    console.log(`✅ Visibility updated successfully: ${isVisible ? 'visible' : 'hidden'}`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error updating visibility:`, error);
+                    
+                    // Revert checkbox state on error
+                    target.checked = !isVisible;
+                    
+                    showToast(`Failed to update visibility: ${error.message}`, 'error');
+                }
             }
 
             async function handleRefreshAll(target, event) {
@@ -1632,9 +1820,63 @@
                 // REMOVAL CANDIDATE: Panel collapsing never implemented - simplified to tab-only navigation
             }
 
-            function handlePromptSetChange(target, event) {
-                console.log('🎯 Prompt set change requested:', target.dataset.promptSetKey);
-                // FUTURE FEATURE: Prompt set switching planned but not yet implemented
+            async function handlePromptSetChange(target, event) {
+                const promptSetKey = target.dataset.promptSetKey;
+                
+                if (!promptSetKey) {
+                    console.error('No prompt set key found for prompt set change');
+                    return;
+                }
+                
+                console.log(`🎯 Switching to prompt set: ${promptSetKey}`);
+                
+                try {
+                    // Save active prompt set to database
+                    const currentUiSettings = appState.currentProjectSettings?.ui_settings || '{}';
+                    const uiSettings = JSON.parse(currentUiSettings);
+                    uiSettings.activePromptSet = promptSetKey;
+                    
+                    const response = await fetch('/api/project-settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ui_settings: JSON.stringify(uiSettings)
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Update appState cache
+                    appState.activePromptSet = promptSetKey;
+                    if (!appState.currentProjectSettings) {
+                        appState.currentProjectSettings = {};
+                    }
+                    appState.currentProjectSettings.ui_settings = JSON.stringify(uiSettings);
+                    
+                    // Update left rail visual states
+                    updatePromptSetActiveState(promptSetKey);
+                    
+                    // Update Prompt Builder header
+                    updatePromptBuilderHeader(promptSetKey);
+                    
+                    // Show success feedback
+                    showToast(`Switched to ${getPromptSetDisplayName(promptSetKey)}`, 'success', 2000);
+                    
+                    // Trigger cross-tab synchronization
+                    triggerCrossTabRerender('prompt-sets', 'prompt_set_change', {
+                        promptSetKey: promptSetKey
+                    });
+                    
+                    console.log(`✅ Prompt set switched to: ${promptSetKey}`);
+                    
+                } catch (error) {
+                    console.error(`❌ Error switching prompt set to ${promptSetKey}:`, error);
+                    showToast(`Failed to switch prompt set: ${error.message}`, 'error');
+                }
             }
 
             function handleTabSwitch(target, event) {
@@ -1677,13 +1919,8 @@
                         
                         // Cross-tab sync check - refresh target panel if needed
                         if (panelId === 'prompt-builder-panel') {
-                            console.log('🔄 Checking Prompt Builder for cross-tab sync');
-                            // Note: Surgical updates happen immediately, no need for full refresh on tab switch
-                            // Only refresh if cache is empty (first load)
-                            if (!appState.cache || !appState.cache.components || appState.cache.components.length === 0) {
-                                console.log('🔄 Cache empty, performing full refresh');
-                                initializePromptBuilderFromDatabase();
-                            }
+                            console.log('🔄 Refreshing Prompt Builder for potential visibility changes');
+                            initializePromptBuilderFromDatabase();
                         }
                     } else {
                         console.warn(`⚠️ Could not find panel: ${panelId}`);
@@ -2019,6 +2256,10 @@
                     updatePromptBuilderComponentTitle(data.typeKey, data.newDisplayName);
                 } else if (updateType === 'active_state' && data) {
                     updatePromptBuilderActiveState(data.componentId, data.isActive);
+                } else if (updateType === 'prompt_set_change' && data) {
+                    updateCrossTabPromptSetChange(data.promptSetKey);
+                } else if (updateType === 'visibility_change' && data) {
+                    updateCrossTabVisibilityChange(data.promptSetId, data.componentTypeId, data.isVisible);
                 } else {
                     // Fallback: refresh admin panel if visible (existing behavior)
                     const adminPanel = document.getElementById('database-components-panel');
@@ -2026,6 +2267,164 @@
                         console.log(`🔄 Refreshing ${panelType} panel for cross-tab sync`);
                         initializeDatabaseComponentsFromDatabase();
                     }
+                }
+            }
+            
+            function updateCrossTabPromptSetChange(promptSetKey) {
+                // Update left rail active states
+                updatePromptSetActiveState(promptSetKey);
+                
+                // Update Prompt Builder header
+                updatePromptBuilderHeader(promptSetKey);
+                
+                // Rebuild Prompt Builder with new visibility rules for the active prompt set
+                updatePromptBuilderForPromptSetChange(promptSetKey);
+                
+                console.log(`🎯 Cross-tab prompt set update: ${promptSetKey}`);
+            }
+            
+            function updatePromptBuilderForPromptSetChange(promptSetKey) {
+                const promptBuilderPanel = document.getElementById('prompt-builder-panel');
+                if (!promptBuilderPanel || promptBuilderPanel.style.display === 'none') {
+                    console.log('🔍 Prompt Builder not visible, skipping component filtering update');
+                    return;
+                }
+                
+                const palletContainer = document.getElementById('prompt-builder-pallet');
+                if (!palletContainer) {
+                    console.warn('⚠️ Prompt Builder pallet container not found');
+                    return;
+                }
+                
+                // Check if we have the necessary data in cache
+                if (!appState.cache || !appState.cache.componentTypes || !appState.cache.promptSets || !appState.cache.visibility) {
+                    console.log('🔄 Cache data incomplete, performing full Prompt Builder refresh');
+                    initializePromptBuilderFromDatabase();
+                    return;
+                }
+                
+                // Clear current components
+                palletContainer.innerHTML = '';
+                
+                // Get visible component types for the new active prompt set
+                const visibleTypes = getVisibleComponentTypes(
+                    appState.cache.componentTypes, 
+                    appState.cache.promptSets, 
+                    appState.cache.visibility, 
+                    promptSetKey
+                );
+                
+                if (visibleTypes.length > 0) {
+                    visibleTypes.forEach((type, index) => {
+                        console.log(`🧩 Adding component for prompt set change: ${type.display_name} (${type.type_key})`);
+                        createPromptBuilderComponent(palletContainer, type, appState.cache.components, index);
+                    });
+                    
+                    console.log(`✅ Rebuilt Prompt Builder with ${visibleTypes.length} visible components for "${promptSetKey}"`);
+                } else {
+                    // Show empty state
+                    palletContainer.innerHTML = `
+                        <div class="prompt-builder__no-components">
+                            <h4>No Components Available</h4>
+                            <p>No components are visible for the "${getPromptSetDisplayName(promptSetKey)}" prompt set.</p>
+                            <p>Go to the <strong>Database Components</strong> panel to enable component visibility.</p>
+                        </div>
+                    `;
+                    console.log(`⚠️ No components visible for prompt set: ${promptSetKey}`);
+                }
+            }
+            
+            function updateCrossTabVisibilityChange(promptSetId, componentTypeId, isVisible) {
+                // Update the checkbox and status in Database Components panel (if visible)
+                const adminPanel = document.getElementById('database-components-panel');
+                if (adminPanel && adminPanel.style.display !== 'none') {
+                    const checkbox = adminPanel.querySelector(
+                        `input[data-prompt-set-id="${promptSetId}"][data-component-type-id="${componentTypeId}"]`
+                    );
+                    if (checkbox && checkbox.checked !== isVisible) {
+                        checkbox.checked = isVisible;
+                        updateVisibilityUIState(checkbox, isVisible);
+                    }
+                }
+                
+                // Update Prompt Builder if visible - full pallet refresh like prompt set switching
+                const promptBuilderPanel = document.getElementById('prompt-builder-panel');
+                if (promptBuilderPanel && promptBuilderPanel.style.display !== 'none') {
+                    console.log('🔄 Refreshing Prompt Builder pallet for visibility change');
+                    initializePromptBuilderFromDatabase();
+                }
+                
+                console.log(`👁️ Cross-tab visibility update: prompt set ${promptSetId}, component type ${componentTypeId}, visible: ${isVisible}`);
+            }
+            
+            function updatePromptBuilderForVisibilityChange(promptSetId, componentTypeId, isVisible) {
+                // Only update if this visibility change affects the currently active prompt set
+                const activePromptSet = appState.activePromptSet || 'custom_build';
+                const activePromptSetData = appState.cache?.promptSets?.find(ps => ps.set_key === activePromptSet);
+                
+                if (!activePromptSetData || activePromptSetData.id !== promptSetId) {
+                    console.log(`🔍 Visibility change doesn't affect active prompt set "${activePromptSet}", skipping Prompt Builder update`);
+                    return;
+                }
+                
+                // Find the affected component type
+                const componentType = appState.cache?.componentTypes?.find(ct => ct.id === componentTypeId);
+                if (!componentType) {
+                    console.warn(`⚠️ Component type ${componentTypeId} not found in cache`);
+                    return;
+                }
+                
+                const promptBuilderPanel = document.getElementById('prompt-builder-panel');
+                if (!promptBuilderPanel || promptBuilderPanel.style.display === 'none') {
+                    console.log('🔍 Prompt Builder not visible, skipping update');
+                    return;
+                }
+                
+                const palletContainer = document.getElementById('prompt-builder-pallet');
+                if (!palletContainer) {
+                    console.warn('⚠️ Prompt Builder pallet container not found');
+                    return;
+                }
+                
+                // Find existing component in Prompt Builder
+                const existingComponent = palletContainer.querySelector(`[data-component-type="${componentType.type_key}"]`);
+                
+                if (isVisible && !existingComponent) {
+                    // Component should be visible but doesn't exist - add it
+                    console.log(`➕ Adding component "${componentType.display_name}" to Prompt Builder`);
+                    createPromptBuilderComponent(palletContainer, componentType, appState.cache.components, 0);
+                } else if (!isVisible && existingComponent) {
+                    // Component should be hidden but exists - remove it
+                    console.log(`➖ Removing component "${componentType.display_name}" from Prompt Builder`);
+                    existingComponent.remove();
+                } else {
+                    console.log(`🔍 No Prompt Builder update needed for "${componentType.display_name}"`);
+                }
+                
+                // Check if no components are visible and show appropriate message
+                updatePromptBuilderEmptyState();
+            }
+            
+            function updatePromptBuilderEmptyState() {
+                const palletContainer = document.getElementById('prompt-builder-pallet');
+                if (!palletContainer) return;
+                
+                const components = palletContainer.querySelectorAll('.prompt-builder__component');
+                const emptyState = palletContainer.querySelector('.prompt-builder__no-components');
+                
+                if (components.length === 0 && !emptyState) {
+                    // No components visible, show empty state
+                    const activePromptSet = appState.activePromptSet || 'custom_build';
+                    palletContainer.innerHTML = `
+                        <div class="prompt-builder__no-components">
+                            <h4>No Components Available</h4>
+                            <p>No components are visible for the "${getPromptSetDisplayName(activePromptSet)}" prompt set.</p>
+                            <p>Go to the <strong>Database Components</strong> panel to enable component visibility.</p>
+                        </div>
+                    `;
+                } else if (components.length > 0 && emptyState) {
+                    // Components are visible, remove empty state
+                    emptyState.remove();
                 }
             }
 
@@ -2067,7 +2466,7 @@
                 const action = target.dataset.action;
                 
                 // Only handle project-related actions
-                const projectActions = ['saveProject', 'saveAsProject', 'loadProject', 'deleteCurrentProject', 'createProject', 'adminReset'];
+                const projectActions = ['saveProject', 'saveAsProject', 'loadProject', 'deleteCurrentProject', 'createProject', 'adminReset', 'changePromptSet'];
                 if (!projectActions.includes(action)) return;
                 
                 console.log(`🏗️ Project Event: ${action}`);
@@ -2079,6 +2478,7 @@
                     case 'deleteCurrentProject': handleDeleteCurrentProject(target, event); break;
                     case 'createProject': createNewProject(target, event); break;
                     case 'adminReset': handleAdminReset(target, event); break;
+                    case 'changePromptSet': handlePromptSetChange(target, event); break;
                 }
                 
                 event.stopPropagation(); // Prevent interference with other handlers

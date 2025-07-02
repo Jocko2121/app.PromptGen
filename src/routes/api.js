@@ -221,6 +221,31 @@ router.put('/prompt-set-visibility', (req, res) => {
     }
 });
 
+// PUT to update project settings
+// Now uses project-scoped settings for Default Project (ID=1)
+router.put('/project-settings', (req, res) => {
+    try {
+        const DEFAULT_PROJECT_ID = 1;
+        const settings = req.body;
+
+        if (!settings || Object.keys(settings).length === 0) {
+            return res.status(400).json({ error: 'Settings object is required' });
+        }
+
+        const success = dbOps.updateProjectSettings(DEFAULT_PROJECT_ID, settings);
+
+        if (success) {
+            res.json({ message: 'Project settings updated successfully' });
+        } else {
+            res.status(400).json({ error: 'No valid settings fields provided' });
+        }
+
+    } catch (error) {
+        console.error(`Error updating project settings:`, error);
+        res.status(500).json({ error: 'Failed to update project settings', details: error.message });
+    }
+});
+
 // POST to create a new user component (prompt)
 // Now creates components in Default Project (ID=1)
 router.post('/user-components', (req, res) => {
@@ -332,6 +357,7 @@ router.get('/projects/:id', (req, res) => {
                 description: project.description,
                 created_at: project.created_at,
                 modified_at: project.modified_at,
+                settings: settings,
                 stats: {
                     component_count: components.length,
                     prompt_set_count: promptSets.length,

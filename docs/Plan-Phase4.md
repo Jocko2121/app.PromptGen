@@ -20,9 +20,9 @@
 
 # *Phase 4: Database Components CRUD & Core Functionality*
 
-**[x] Epic 4.1 - Database Components Panel CRUD Operations** ✅ - COMPLETE
+**[x] Epic 4.1 - Database Components Panel CRUD Operations** - COMPLETE
 
-- [x] **Task 1: Implement Text Field Database Updates** ✅
+- [x] **Task 1: Implement Text Field Database Updates**
   - [x] Change event listener from `input` to `blur` for textarea saves
   - [x] Fix `handleComponentInput()` → implemented onBlur auto-save functionality
   - [x] Add database API call: `PUT /api/user-components/:id` with `{ prompt_value: newValue }`
@@ -40,7 +40,7 @@
   - [x] Add `data-action="adminSelectionBlur"` to selection inputs in `renderDatabaseComponentsAdmin()`
   - [x] Test selection editing and dropdown synchronization
 
-- [x] **Task 3: Implement Component Rename Functionality** ✅
+- [x] **Task 3: Implement Component Rename Functionality**
   - [x] Enhanced `handleComponentRename()` with blur event handling (async function)
   - [x] Database API call: `PUT /api/component-types/:typeKey` with `{ displayName: newName }`
   - [x] User feedback with toast notifications for success/error messages
@@ -51,35 +51,76 @@
   - [x] Added to `handleInputEvents()` routing system
   - [x] Test component type renaming across all tabs - PASSED
 
-- [x] **Task 4: Fix Cross-Tab Re-rendering** ✅ - COMPLETE
-  - [x] Implement surgical re-rendering for prompt_value changes (update specific textarea if component selected) ✅
-  - [x] Implement dropdown refresh for selection name changes (rebuild dropdown options, preserve selections) ✅
-  - [x] Implement header updates for component renames (update display names throughout Prompt Builder) ✅
-  - [x] Verify existing Prompt Set Visibility system handles component type visibility (no changes needed) ✅
-  - [x] Avoid full page re-render - use targeted DOM updates only ✅
-  - [x] Test that Database Components changes immediately appear in Prompt Builder without page refresh ✅
+- [x] **Task 4: Fix Cross-Tab Re-rendering**
+  - [x] Implement surgical re-rendering for prompt_value changes (update specific textarea if component selected)
+  - [x] Implement dropdown refresh for selection name changes (rebuild dropdown options, preserve selections)
+  - [x] Implement header updates for component renames (update display names throughout Prompt Builder)
+  - [x] Verify existing Prompt Set Visibility system handles component type visibility (no changes needed)
+  - [x] Avoid full page re-render - use targeted DOM updates only
+  - [x] Test that Database Components changes immediately appear in Prompt Builder without page refresh
 
-- [x] **Task 5: Implement Refresh All Functionality** ✅ - COMPLETE (Simple Implementation)
-  - [x] Change "Save All" button to "Refresh All" (admin/development tool) ✅
-  - [x] Implement fresh data reload from database to appState cache ✅
-  - [x] Re-render Database Components admin panel with fresh data ✅
-  - [x] Update Prompt Builder dropdowns and components with refreshed data ✅
-  - [x] Add visual feedback with toast notification ✅
-  - [x] Simple 20-line implementation as debugging tool ✅
+- [x] **Task 5: Implement Refresh All Functionality** (Simple Implementation)
+  - [x] Change "Save All" button to "Refresh All" (admin/development tool)
+  - [x] Implement fresh data reload from database to appState cache
+  - [x] Re-render Database Components admin panel with fresh data
+  - [x] Update Prompt Builder dropdowns and components with refreshed data
+  - [x] Add visual feedback with toast notification 
+  - [x] Simple 20-line implementation as debugging tool 
 
-- [x] **Task 6: Implement Individual Prompt Active/Inactive Checkboxes** ✅ - COMPLETE
-  - [x] Implement `handleComponentActiveToggle()` function to save `is_active` state to database ✅
-  - [x] Add API call to update component: `PUT /user-components/:id` with `{ is_active: boolean }` ✅
-  - [x] Update appState cache after successful database save ✅
-  - [x] Trigger cross-tab re-rendering when active/inactive state changes ✅
-  - [x] Filter Prompt Builder dropdowns to only show active prompts (is_active = true) ✅
-  - [x] Add user feedback: brief visual confirmation on successful toggle ✅
-  - [x] Test that inactive prompts are hidden from Prompt Builder but still visible in Database Components admin ✅
+- [x] **Task 6: Implement Individual Prompt Active/Inactive Checkboxes**
+  - [x] Implement `handleComponentActiveToggle()` function to save `is_active` state to database
+  - [x] Add API call to update component: `PUT /user-components/:id` with `{ is_active: boolean }`
+  - [x] Update appState cache after successful database save
+  - [x] Trigger cross-tab re-rendering when active/inactive state changes
+  - [x] Filter Prompt Builder dropdowns to only show active prompts (is_active = true)
+  - [x] Add user feedback: brief visual confirmation on successful toggle
+  - [x] Test that inactive prompts are hidden from Prompt Builder but still visible in Database Components admin
 
-**[ ] Epic 4.2 - Dynamic Component Add/Remove System**
+**[x] Epic 4.2 - Prompt Set Management & Visibility System** - COMPLETE
 
-- [ ] **Task 1: Implement Add Component Type Functionality**
-  - [ ] Fix `handleAddComponent()` to create new component types
+- [x] **Task 1: Implement Left Rail Prompt Set Switching** ✅ COMPLETE
+  - [x] Fix `handlePromptSetChange()` to save active prompt set to database
+  - [x] Add to main click event routing system with action `changePromptSet`
+  - [x] Database integration: save active prompt set in project settings via `PUT /api/project-settings`
+  - [x] Update Prompt Builder header to show active prompt set name (replace `[set_name] ⏳`)
+  - [x] Update appState cache and left rail active visual states
+  - [x] Add cross-tab synchronization when prompt set changes
+  - [x] Test prompt set switching with visual feedback and persistence
+  - [x] Strategic API hardcoding to Project ID=1 for rapid development (multi-project support deferred)
+
+- [x] **Task 2: Implement Prompt Set Visibility Database Updates** ✅ COMPLETE
+  - [x] Fix `handleComponentGroupCheckbox()` to save visibility state to database
+  - [x] Add to admin change event routing system with action `componentGroupCheckbox`
+  - [x] Database API call: `PUT /api/prompt-set-visibility` with `{ promptSetId, componentTypeId, isVisible }`
+  - [x] Update appState cache after successful database save
+  - [x] Add toast notifications for success/error feedback
+  - [x] Update status text ("Visible"/"Hidden") immediately after save
+  - [x] Add surgical cross-tab synchronization for visibility changes
+  - [x] Test visibility checkbox toggling and persistence across page reloads
+
+- [x] **Task 3: Implement Prompt Builder Component Filtering** ✅ COMPLETE
+  - [x] Filter Prompt Builder components based on active prompt set visibility rules
+  - [x] Modified Prompt Builder initialization to use `getVisibleComponentTypes()` filtering
+  - [x] Add `getVisibleComponentTypes()` helper function using appState cache
+  - [x] Update Prompt Builder initialization to respect prompt set visibility
+  - [x] Handle edge case where no components are visible for active prompt set (shows helpful message)
+  - [x] Enhanced cross-tab sync: visibility changes instantly add/remove components from Prompt Builder
+  - [x] Enhanced cross-tab sync: prompt set changes rebuild Prompt Builder with new visibility rules
+  - [x] Test that changing prompt sets shows/hides appropriate components
+
+- [x] **Task 4: Implement Cross-Tab Synchronization for Prompt Sets** ✅ COMPLETE
+  - [x] Add surgical update functions for prompt set changes
+  - [x] Implement `updatePromptBuilderForPromptSetChange()` - rebuild visible components
+  - [x] Implement `updatePromptSetVisibilityStatus()` - update status text and checkboxes
+  - [x] Enhance `triggerCrossTabRerender()` with prompt set update types
+  - [x] Add prompt set header updates across all tabs
+  - [x] Test cross-tab sync: changes in Database Components immediately affect Prompt Builder
+  - [x] Test cross-tab sync: left rail prompt set switching updates Database Components checkboxes
+
+
+
+
+
 
 
 
